@@ -9,6 +9,8 @@ use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\GuestController;
 use App\Http\Controllers\GuestMenuController;
 use App\Http\Controllers\VotingController;
+use App\Http\Controllers\TransportasiController;
+use App\Http\Controllers\BusController;
 
 // ─── Landing ──────────────────────────────────────────────────────────────────
 Route::get('/', [AuthController::class, 'landing'])->name('landing');
@@ -52,6 +54,12 @@ Route::middleware(['auth', \App\Http\Middleware\AdminOnly::class])->group(functi
     Route::post('/voting',        [VotingController::class, 'store'])->name('voting.store');
     Route::put('/voting/{id}',    [VotingController::class, 'update'])->name('voting.update');
     Route::delete('/voting/{id}', [VotingController::class, 'destroy'])->name('voting.destroy');
+
+    // Transportasi — lihat siapa naik bus & kendaraan pribadi
+    Route::get('/buses',             [TransportasiController::class, 'buses'])->name('buses.index');
+    Route::get('/buses/export',      [TransportasiController::class, 'exportBuses'])->name('buses.export');
+    Route::get('/kendaraans',        [TransportasiController::class, 'kendaraans'])->name('kendaraans.index');
+    Route::get('/kendaraans/export', [TransportasiController::class, 'exportKendaraans'])->name('kendaraans.export');
 });
 
 // ─── Guest Routes ─────────────────────────────────────────────────────────────
@@ -61,4 +69,8 @@ Route::middleware(['auth', \App\Http\Middleware\GuestOnly::class])->group(functi
     Route::post('/my/kehadiran',     [GuestController::class, 'konfirmasiKehadiran'])->name('guest.kehadiran');
     Route::get('/my/voting',         [VotingController::class, 'guestIndex'])->name('guest.voting');
     Route::post('/my/voting',        [VotingController::class, 'vote'])->name('guest.voting.post');
+
+    // Transportasi — guest pilih bus atau kendaraan pribadi
+    Route::post('/my/transportasi',        [BusController::class, 'store'])->name('guest.transportasi.store');
+    Route::post('/my/transportasi/cancel', [BusController::class, 'cancel'])->name('guest.transportasi.cancel');
 });

@@ -20,7 +20,6 @@ class GuestController extends Controller
 
         $menus = GuestMenu::getActive();
 
-        // Notif per menu key
         $notif = [];
 
         // Voting — belum vote
@@ -30,12 +29,18 @@ class GuestController extends Controller
             $notif['voting'] = true;
         }
 
+        // Transportasi — belum pilih
+        $sudahPilihBus       = \App\Models\Bus::where('nik', $karyawan->nik)->exists();
+        $sudahPilihKendaraan = \App\Models\Kendaraan::where('nik', $karyawan->nik)->exists();
+        if (!$sudahPilihBus && !$sudahPilihKendaraan) {
+            $notif['bus'] = true;
+        }
+
         return view('guest.dashboard', compact('karyawan', 'menus', 'notif'));
     }
 
     public function menu(string $key)
     {
-        // Voting punya controller sendiri
         if ($key === 'voting') {
             return redirect()->route('guest.voting');
         }

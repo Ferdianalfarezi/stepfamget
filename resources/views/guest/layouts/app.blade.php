@@ -106,9 +106,9 @@
     <i class="fa-solid fa-arrow-left"></i>
   </a>
   @if(isset($menu))
-  <div class="page-icon" style="background:{{ $menu->bg_color }}20;">
-    <i class="fa-solid {{ $menu->icon }}" style="color:{{ $menu->color }};"></i>
-  </div>
+  <div class="page-icon">
+  <i class="fa-solid {{ $menu->icon }}"></i>
+</div>
   <div>
     <div class="page-title">{{ $menu->label }}</div>
     <div class="page-sub">{{ $karyawan->nama }}</div>

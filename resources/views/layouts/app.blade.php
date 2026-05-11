@@ -633,6 +633,39 @@
             <span class="sb-nav-label">Kelola Tempat</span>
         </a>
     </div>
+
+    <div class="sb-nav-wrap {{ request()->routeIs('buses.*') || request()->routeIs('kendaraans.*') ? 'active' : '' }}">
+        <div class="sb-nav" onclick="toggleDropdown('dd-transportasi')" style="cursor:pointer;">
+            @if(request()->routeIs('buses.*') || request()->routeIs('kendaraans.*'))
+                <div class="sb-dot"></div>
+            @else
+                <i class="fa-solid fa-bus"></i>
+            @endif
+            <span class="sb-nav-label">Transportasi</span>
+            <i class="fa-solid fa-chevron-down" id="dd-transportasi-chevron"
+               style="font-size:10px;margin-left:auto;color:#94a3b8;transition:transform .2s;
+                      {{ request()->routeIs('buses.*') || request()->routeIs('kendaraans.*') ? 'transform:rotate(180deg);' : '' }}">
+            </i>
+        </div>
+        <div id="dd-transportasi"
+             style="overflow:hidden;transition:max-height .25s ease;
+                    {{ request()->routeIs('buses.*') || request()->routeIs('kendaraans.*') ? 'max-height:120px;' : 'max-height:0;' }}">
+            <div style="padding:4px 0 4px 36px;display:flex;flex-direction:column;gap:2px;">
+                <a href="{{ route('buses.index') }}"
+                   style="font-size:12px;font-weight:600;padding:6px 10px;border-radius:8px;text-decoration:none;
+                          color:{{ request()->routeIs('buses.*') ? '#0b4614' : '#64748b' }};
+                          background:{{ request()->routeIs('buses.*') ? '#e8f5e9' : 'transparent' }};">
+                    <i class="fa-solid fa-bus" style="font-size:11px;margin-right:6px;"></i>Bus
+                </a>
+                <a href="{{ route('kendaraans.index') }}"
+                   style="font-size:12px;font-weight:600;padding:6px 10px;border-radius:8px;text-decoration:none;
+                          color:{{ request()->routeIs('kendaraans.*') ? '#0b4614' : '#64748b' }};
+                          background:{{ request()->routeIs('kendaraans.*') ? '#e8f5e9' : 'transparent' }};">
+                    <i class="fa-solid fa-car" style="font-size:11px;margin-right:6px;"></i>Kendaraan Pribadi
+                </a>
+            </div>
+        </div>
+    </div>
         
 
     {{-- <div class="sb-nav-wrap {{ request()->routeIs('import.*') ? 'active' : '' }}">
@@ -768,6 +801,16 @@
 
     // ── CSRF for AJAX ──
     const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+    
+    function toggleDropdown(id) {
+        const el      = document.getElementById(id);
+        const chevron = document.getElementById(id + '-chevron');
+        const isOpen  = el.style.maxHeight && el.style.maxHeight !== '0px';
+        el.style.maxHeight      = isOpen ? '0px' : '120px';
+        chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
+    }
+
 </script>
 
 @stack('scripts')

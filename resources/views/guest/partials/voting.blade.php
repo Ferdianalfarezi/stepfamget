@@ -7,7 +7,7 @@
 <div style="background:var(--green-dark);border-radius:18px;padding:18px;margin-bottom:14px;position:relative;overflow:hidden;">
   <div style="position:absolute;top:-30px;right:-30px;width:110px;height:110px;border-radius:50%;background:rgba(21,101,192,.2);pointer-events:none;"></div>
   <div style="font-size:10px;font-weight:600;color:rgba(255,255,255,.4);letter-spacing:1px;margin-bottom:6px;">VOTING TEMPAT GATHERING</div>
-  <div style="font-size:22px;font-weight:800;color:#fff;margin-bottom:4px;">Pilih Tempatmu!</div>
+  <div style="font-size:22px;font-weight:800;color:#fff;margin-bottom:4px;">Pilih Saran Tempatmu!</div>
   <div style="font-size:12px;color:rgba(255,255,255,.4);">
     @if($myVote)
       <span style="color:#7ec88a;font-weight:600;">✓ Kamu sudah memberikan suara</span>
