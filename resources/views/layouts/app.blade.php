@@ -587,7 +587,7 @@
     </div>
 
      {{-- Navigation --}}
-    <div class="sb-section-label">Master</div>
+    <div class="sb-section-label">Menu</div>
 
     <div class="sb-nav-wrap {{ request()->routeIs('karyawan.*') ? 'active' : '' }}">
         <a href="{{ route('karyawan.index') }}" class="sb-nav">
@@ -665,6 +665,29 @@
                 </a>
             </div>
         </div>
+    </div>
+
+    <div class="sb-nav-wrap {{ request()->routeIs('pengajuan.*') ? 'active' : '' }}">
+        <a href="{{ route('pengajuan.index') }}" class="sb-nav">
+            @if(request()->routeIs('pengajuan.*'))
+                <div class="sb-dot"></div>
+            @else
+                <i class="fa-solid fa-user-plus"></i>
+            @endif
+            <span class="sb-nav-label">
+                Pengajuan Anggota
+                @php
+                    $pendingCount = \App\Models\PengajuanAnggota::where('status', 'pending')->count();
+                @endphp
+                @if($pendingCount > 0)
+                    <span style="
+                        background:#ef4444;color:#fff;border-radius:100px;
+                        font-size:10px;font-weight:700;padding:1px 6px;
+                        margin-left:4px;line-height:1.6;display:inline-block;
+                    ">{{ $pendingCount }}</span>
+                @endif
+            </span>
+        </a>
     </div>
         
 

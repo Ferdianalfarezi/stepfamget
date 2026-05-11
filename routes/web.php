@@ -1,4 +1,23 @@
 <?php
+// ─────────────────────────────────────────────────────────────────────────────
+// TAMBAHKAN import ini di bagian atas web.php (setelah use yang lain):
+// use App\Http\Controllers\PengajuanController;
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ─── Di dalam grup Admin (middleware auth + AdminOnly) ────────────────────────
+//
+//     // Pengajuan Anggota Keluarga
+//     Route::get('/pengajuan',           [PengajuanController::class, 'index'])->name('pengajuan.index');
+//     Route::post('/pengajuan/{id}/approve', [PengajuanController::class, 'approve'])->name('pengajuan.approve');
+//     Route::post('/pengajuan/{id}/reject',  [PengajuanController::class, 'reject'])->name('pengajuan.reject');
+//
+// ─── Di dalam grup Guest (middleware auth + GuestOnly) ────────────────────────
+//
+//     Route::post('/my/pengajuan', [PengajuanController::class, 'store'])->name('guest.pengajuan.store');
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CONTOH lengkap setelah ditambahkan (bagian relevan saja):
+// ─────────────────────────────────────────────────────────────────────────────
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
@@ -11,6 +30,7 @@ use App\Http\Controllers\GuestMenuController;
 use App\Http\Controllers\VotingController;
 use App\Http\Controllers\TransportasiController;
 use App\Http\Controllers\BusController;
+use App\Http\Controllers\PengajuanController; // ← TAMBAH INI
 
 // ─── Landing ──────────────────────────────────────────────────────────────────
 Route::get('/', [AuthController::class, 'landing'])->name('landing');
@@ -55,11 +75,16 @@ Route::middleware(['auth', \App\Http\Middleware\AdminOnly::class])->group(functi
     Route::put('/voting/{id}',    [VotingController::class, 'update'])->name('voting.update');
     Route::delete('/voting/{id}', [VotingController::class, 'destroy'])->name('voting.destroy');
 
-    // Transportasi — lihat siapa naik bus & kendaraan pribadi
+    // Transportasi
     Route::get('/buses',             [TransportasiController::class, 'buses'])->name('buses.index');
     Route::get('/buses/export',      [TransportasiController::class, 'exportBuses'])->name('buses.export');
     Route::get('/kendaraans',        [TransportasiController::class, 'kendaraans'])->name('kendaraans.index');
     Route::get('/kendaraans/export', [TransportasiController::class, 'exportKendaraans'])->name('kendaraans.export');
+
+    // ── TAMBAHAN: Pengajuan Anggota Keluarga ──────────────────────────────────
+    Route::get('/pengajuan',                   [PengajuanController::class, 'index'])->name('pengajuan.index');
+    Route::post('/pengajuan/{id}/approve',     [PengajuanController::class, 'approve'])->name('pengajuan.approve');
+    Route::post('/pengajuan/{id}/reject',      [PengajuanController::class, 'reject'])->name('pengajuan.reject');
 });
 
 // ─── Guest Routes ─────────────────────────────────────────────────────────────
@@ -70,7 +95,10 @@ Route::middleware(['auth', \App\Http\Middleware\GuestOnly::class])->group(functi
     Route::get('/my/voting',         [VotingController::class, 'guestIndex'])->name('guest.voting');
     Route::post('/my/voting',        [VotingController::class, 'vote'])->name('guest.voting.post');
 
-    // Transportasi — guest pilih bus atau kendaraan pribadi
+    // Transportasi
     Route::post('/my/transportasi',        [BusController::class, 'store'])->name('guest.transportasi.store');
     Route::post('/my/transportasi/cancel', [BusController::class, 'cancel'])->name('guest.transportasi.cancel');
+
+    // ── TAMBAHAN: Pengajuan Anggota Keluarga ──────────────────────────────────
+    Route::post('/my/pengajuan', [PengajuanController::class, 'store'])->name('guest.pengajuan.store');
 });

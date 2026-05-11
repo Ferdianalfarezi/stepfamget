@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\GuestMenu;
+use App\Models\PengajuanAnggota;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -54,7 +55,26 @@ class GuestController extends Controller
             return view('guest.partials.coming_soon', compact('menu', 'karyawan'));
         }
 
-        return view($viewPath, compact('menu', 'karyawan'));
+        // ── Extra data untuk halaman keluarga ────────────────────────────────
+        $pengajuanPending = null;
+        $riwayatPengajuan = collect();
+
+        if ($key === 'keluarga') {
+            // Cek pengajuan yang masih pending
+            $pengajuanPending = PengajuanAnggota::where('nik', $karyawan->nik)
+                ->where('status', 'pending')
+                ->latest()
+                ->first();
+
+            // Riwayat approved / rejected — 5 terbaru
+            $riwayatPengajuan = PengajuanAnggota::where('nik', $karyawan->nik)
+                ->whereIn('status', ['approved', 'rejected'])
+                ->latest()
+                ->take(5)
+                ->get();
+        }
+
+        return view($viewPath, compact('menu', 'karyawan', 'pengajuanPending', 'riwayatPengajuan'));
     }
 
     public function konfirmasiKehadiran(Request $request)

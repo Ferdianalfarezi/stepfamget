@@ -54,4 +54,9 @@ class User extends Authenticatable
     {
         return 'username';
     }
+
+    protected $primaryKey = 'id';
+    public $incrementing = true;
+    protected $keyType = 'int';
+
 }
