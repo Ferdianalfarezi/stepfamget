@@ -7,6 +7,7 @@ use App\Models\DetailKaryawan;
 use Illuminate\Http\Request;
 use App\Exports\KaryawanExport;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Imports\BajuFamilyGatheringImport;
 
 class KaryawanController extends Controller
 {
@@ -34,7 +35,7 @@ class KaryawanController extends Controller
             $query->where('keterangan', $request->keterangan);
         }
 
-        $karyawans    = $query->orderBy('nama')->paginate(15)->withQueryString();
+        $karyawans      = $query->orderBy('nama')->paginate(15)->withQueryString();
         $departemenList = Karyawan::select('departemen')->distinct()->orderBy('departemen')->pluck('departemen');
 
         return view('karyawan.index', compact('karyawans', 'departemenList'));
@@ -53,7 +54,6 @@ class KaryawanController extends Controller
             'keterangan'       => 'required|in:Aktif,Non-Aktif',
             'status_kehadiran' => 'nullable|boolean',
 
-            // validasi array anggota keluarga (opsional, boleh kosong)
             'details'                       => 'nullable|array',
             'details.*.nama_keluarga'       => 'required|string|max:100',
             'details.*.hubungan'            => 'required|in:Karyawan,Karyawati,Istri,Suami,Anak,Saudara',
@@ -61,19 +61,21 @@ class KaryawanController extends Controller
             'details.*.tanggal_lahir'       => 'nullable|date',
             'details.*.umur'                => 'nullable|integer|min:0',
             'details.*.ukuran_kaos'         => 'nullable|string|max:10',
+            'details.*.jenis_kaos'          => 'nullable|in:Dewasa,Anak',
+            'details.*.lengan_kaos'         => 'nullable|in:Lengan Pendek,Lengan Panjang',
         ], [
-            'nik.required'                    => 'NIK wajib diisi.',
-            'nik.unique'                      => 'NIK sudah terdaftar.',
-            'nama.required'                   => 'Nama karyawan wajib diisi.',
-            'departemen.required'             => 'Departemen wajib diisi.',
-            'keterangan.required'             => 'Status karyawan wajib dipilih.',
-            'details.*.nama_keluarga.required'=> 'Nama anggota keluarga wajib diisi.',
-            'details.*.hubungan.required'     => 'Hubungan wajib dipilih.',
-            'details.*.jenis_kelamin.required'=> 'Jenis kelamin wajib dipilih.',
+            'nik.required'                     => 'NIK wajib diisi.',
+            'nik.unique'                       => 'NIK sudah terdaftar.',
+            'nama.required'                    => 'Nama karyawan wajib diisi.',
+            'departemen.required'              => 'Departemen wajib diisi.',
+            'keterangan.required'              => 'Status karyawan wajib dipilih.',
+            'details.*.nama_keluarga.required' => 'Nama anggota keluarga wajib diisi.',
+            'details.*.hubungan.required'      => 'Hubungan wajib dipilih.',
+            'details.*.jenis_kelamin.required' => 'Jenis kelamin wajib dipilih.',
         ]);
 
-        $details            = $validated['details'] ?? [];
-        $jumlahKeluarga     = count($details);
+        $details        = $validated['details'] ?? [];
+        $jumlahKeluarga = count($details);
 
         $karyawan = Karyawan::create([
             'nik'              => $validated['nik'],
@@ -85,17 +87,8 @@ class KaryawanController extends Controller
             'jumlah_keluarga'  => $jumlahKeluarga,
         ]);
 
-        // Simpan anggota keluarga
         foreach ($details as $d) {
-            DetailKaryawan::create([
-                'nik'           => $karyawan->nik,
-                'nama_keluarga' => $d['nama_keluarga'],
-                'hubungan'      => $d['hubungan'],
-                'jenis_kelamin' => $d['jenis_kelamin'],
-                'tanggal_lahir' => $d['tanggal_lahir'] ?? null,
-                'umur'          => $d['umur'] ?? 0,
-                'ukuran_kaos'   => $d['ukuran_kaos'] ?? null,
-            ]);
+            DetailKaryawan::create($this->buildDetailPayload($karyawan->nik, $d));
         }
 
         return response()->json([
@@ -105,7 +98,7 @@ class KaryawanController extends Controller
     }
 
     // ─────────────────────────────────────────
-    // SHOW (AJAX — detail keluarga)
+    // SHOW (AJAX)
     // ─────────────────────────────────────────
     public function show($id)
     {
@@ -118,7 +111,7 @@ class KaryawanController extends Controller
     }
 
     // ─────────────────────────────────────────
-    // EDIT (AJAX — kembalikan data + details untuk form)
+    // EDIT (AJAX)
     // ─────────────────────────────────────────
     public function edit($id)
     {
@@ -158,15 +151,17 @@ class KaryawanController extends Controller
             'details.*.tanggal_lahir'       => 'nullable|date',
             'details.*.umur'                => 'nullable|integer|min:0',
             'details.*.ukuran_kaos'         => 'nullable|string|max:10',
+            'details.*.jenis_kaos'          => 'nullable|in:Dewasa,Anak',
+            'details.*.lengan_kaos'         => 'nullable|in:Lengan Pendek,Lengan Panjang',
         ], [
-            'nik.required'                    => 'NIK wajib diisi.',
-            'nik.unique'                      => 'NIK sudah digunakan karyawan lain.',
-            'nama.required'                   => 'Nama karyawan wajib diisi.',
-            'departemen.required'             => 'Departemen wajib diisi.',
-            'keterangan.required'             => 'Status karyawan wajib dipilih.',
-            'details.*.nama_keluarga.required'=> 'Nama anggota keluarga wajib diisi.',
-            'details.*.hubungan.required'     => 'Hubungan wajib dipilih.',
-            'details.*.jenis_kelamin.required'=> 'Jenis kelamin wajib dipilih.',
+            'nik.required'                     => 'NIK wajib diisi.',
+            'nik.unique'                       => 'NIK sudah digunakan karyawan lain.',
+            'nama.required'                    => 'Nama karyawan wajib diisi.',
+            'departemen.required'              => 'Departemen wajib diisi.',
+            'keterangan.required'              => 'Status karyawan wajib dipilih.',
+            'details.*.nama_keluarga.required' => 'Nama anggota keluarga wajib diisi.',
+            'details.*.hubungan.required'      => 'Hubungan wajib dipilih.',
+            'details.*.jenis_kelamin.required' => 'Jenis kelamin wajib dipilih.',
         ]);
 
         $details        = $validated['details'] ?? [];
@@ -182,32 +177,19 @@ class KaryawanController extends Controller
             'jumlah_keluarga'  => $jumlahKeluarga,
         ]);
 
-        // Kumpulkan ID detail yang dikirim dari form (yang masih ada)
         $submittedIds = collect($details)
             ->filter(fn($d) => !empty($d['id']))
             ->pluck('id')
             ->toArray();
 
-        // Hapus detail yang tidak ada di form (sudah dihapus user)
         $karyawan->details()->whereNotIn('id', $submittedIds)->delete();
 
-        // Update existing / insert baru
         foreach ($details as $d) {
-            $payload = [
-                'nik'           => $karyawan->nik,
-                'nama_keluarga' => $d['nama_keluarga'],
-                'hubungan'      => $d['hubungan'],
-                'jenis_kelamin' => $d['jenis_kelamin'],
-                'tanggal_lahir' => $d['tanggal_lahir'] ?? null,
-                'umur'          => $d['umur'] ?? 0,
-                'ukuran_kaos'   => $d['ukuran_kaos'] ?? null,
-            ];
+            $payload = $this->buildDetailPayload($karyawan->nik, $d);
 
             if (!empty($d['id'])) {
-                // Update existing row
                 DetailKaryawan::where('id', $d['id'])->update($payload);
             } else {
-                // Insert baru
                 DetailKaryawan::create($payload);
             }
         }
@@ -224,19 +206,66 @@ class KaryawanController extends Controller
     public function destroy($id)
     {
         $karyawan = Karyawan::findOrFail($id);
-
-        // Hapus detail keluarga dulu (kalau tidak pakai cascade di DB)
         $karyawan->details()->delete();
         $karyawan->delete();
 
-        return response()->json([
-            'message' => 'Karyawan berhasil dihapus.',
-        ]);
+        return response()->json(['message' => 'Karyawan berhasil dihapus.']);
     }
 
+    // ─────────────────────────────────────────
+    // EXPORT
+    // ─────────────────────────────────────────
     public function export(Request $request)
     {
         $filename = 'data-karyawan-' . now()->format('Ymd-His') . '.xlsx';
         return Excel::download(new KaryawanExport($request), $filename);
     }
+
+    // ─────────────────────────────────────────
+    // HELPER
+    // ─────────────────────────────────────────
+    private function buildDetailPayload(string $nik, array $d): array
+    {
+        $jenisKaos = $d['jenis_kaos'] ?? 'Dewasa';
+
+        return [
+            'nik'           => $nik,
+            'nama_keluarga' => $d['nama_keluarga'],
+            'hubungan'      => $d['hubungan'],
+            'jenis_kelamin' => $d['jenis_kelamin'],
+            'tanggal_lahir' => $d['tanggal_lahir'] ?? null,
+            'umur'          => $d['umur'] ?? 0,
+            'ukuran_kaos'   => $d['ukuran_kaos'] ?? null,
+            'jenis_kaos'    => $jenisKaos,
+            // kalau Anak, lengan tidak relevan → simpan null
+            'lengan_kaos'   => $jenisKaos === 'Anak' ? null : ($d['lengan_kaos'] ?? null),
+        ];
+    }
+
+    public function importBaju(Request $request)
+    {
+        $request->validate([
+            'file_excel' => 'required|file|mimes:xlsx,xls|max:5120',
+        ], [
+            'file_excel.required' => 'File excel wajib dipilih.',
+            'file_excel.mimes'    => 'File harus berformat .xlsx atau .xls.',
+            'file_excel.max'      => 'Ukuran file maksimal 5MB.',
+        ]);
+ 
+        try {
+            $import = new BajuFamilyGatheringImport();
+            Excel::import($import, $request->file('file_excel'));
+ 
+            return response()->json([
+                'message'  => "Import berhasil! {$import->imported} data diproses, {$import->skipped} baris dilewati.",
+                'imported' => $import->imported,
+                'skipped'  => $import->skipped,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Import gagal: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+ 
 }

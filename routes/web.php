@@ -1,23 +1,4 @@
 <?php
-// ─────────────────────────────────────────────────────────────────────────────
-// TAMBAHKAN import ini di bagian atas web.php (setelah use yang lain):
-// use App\Http\Controllers\PengajuanController;
-// ─────────────────────────────────────────────────────────────────────────────
-
-// ─── Di dalam grup Admin (middleware auth + AdminOnly) ────────────────────────
-//
-//     // Pengajuan Anggota Keluarga
-//     Route::get('/pengajuan',           [PengajuanController::class, 'index'])->name('pengajuan.index');
-//     Route::post('/pengajuan/{id}/approve', [PengajuanController::class, 'approve'])->name('pengajuan.approve');
-//     Route::post('/pengajuan/{id}/reject',  [PengajuanController::class, 'reject'])->name('pengajuan.reject');
-//
-// ─── Di dalam grup Guest (middleware auth + GuestOnly) ────────────────────────
-//
-//     Route::post('/my/pengajuan', [PengajuanController::class, 'store'])->name('guest.pengajuan.store');
-
-// ─────────────────────────────────────────────────────────────────────────────
-// CONTOH lengkap setelah ditambahkan (bagian relevan saja):
-// ─────────────────────────────────────────────────────────────────────────────
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
@@ -30,7 +11,7 @@ use App\Http\Controllers\GuestMenuController;
 use App\Http\Controllers\VotingController;
 use App\Http\Controllers\TransportasiController;
 use App\Http\Controllers\BusController;
-use App\Http\Controllers\PengajuanController; // ← TAMBAH INI
+use App\Http\Controllers\PengajuanController;
 
 // ─── Landing ──────────────────────────────────────────────────────────────────
 Route::get('/', [AuthController::class, 'landing'])->name('landing');
@@ -50,11 +31,12 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::middleware(['auth', \App\Http\Middleware\AdminOnly::class])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    // Karyawan
-    Route::get('/karyawan/export', [KaryawanController::class, 'export'])->name('karyawan.export');
+    // Karyawan — route eksplisit HARUS di atas resource supaya tidak bentrok
+    Route::get('/karyawan/export',        [KaryawanController::class, 'export'])->name('karyawan.export');
+    Route::post('/karyawan/import-baju',  [KaryawanController::class, 'importBaju'])->name('karyawan.importBaju');
     Route::resource('karyawan', KaryawanController::class);
 
-    // Import Excel
+    // Import Excel (halaman terpisah)
     Route::get('/import',           [ImportController::class, 'index'])->name('import.index');
     Route::post('/import/karyawan', [ImportController::class, 'importKaryawan'])->name('import.karyawan');
     Route::post('/import/detail',   [ImportController::class, 'importDetail'])->name('import.detail');
@@ -81,10 +63,10 @@ Route::middleware(['auth', \App\Http\Middleware\AdminOnly::class])->group(functi
     Route::get('/kendaraans',        [TransportasiController::class, 'kendaraans'])->name('kendaraans.index');
     Route::get('/kendaraans/export', [TransportasiController::class, 'exportKendaraans'])->name('kendaraans.export');
 
-    // ── TAMBAHAN: Pengajuan Anggota Keluarga ──────────────────────────────────
-    Route::get('/pengajuan',                   [PengajuanController::class, 'index'])->name('pengajuan.index');
-    Route::post('/pengajuan/{id}/approve',     [PengajuanController::class, 'approve'])->name('pengajuan.approve');
-    Route::post('/pengajuan/{id}/reject',      [PengajuanController::class, 'reject'])->name('pengajuan.reject');
+    // Pengajuan Anggota Keluarga
+    Route::get('/pengajuan',               [PengajuanController::class, 'index'])->name('pengajuan.index');
+    Route::post('/pengajuan/{id}/approve', [PengajuanController::class, 'approve'])->name('pengajuan.approve');
+    Route::post('/pengajuan/{id}/reject',  [PengajuanController::class, 'reject'])->name('pengajuan.reject');
 });
 
 // ─── Guest Routes ─────────────────────────────────────────────────────────────
@@ -99,6 +81,9 @@ Route::middleware(['auth', \App\Http\Middleware\GuestOnly::class])->group(functi
     Route::post('/my/transportasi',        [BusController::class, 'store'])->name('guest.transportasi.store');
     Route::post('/my/transportasi/cancel', [BusController::class, 'cancel'])->name('guest.transportasi.cancel');
 
-    // ── TAMBAHAN: Pengajuan Anggota Keluarga ──────────────────────────────────
+    // Pengajuan Anggota Keluarga
     Route::post('/my/pengajuan', [PengajuanController::class, 'store'])->name('guest.pengajuan.store');
+
+    Route::get('/my/baju',         [GuestController::class, 'baju'])->name('guest.baju.index');
+    Route::post('/my/baju/update', [GuestController::class, 'bajuUpdate'])->name('guest.baju.update');
 });

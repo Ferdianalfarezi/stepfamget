@@ -10,7 +10,8 @@ class DetailKaryawan extends Model
 
     protected $fillable = [
         'nik', 'nama_keluarga', 'jenis_kelamin',
-        'hubungan', 'tanggal_lahir', 'umur', 'ukuran_kaos'
+        'hubungan', 'tanggal_lahir', 'umur',
+        'ukuran_kaos', 'jenis_kaos', 'lengan_kaos',
     ];
 
     protected $casts = [

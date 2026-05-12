@@ -77,6 +77,8 @@
                     <th class="k-fth">Jenis Kelamin <span class="required">*</span></th>
                     <th class="k-fth">Tgl. Lahir</th>
                     <th class="k-fth">Ukuran Kaos</th>
+                    <th class="k-fth">Jenis Kaos</th>
+                    <th class="k-fth">Lengan</th>
                     <th class="k-fth" style="width:40px;"></th>
                 </tr>
             </thead>
@@ -108,7 +110,6 @@
 (function () {
     let editRowIdx = 0;
 
-    // ── Build satu row (bisa prefill dari data existing) ──
     function buildEditRow(i, data = {}) {
         const hubunganOpts = ['Karyawan','Karyawati','Istri','Suami','Anak','Saudara']
             .map(v => `<option value="${v}" ${data.hubungan === v ? 'selected' : ''}>${v}</option>`)
@@ -122,11 +123,18 @@
             .map(v => `<option value="${v}" ${data.ukuran_kaos === v ? 'selected' : ''}>${v || '–'}</option>`)
             .join('');
 
-        // tanggal lahir: strip jam kalau ada (format ISO)
-        const tglVal = data.tanggal_lahir ? data.tanggal_lahir.substring(0, 10) : '';
-        const umurVal = data.umur ?? 0;
+        const jenisKaos  = data.jenis_kaos ?? 'Dewasa';
+        const isAnak     = jenisKaos === 'Anak';
+        const lenganKaos = data.lengan_kaos ?? '';
 
-        // hidden id untuk existing detail (0 = baru)
+        const lenganOpts = ['','Lengan Pendek','Lengan Panjang']
+            .map(v => `<option value="${v}" ${lenganKaos === v ? 'selected' : ''}>${v || '–'}</option>`)
+            .join('');
+
+        const lenganStyle = isAnak ? 'opacity:.4;pointer-events:none;' : '';
+
+        const tglVal   = data.tanggal_lahir ? data.tanggal_lahir.substring(0, 10) : '';
+        const umurVal  = data.umur ?? 0;
         const detailId = data.id ?? '';
 
         return `
@@ -153,9 +161,22 @@
                        value="${tglVal}" onchange="calcEditUmur(this, ${i})">
                 <input type="hidden" name="details[${i}][umur]" id="edit_umur_${i}" value="${umurVal}">
             </td>
-            <td class="k-ftd" style="min-width:95px;">
+            <td class="k-ftd" style="min-width:80px;">
                 <select name="details[${i}][ukuran_kaos]" class="k-fc">
                     ${kaosOpts}
+                </select>
+            </td>
+            <td class="k-ftd" style="min-width:90px;">
+                <select name="details[${i}][jenis_kaos]" class="k-fc"
+                        onchange="toggleLenganEdit(this, ${i})">
+                    <option value="Dewasa" ${!isAnak ? 'selected' : ''}>Dewasa</option>
+                    <option value="Anak"   ${isAnak  ? 'selected' : ''}>Anak</option>
+                </select>
+            </td>
+            <td class="k-ftd" style="min-width:130px;">
+                <select name="details[${i}][lengan_kaos]" class="k-fc"
+                        id="edit_lengan_${i}" style="${lenganStyle}">
+                    ${lenganOpts}
                 </select>
             </td>
             <td class="k-ftd" style="text-align:center;">
@@ -169,7 +190,6 @@
         return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
 
-    // ── Tambah row kosong ──
     window.addEditFamilyRow = function () {
         const tbody = document.getElementById('editFamilyRows');
         const i     = editRowIdx++;
@@ -179,7 +199,6 @@
         syncEditFamilyUI();
     };
 
-    // ── Load rows dari data existing (dipanggil saat openModalEdit) ──
     window.loadEditFamilyRows = function (details) {
         const tbody = document.getElementById('editFamilyRows');
         tbody.innerHTML = '';
@@ -209,6 +228,19 @@
         el.value = Math.max(0, Math.floor(diff / (365.25 * 24 * 3600 * 1000)));
     };
 
+    window.toggleLenganEdit = function (sel, idx) {
+        const lengan = document.getElementById(`edit_lengan_${idx}`);
+        if (!lengan) return;
+        if (sel.value === 'Anak') {
+            lengan.value               = '';
+            lengan.style.opacity       = '0.4';
+            lengan.style.pointerEvents = 'none';
+        } else {
+            lengan.style.opacity       = '1';
+            lengan.style.pointerEvents = 'auto';
+        }
+    };
+
     function reindexEdit() {
         document.querySelectorAll('#editFamilyRows tr').forEach((tr, i) => {
             tr.cells[0].textContent = i + 1;
@@ -217,7 +249,6 @@
 
     function syncEditFamilyUI() {
         const count = document.getElementById('editFamilyRows').rows.length;
-        // reindex nomor urut
         document.querySelectorAll('#editFamilyRows tr').forEach((tr, i) => {
             tr.cells[0].textContent = i + 1;
         });

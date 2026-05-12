@@ -54,7 +54,6 @@
                 <option value="1">Ya</option>
             </select>
         </div>
-        {{-- hidden, dihitung otomatis dari jumlah row keluarga --}}
         <input type="hidden" name="jumlah_keluarga" id="create_jumlah_keluarga" value="0">
     </div>
 
@@ -76,6 +75,8 @@
                     <th class="k-fth">Jenis Kelamin <span class="required">*</span></th>
                     <th class="k-fth">Tgl. Lahir</th>
                     <th class="k-fth">Ukuran Kaos</th>
+                    <th class="k-fth">Jenis Kaos</th>
+                    <th class="k-fth">Lengan</th>
                     <th class="k-fth" style="width:40px;"></th>
                 </tr>
             </thead>
@@ -143,7 +144,7 @@
                        onchange="calcUmur(this, ${i})">
                 <input type="hidden" name="details[${i}][umur]" id="umur_${i}" value="0">
             </td>
-            <td class="k-ftd" style="min-width:95px;">
+            <td class="k-ftd" style="min-width:80px;">
                 <select name="details[${i}][ukuran_kaos]" class="k-fc">
                     <option value="">–</option>
                     <option value="S">S</option>
@@ -152,6 +153,20 @@
                     <option value="XL">XL</option>
                     <option value="XXL">XXL</option>
                     <option value="XXXL">XXXL</option>
+                </select>
+            </td>
+            <td class="k-ftd" style="min-width:90px;">
+                <select name="details[${i}][jenis_kaos]" class="k-fc"
+                        onchange="toggleLenganCreate(this, ${i})">
+                    <option value="Dewasa">Dewasa</option>
+                    <option value="Anak">Anak</option>
+                </select>
+            </td>
+            <td class="k-ftd" style="min-width:130px;">
+                <select name="details[${i}][lengan_kaos]" class="k-fc" id="lengan_${i}">
+                    <option value="">–</option>
+                    <option value="Lengan Pendek">Lengan Pendek</option>
+                    <option value="Lengan Panjang">Lengan Panjang</option>
                 </select>
             </td>
             <td class="k-ftd" style="text-align:center;">
@@ -178,6 +193,19 @@
         el.value = Math.max(0, Math.floor(diff / (365.25 * 24 * 3600 * 1000)));
     };
 
+    window.toggleLenganCreate = function (sel, idx) {
+        const lengan = document.getElementById(`lengan_${idx}`);
+        if (!lengan) return;
+        if (sel.value === 'Anak') {
+            lengan.value               = '';
+            lengan.style.opacity       = '0.4';
+            lengan.style.pointerEvents = 'none';
+        } else {
+            lengan.style.opacity       = '1';
+            lengan.style.pointerEvents = 'auto';
+        }
+    };
+
     function reindex() {
         document.querySelectorAll('#familyRows tr').forEach((tr, i) => {
             tr.cells[0].textContent = i + 1;
@@ -193,7 +221,6 @@
         if (jk) jk.value = count;
     }
 
-    // dipanggil oleh openModalCreate()
     window._resetFamilyRows = function () {
         document.getElementById('familyRows').innerHTML = '';
         rowIdx = 0;

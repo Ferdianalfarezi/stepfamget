@@ -51,6 +51,10 @@
             style="background:#16a34a;color:#fff;border:none;display:inline-flex;align-items:center;gap:6px;">
                 <i class="fa-solid fa-file-excel"></i> Export Excel
             </a>
+            {{-- <button class="btn" onclick="openModalImport()"
+                    style="background:#0369a1;color:#fff;border:none;display:inline-flex;align-items:center;gap:6px;">
+                <i class="fa-solid fa-file-arrow-up"></i> Import Baju
+            </button> --}}
             <button class="btn btn-primary" onclick="openModalCreate()">
                 <i class="fa-solid fa-plus"></i> Tambah Karyawan
             </button>
@@ -267,6 +271,66 @@
     </div>
 </div>
 
+{{-- ============================= --}}
+{{-- MODAL: IMPORT BAJU            --}}
+{{-- ============================= --}}
+<div class="modal-overlay" id="modalImport">
+    <div class="modal-box" style="max-width:460px;">
+        <div class="modal-header">
+            <div>
+                <div class="modal-title">
+                    <i class="fa-solid fa-file-arrow-up" style="color:#0369a1;margin-right:8px;"></i>Import Data Baju
+                </div>
+                <div class="modal-subtitle">Upload file excel data baju family gathering</div>
+            </div>
+            <button class="modal-close" onclick="closeModalImport()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+
+            <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:#0369a1;">
+                <div style="font-weight:600;margin-bottom:6px;">
+                    <i class="fa-solid fa-circle-info" style="margin-right:4px;"></i>Kolom yang dibaca dari excel:
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 12px;">
+                    <span>• NIK</span>
+                    <span>• Nama Karyawan</span>
+                    <span>• Departemen</span>
+                    <span>• Nama Anggota</span>
+                    <span>• Status/Hubungan</span>
+                    <span>• Ukuran Baju</span>
+                    <span>• Keterangan</span>
+                </div>
+            </div>
+
+            <div style="background:#fefce8;border:1px solid #fde68a;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:12px;color:#92400e;">
+                <i class="fa-solid fa-triangle-exclamation" style="margin-right:4px;"></i>
+                Data yang sudah ada akan di-<strong>update</strong> ukuran &amp; tipe bajunya. Data baru akan ditambahkan.
+            </div>
+
+            <div class="k-form-group">
+                <label class="k-form-label">File Excel <span class="required">*</span></label>
+                <input type="file" id="importFileInput" class="k-form-input"
+                       accept=".xlsx,.xls" style="padding:6px;">
+                <div class="k-form-error" id="importFileError"></div>
+            </div>
+
+            <div id="importResult" style="display:none;margin-top:12px;"></div>
+
+            <div class="k-form-actions" style="margin-top:20px;">
+                <button type="button" class="btn btn-outline" onclick="closeModalImport()">
+                    <i class="fa-solid fa-xmark"></i> Batal
+                </button>
+                <button type="button" id="btnDoImport" onclick="doImportBaju()"
+                        class="btn" style="background:#0369a1;color:#fff;">
+                    <i class="fa-solid fa-file-arrow-up"></i> Import
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection
 @push('scripts')
 <script>
@@ -373,7 +437,7 @@ function openModalEdit(id) {
     })
     .then(r => r.json())
     .then(data => {
-        const k       = data.karyawan ?? data;   // support both {karyawan, details} or flat
+        const k       = data.karyawan ?? data;
         const details = data.details ?? [];
 
         document.getElementById('edit_id').value               = k.id;
@@ -385,7 +449,6 @@ function openModalEdit(id) {
         document.getElementById('edit_status_kehadiran').value = k.status_kehadiran ? '1' : '0';
         document.getElementById('editModalSub').textContent    = `NIK: ${k.nik}`;
 
-        // load family rows
         if (typeof loadEditFamilyRows === 'function') loadEditFamilyRows(details);
     })
     .catch(() => {
@@ -512,6 +575,17 @@ function showDetail(id, nama) {
                 const tl = d.tanggal_lahir
                     ? new Date(d.tanggal_lahir).toLocaleDateString('id-ID', {day:'2-digit',month:'long',year:'numeric'})
                     : '-';
+
+                const jenisBadge = d.jenis_kaos === 'Anak'
+                    ? `<span class="badge badge-danger"><i class="fa-solid fa-child" style="margin-right:3px;font-size:10px;"></i>Anak</span>`
+                    : `<span class="badge badge-success"><i class="fa-solid fa-person" style="margin-right:3px;font-size:10px;"></i>Dewasa</span>`;
+
+                const lenganBadge = d.lengan_kaos === 'Lengan Pendek'
+                    ? `<span class="badge badge-gray"><i class="fa-solid fa-shirt" style="margin-right:3px;font-size:10px;"></i>Pendek</span>`
+                    : d.lengan_kaos === 'Lengan Panjang'
+                        ? `<span class="badge" style="background:#e0f2fe;color:#0369a1;"><i class="fa-solid fa-shirt" style="margin-right:3px;font-size:10px;"></i>Panjang</span>`
+                        : `<span style="color:#94a3b8;font-size:12px;">-</span>`;
+
                 rows += `<tr>
                     <td style="padding:10px 14px;font-size:13px;border-bottom:1px solid #f1f5f9;color:#64748b;">${i+1}</td>
                     <td style="padding:10px 14px;font-size:13px;border-bottom:1px solid #f1f5f9;font-weight:600;">${d.nama_keluarga}</td>
@@ -530,10 +604,12 @@ function showDetail(id, nama) {
                     <td style="padding:10px 14px;border-bottom:1px solid #f1f5f9;">
                         <span class="badge badge-gray">${d.ukuran_kaos ?? '-'}</span>
                     </td>
+                    <td style="padding:10px 14px;border-bottom:1px solid #f1f5f9;">${jenisBadge}</td>
+                    <td style="padding:10px 14px;border-bottom:1px solid #f1f5f9;">${lenganBadge}</td>
                 </tr>`;
             });
         } else {
-            rows = `<tr><td colspan="7" style="text-align:center;padding:30px;color:#94a3b8;">
+            rows = `<tr><td colspan="9" style="text-align:center;padding:30px;color:#94a3b8;">
                 Belum ada data keluarga</td></tr>`;
         }
 
@@ -574,15 +650,15 @@ function showDetail(id, nama) {
             </div>
             <div class="family-section">
                 <h4>
-                    <i class="fa-solid fa-people-group" 
-                    style="color:#0b4614; margin-right:8px; margin-bottom:10px;"></i>
+                    <i class="fa-solid fa-people-group"
+                    style="color:#0b4614;margin-right:8px;margin-bottom:10px;"></i>
                     Data Keluarga
                 </h4>
                 <div style="overflow-x:auto;border-radius:10px;border:1px solid #f1f5f9;">
                     <table style="width:100%;border-collapse:collapse;">
                         <thead>
                             <tr style="background:#f8fafc;">
-                                ${['#','Nama','Hubungan','Jenis Kelamin','Tgl Lahir','Umur','Kaos']
+                                ${['#','Nama','Hubungan','Jenis Kelamin','Tgl Lahir','Umur','Ukuran','Jenis Kaos','Lengan']
                                     .map(h => `<th style="padding:10px 14px;font-size:11px;font-weight:600;
                                         color:#64748b;text-transform:uppercase;letter-spacing:.8px;
                                         text-align:left;white-space:nowrap;">${h}</th>`).join('')}
@@ -606,16 +682,90 @@ function closeModal() {
 }
 
 // ─────────────────────────────────────────────
+// MODAL IMPORT BAJU
+// ─────────────────────────────────────────────
+function openModalImport() {
+    document.getElementById('importFileInput').value = '';
+    document.getElementById('importFileError').textContent = '';
+    document.getElementById('importResult').style.display = 'none';
+    document.getElementById('importResult').innerHTML = '';
+    document.getElementById('modalImport').classList.add('show');
+}
+function closeModalImport() {
+    document.getElementById('modalImport').classList.remove('show');
+}
+
+async function doImportBaju() {
+    const fileInput = document.getElementById('importFileInput');
+    const errEl     = document.getElementById('importFileError');
+    const resultEl  = document.getElementById('importResult');
+    const btn       = document.getElementById('btnDoImport');
+
+    errEl.textContent = '';
+    resultEl.style.display = 'none';
+
+    if (!fileInput.files.length) {
+        errEl.textContent = 'Pilih file excel terlebih dahulu.';
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('file_excel', fileInput.files[0]);
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Mengimport...';
+
+    try {
+        const res  = await fetch('{{ route('karyawan.importBaju') }}', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': CSRF,
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+            },
+            body: formData,
+        });
+
+        const data = await res.json();
+
+        resultEl.style.display = 'block';
+        if (res.ok) {
+            resultEl.innerHTML = `
+                <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:12px 14px;font-size:13px;color:#166534;">
+                    <i class="fa-solid fa-circle-check" style="margin-right:6px;"></i>
+                    <strong>${data.imported}</strong> data berhasil diproses,
+                    <strong>${data.skipped}</strong> baris dilewati.
+                </div>`;
+            setTimeout(() => { closeModalImport(); location.reload(); }, 1800);
+        } else {
+            resultEl.innerHTML = `
+                <div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:12px 14px;font-size:13px;color:#991b1b;">
+                    <i class="fa-solid fa-circle-exclamation" style="margin-right:6px;"></i>${data.message}
+                </div>`;
+        }
+    } catch {
+        resultEl.style.display = 'block';
+        resultEl.innerHTML = `
+            <div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:12px 14px;font-size:13px;color:#991b1b;">
+                <i class="fa-solid fa-circle-exclamation" style="margin-right:6px;"></i>Gagal menghubungi server.
+            </div>`;
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-file-arrow-up"></i> Import';
+    }
+}
+
+// ─────────────────────────────────────────────
 // CLOSE ON OVERLAY / ESC
 // ─────────────────────────────────────────────
-['modalCreate','modalEdit','modalDetail','modalDelete'].forEach(id => {
+['modalCreate','modalEdit','modalDetail','modalDelete','modalImport'].forEach(id => {
     document.getElementById(id).addEventListener('click', function (e) {
         if (e.target === this) this.classList.remove('show');
     });
 });
 document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
-        ['modalCreate','modalEdit','modalDetail','modalDelete'].forEach(id => {
+        ['modalCreate','modalEdit','modalDetail','modalDelete','modalImport'].forEach(id => {
             document.getElementById(id).classList.remove('show');
         });
     }
