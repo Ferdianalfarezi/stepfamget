@@ -59,4 +59,28 @@ class TransportasiController extends Controller
         $filename = 'data-kendaraan-' . now()->format('Ymd-His') . '.xlsx';
         return Excel::download(new KendaraanExport($request), $filename);
     }
+
+    public function importKursi(Request $request)
+{
+    $request->validate([
+        'file_excel' => 'required|file|mimes:xlsx,xls',
+    ]);
+
+    $import = new \App\Imports\BusKursiImport();
+    Excel::import($import, $request->file('file_excel'));
+
+    return response()->json([
+        'updated' => $import->updated,
+        'skipped' => $import->skipped,
+        'debug'   => $import->debugLog, // tambah ini
+        'message' => "{$import->updated} kursi berhasil diperbarui, {$import->skipped} dilewati.",
+    ]);
+}
+
+// Taruh sementara di TransportasiController, akses via browser: /buses/debug-nik/1267
+public function debugNik($nik)
+{
+    $buses = \App\Models\Bus::where('nik', $nik)->get(['id','nik','nama_karyawan','kursi']);
+    return response()->json($buses);
+}
 }

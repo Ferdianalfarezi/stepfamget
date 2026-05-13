@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
     <style>
         :root {
             --sb-w:       228px;
@@ -589,6 +590,17 @@
      {{-- Navigation --}}
     <div class="sb-section-label">Menu</div>
 
+    <div class="sb-nav-wrap {{ request()->routeIs('users.*') ? 'active' : '' }}">
+        <a href="{{ route('users.index') }}" class="sb-nav">
+            @if(request()->routeIs('users.*'))
+                <div class="sb-dot"></div>
+            @else
+                <i class="fa-solid fa-users-gear"></i>
+            @endif
+            <span class="sb-nav-label">List Admin</span>
+        </a>
+    </div>
+
     <div class="sb-nav-wrap {{ request()->routeIs('karyawan.*') ? 'active' : '' }}">
         <a href="{{ route('karyawan.index') }}" class="sb-nav">
             @if(request()->routeIs('karyawan.*'))
@@ -689,6 +701,28 @@
             </span>
         </a>
     </div>
+
+    <div class="sb-nav-wrap {{ request()->routeIs('konveksi.*') ? 'active' : '' }}">
+        <a href="{{ route('konveksi.index') }}" class="sb-nav">
+            @if(request()->routeIs('konveksi.*'))
+                <div class="sb-dot"></div>
+            @else
+                <i class="fa-solid fa-shirt"></i>
+            @endif
+            <span class="sb-nav-label">Konveksi</span>
+        </a>
+    </div>
+
+    <div class="sb-nav-wrap {{ request()->routeIs('penerimaan-baju.*') ? 'active' : '' }}">
+        <a href="{{ route('penerimaan-baju.index') }}" class="sb-nav">
+            @if(request()->routeIs('penerimaan-baju.*'))
+                <div class="sb-dot"></div>
+            @else
+                <i class="fa-solid fa-box-open"></i>
+            @endif
+            <span class="sb-nav-label">Penerimaan Baju</span>
+        </a>
+    </div>
         
 
     {{-- <div class="sb-nav-wrap {{ request()->routeIs('import.*') ? 'active' : '' }}">
@@ -771,6 +805,9 @@
 
 {{-- Toast container --}}
 <div class="toast-container" id="toastContainer"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 {{-- ══════════════════════════════════
      SCRIPTS

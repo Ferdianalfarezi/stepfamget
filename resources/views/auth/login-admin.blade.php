@@ -53,7 +53,7 @@
   label { display:block;font-size:11.5px;font-weight:600;color:rgba(255,255,255,.6);margin-bottom:7px;letter-spacing:.3px; }
   .input-wrap { position:relative; }
   .input-wrap i { position:absolute;left:14px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,.25);font-size:13px; }
-  input[type=email], input[type=password] {
+  input[type=text], input[type=email], input[type=password] {
     width:100%;
     background:rgba(255,255,255,.07);
     border:1px solid rgba(255,255,255,.12);

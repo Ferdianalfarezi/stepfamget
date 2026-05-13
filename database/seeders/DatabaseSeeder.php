@@ -12,10 +12,10 @@ class DatabaseSeeder extends Seeder
     {
         // Create default admin user
         DB::table('users')->insertOrIgnore([
-            'username' => 'admin',
-            'password' => Hash::make('admin123'),
-            'nama'     => 'Administrator',
-            'role'     => 'admin',
+            'username' => 'fatah',
+            'password' => Hash::make('senaru'),
+            'nama'     => 'Ahmad Fatah',
+            
             'created_at' => now(),
             'updated_at' => now(),
         ]);

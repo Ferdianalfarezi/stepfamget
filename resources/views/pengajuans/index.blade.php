@@ -85,7 +85,7 @@
                     <th>Detail</th>
                     <th>Status</th>
                     <th>Diajukan</th>
-                    <th>Aksi</th>
+                    <th>Di Setujui</th>
                 </tr>
             </thead>
             <tbody>
@@ -193,7 +193,7 @@
                                 </button>
                             </div>
                         @else
-                            <span style="font-size:11.5px;color:#cbd5e1;">
+                            <span style="font-size:11.5px;color:#343434;">
                                 {{ $p->reviewed_at?->format('d M Y') ?? '—' }}
                             </span>
                         @endif

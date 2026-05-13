@@ -12,6 +12,10 @@ use App\Http\Controllers\VotingController;
 use App\Http\Controllers\TransportasiController;
 use App\Http\Controllers\BusController;
 use App\Http\Controllers\PengajuanController;
+use App\Http\Controllers\KonveksiController;
+use App\Http\Controllers\PenerimaanBajuController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\KetuaBusController;
 
 // ─── Landing ──────────────────────────────────────────────────────────────────
 Route::get('/', [AuthController::class, 'landing'])->name('landing');
@@ -30,6 +34,8 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 // ─── Admin Routes ─────────────────────────────────────────────────────────────
 Route::middleware(['auth', \App\Http\Middleware\AdminOnly::class])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    Route::resource('users', UserController::class)->except(['create', 'show']);
 
     // Karyawan — route eksplisit HARUS di atas resource supaya tidak bentrok
     Route::get('/karyawan/export',        [KaryawanController::class, 'export'])->name('karyawan.export');
@@ -62,11 +68,36 @@ Route::middleware(['auth', \App\Http\Middleware\AdminOnly::class])->group(functi
     Route::get('/buses/export',      [TransportasiController::class, 'exportBuses'])->name('buses.export');
     Route::get('/kendaraans',        [TransportasiController::class, 'kendaraans'])->name('kendaraans.index');
     Route::get('/kendaraans/export', [TransportasiController::class, 'exportKendaraans'])->name('kendaraans.export');
+    Route::post('buses/import-kursi', [TransportasiController::class, 'importKursi'])->name('buses.importKursi');
 
     // Pengajuan Anggota Keluarga
     Route::get('/pengajuan',               [PengajuanController::class, 'index'])->name('pengajuan.index');
     Route::post('/pengajuan/{id}/approve', [PengajuanController::class, 'approve'])->name('pengajuan.approve');
     Route::post('/pengajuan/{id}/reject',  [PengajuanController::class, 'reject'])->name('pengajuan.reject');
+
+    // Konveksi
+    Route::get('/konveksis',              [KonveksiController::class, 'index'])->name('konveksi.index');
+    Route::get('/konveksis/export',       [KonveksiController::class, 'export'])->name('konveksi.export');
+    Route::post('/konveksis/scan',        [KonveksiController::class, 'scan'])->name('konveksi.scan');
+    Route::post('/konveksis/reset-scan',  [KonveksiController::class, 'resetScan'])->name('konveksi.resetScan');
+    Route::get('/konveksis/print',        [KonveksiController::class, 'print'])->name('konveksi.print');
+
+    Route::get('/penerimaan-baju',                   [PenerimaanBajuController::class, 'index'])->name('penerimaan-baju.index');
+    Route::get('/penerimaan-baju/export',            [PenerimaanBajuController::class, 'export'])->name('penerimaan-baju.export');
+    Route::get('/penerimaan-baju/print',             [PenerimaanBajuController::class, 'print'])->name('penerimaan-baju.print');
+    Route::post('/penerimaan-baju/scan',             [PenerimaanBajuController::class, 'scan'])->name('penerimaan-baju.scan');
+    Route::post('/penerimaan-baju/scan-departemen',  [PenerimaanBajuController::class, 'scanDepartemen'])->name('penerimaan-baju.scanDepartemen');
+    Route::post('/penerimaan-baju/reset-nik',        [PenerimaanBajuController::class, 'resetNik'])->name('penerimaan-baju.resetNik');
+    Route::post('/penerimaan-baju/reset-scan',       [PenerimaanBajuController::class, 'resetScan'])->name('penerimaan-baju.resetScan');
+
+    Route::get('/bus/card',          [KetuaBusController::class, 'card'])->name('bus.card');
+    Route::get('/bus/layout/{kode}', [KetuaBusController::class, 'layout'])->name('bus.layout');
+    Route::get('/bus/ketua',         [KetuaBusController::class, 'index'])->name('bus.ketua.index');
+    Route::post('/bus/ketua',        [KetuaBusController::class, 'store'])->name('bus.ketua.store');
+    Route::get('/bus/ketua/{id}/edit', [KetuaBusController::class, 'edit'])->name('bus.ketua.edit');
+    Route::put('/bus/ketua/{id}',    [KetuaBusController::class, 'update'])->name('bus.ketua.update');
+    Route::delete('/bus/ketua/{id}', [KetuaBusController::class, 'destroy'])->name('bus.ketua.destroy');
+    
 });
 
 // ─── Guest Routes ─────────────────────────────────────────────────────────────

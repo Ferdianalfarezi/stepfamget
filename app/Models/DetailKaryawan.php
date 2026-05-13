@@ -12,10 +12,14 @@ class DetailKaryawan extends Model
         'nik', 'nama_keluarga', 'jenis_kelamin',
         'hubungan', 'tanggal_lahir', 'umur',
         'ukuran_kaos', 'jenis_kaos', 'lengan_kaos',
+        'is_scanned', 'is_scanned_baju', 'scanned_baju_at',
     ];
 
     protected $casts = [
-        'tanggal_lahir' => 'date',
+        'tanggal_lahir'   => 'date',
+        'is_scanned'      => 'boolean',
+        'is_scanned_baju' => 'boolean',
+        'scanned_baju_at' => 'datetime',
     ];
 
     public function karyawan()
