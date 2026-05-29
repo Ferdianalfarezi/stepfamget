@@ -55,6 +55,8 @@ Route::middleware(['auth', \App\Http\Middleware\AdminOnly::class])->group(functi
     Route::get('/guest-menu',              [GuestMenuController::class, 'index'])->name('guest-menu.index');
     Route::post('/guest-menu/{id}/toggle', [GuestMenuController::class, 'toggle'])->name('guest-menu.toggle');
     Route::post('/guest-menu/reorder',     [GuestMenuController::class, 'reorder'])->name('guest-menu.reorder');
+    Route::post('/guest-menu/{id}/deadline', [GuestMenuController::class, 'updateDeadline'])
+     ->name('guest-menu.deadline');
 
     // Voting kandidat tempat (CRUD) + reset
     Route::get('/voting',         [VotingController::class, 'index'])->name('voting.index');

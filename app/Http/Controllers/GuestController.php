@@ -52,42 +52,47 @@ class GuestController extends Controller
     }
 
     public function menu(string $key)
-    {
-        if ($key === 'voting') {
-            return redirect()->route('guest.voting');
-        }
-
-        if ($key === 'baju') {
-            return redirect()->route('guest.baju.index');
-        }
-
-        $menu     = GuestMenu::where('key', $key)->where('is_active', true)->firstOrFail();
-        $user     = Auth::user()->load('karyawan.details');
-        $karyawan = $user->karyawan;
-        $viewPath = 'guest.partials.' . $key;
-
-        if (!view()->exists($viewPath)) {
-            return view('guest.partials.coming_soon', compact('menu', 'karyawan'));
-        }
-
-        $pengajuanPending = null;
-        $riwayatPengajuan = collect();
-
-        if ($key === 'keluarga') {
-            $pengajuanPending = PengajuanAnggota::where('nik', $karyawan->nik)
-                ->where('status', 'pending')
-                ->latest()
-                ->first();
-
-            $riwayatPengajuan = PengajuanAnggota::where('nik', $karyawan->nik)
-                ->whereIn('status', ['approved', 'rejected'])
-                ->latest()
-                ->take(5)
-                ->get();
-        }
-
-        return view($viewPath, compact('menu', 'karyawan', 'pengajuanPending', 'riwayatPengajuan'));
+{
+    if ($key === 'voting') {
+        return redirect()->route('guest.voting');
     }
+
+    if ($key === 'baju') {
+        return redirect()->route('guest.baju.index');
+    }
+
+    $menu     = GuestMenu::where('key', $key)->where('is_active', true)->firstOrFail();
+    $user     = Auth::user()->load('karyawan.details');
+    $karyawan = $user->karyawan;
+    $viewPath = 'guest.partials.' . $key;
+
+    if (!view()->exists($viewPath)) {
+        return view('guest.partials.coming_soon', compact('menu', 'karyawan'));
+    }
+
+    $pengajuanPending = null;
+    $riwayatPengajuan = collect();
+
+    if ($key === 'keluarga') {
+        $pengajuanPending = PengajuanAnggota::where('nik', $karyawan->nik)
+            ->where('status', 'pending')
+            ->latest()
+            ->first();
+
+        $riwayatPengajuan = PengajuanAnggota::where('nik', $karyawan->nik)
+            ->whereIn('status', ['approved', 'rejected'])
+            ->latest()
+            ->take(5)
+            ->get();
+    }
+
+    // ── Expired check ──────────────────────────────
+    $isExpired = $menu->berlaku_hingga !== null
+                 && \Carbon\Carbon::now()->isAfter($menu->berlaku_hingga);
+    // ───────────────────────────────────────────────
+
+    return view($viewPath, compact('menu', 'karyawan', 'pengajuanPending', 'riwayatPengajuan', 'isExpired'));
+}
 
     public function konfirmasiKehadiran(Request $request)
     {

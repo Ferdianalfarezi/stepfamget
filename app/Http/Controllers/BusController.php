@@ -4,79 +4,86 @@ namespace App\Http\Controllers;
 
 use App\Models\Bus;
 use App\Models\Kendaraan;
+use App\Models\GuestMenu;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 class BusController extends Controller
 {
+    // ── Helper cek expired ─────────────────────────
+    private function isExpired(): bool
+    {
+        $menu = GuestMenu::where('key', 'bus')->first();
+        if (!$menu || !$menu->berlaku_hingga) return false;
+        return Carbon::now()->isAfter($menu->berlaku_hingga);
+    }
+
+    // ── Store ──────────────────────────────────────
     public function store(Request $request)
     {
-        $karyawan = Auth::user()->karyawan;
-
-        if (!$karyawan) {
-            return response()->json(['message' => 'Data tidak ditemukan.'], 404);
+        if ($this->isExpired()) {
+            return response()->json([
+                'message' => 'Batas waktu pendaftaran transportasi sudah habis.',
+            ], 403);
         }
 
         $request->validate([
             'pilihan'         => 'required|in:bus,kendaraan',
-            'plat_no'         => 'required_if:pilihan,kendaraan|nullable|string|max:20',
-            'jenis_kendaraan' => 'required_if:pilihan,kendaraan|nullable|in:mobil,motor,truk',
-        ], [
-            'pilihan.required'              => 'Pilihan transportasi wajib dipilih.',
-            'pilihan.in'                    => 'Pilihan tidak valid.',
-            'plat_no.required_if'           => 'Plat nomor kendaraan wajib diisi.',
-            'jenis_kendaraan.required_if'   => 'Jenis kendaraan wajib dipilih.',
-            'jenis_kendaraan.in'            => 'Jenis kendaraan tidak valid.',
+            'plat_no'         => 'nullable|string|max:12',
+            'jenis_kendaraan' => 'nullable|in:mobil,motor,truk',
         ]);
 
-        if ($request->pilihan === 'bus') {
-            Kendaraan::where('nik', $karyawan->nik)->delete();
+        $karyawan = Auth::user()->karyawan;
 
-            Bus::updateOrCreate(
-                ['nik' => $karyawan->nik],
-                ['nama_karyawan' => $karyawan->nama]
-            );
+        // Hapus data lama dulu
+        Bus::where('nik', $karyawan->nik)->delete();
+        Kendaraan::where('nik', $karyawan->nik)->delete();
+
+        if ($request->pilihan === 'bus') {
+            Bus::create([
+                'nik'           => $karyawan->nik,
+                'nama_karyawan' => $karyawan->nama,
+            ]);
 
             return response()->json([
-                'message' => 'Pilihan transportasi berhasil disimpan: Naik Bus.',
+                'message' => 'Pilihan bus berhasil disimpan.',
                 'pilihan' => 'bus',
             ]);
         }
 
-        // Kendaraan pribadi
-        Bus::where('nik', $karyawan->nik)->delete();
-
-        Kendaraan::updateOrCreate(
-            ['nik' => $karyawan->nik],
-            [
-                'nama_karyawan'  => $karyawan->nama,
-                'plat_no'        => strtoupper(trim($request->plat_no)),
-                'jenis_kendaraan'=> $request->jenis_kendaraan,  // ← tambahan
-            ]
-        );
+        // kendaraan
+        Kendaraan::create([
+            'nik'             => $karyawan->nik,
+            'nama_karyawan'   => $karyawan->nama,
+            'plat_no'         => strtoupper($request->plat_no),
+            'jenis_kendaraan' => $request->jenis_kendaraan ?? 'mobil',
+        ]);
 
         return response()->json([
-            'message'         => 'Pilihan transportasi berhasil disimpan: Kendaraan Pribadi.',
+            'message'         => 'Kendaraan pribadi berhasil disimpan.',
             'pilihan'         => 'kendaraan',
-            'plat_no'         => strtoupper(trim($request->plat_no)),
-            'jenis_kendaraan' => $request->jenis_kendaraan,     // ← tambahan
+            'plat_no'         => strtoupper($request->plat_no),
+            'jenis_kendaraan' => $request->jenis_kendaraan ?? 'mobil',
         ]);
     }
 
-    public function cancel()
+    // ── Cancel ─────────────────────────────────────
+    public function cancel(Request $request)
     {
-        $karyawan = Auth::user()->karyawan;
-
-        if (!$karyawan) {
-            return response()->json(['message' => 'Data tidak ditemukan.'], 404);
+        if ($this->isExpired()) {
+            return response()->json([
+                'message' => 'Batas waktu sudah habis, pilihan tidak bisa dibatalkan.',
+            ], 403);
         }
+
+        $karyawan = Auth::user()->karyawan;
 
         Bus::where('nik', $karyawan->nik)->delete();
         Kendaraan::where('nik', $karyawan->nik)->delete();
 
         return response()->json([
-            'message' => 'Pilihan transportasi dibatalkan.',
-            'pilihan' => null,
+            'message' => 'Pilihan transportasi berhasil dibatalkan.',
         ]);
     }
 }

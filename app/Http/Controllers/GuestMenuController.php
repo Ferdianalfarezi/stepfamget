@@ -38,4 +38,21 @@ class GuestMenuController extends Controller
 
         return response()->json(['message' => 'Urutan disimpan.']);
     }
+
+    // ─── Update berlaku_hingga (AJAX) ─────────────────────
+    public function updateDeadline(Request $request, $id)
+    {
+        $request->validate([
+            'berlaku_hingga' => 'nullable|date',
+        ]);
+
+        $menu = GuestMenu::findOrFail($id);
+        $menu->berlaku_hingga = $request->berlaku_hingga ?: null;
+        $menu->save();
+
+        return response()->json([
+            'message'        => 'Batas waktu disimpan.',
+            'berlaku_hingga' => $menu->berlaku_hingga?->format('Y-m-d\TH:i'),
+        ]);
+    }
 }
