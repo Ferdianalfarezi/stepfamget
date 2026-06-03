@@ -43,20 +43,18 @@
     </div>
 
     <div class="stat-card">
-        <div class="stat-sublabel">Non-Aktif</div>
-        <div class="stat-value" style="color:#c62828;">
-            {{ number_format($totalKaryawan - $totalAktif) }}
-        </div>
-        <div class="stat-trend down">
-            <i class="fa-solid fa-circle-xmark" style="font-size:9px;"></i>
-            Karyawan non-aktif
+        <div class="stat-sublabel">Total Peserta</div>
+        <div class="stat-value">{{ number_format($totalPeserta) }}</div>
+        <div class="stat-trend up">
+            <i class="fa-solid fa-users" style="font-size:9px;"></i>
+            Karyawan hadir + keluarga
         </div>
         <div class="mini-bars">
-            <div class="mini-bar r" style="height:18px;"></div>
-            <div class="mini-bar r" style="height:10px;"></div>
-            <div class="mini-bar r" style="height:16px;"></div>
-            <div class="mini-bar r" style="height:8px;"></div>
-            <div class="mini-bar r" style="height:14px;"></div>
+            <div class="mini-bar g" style="height:10px;"></div>
+            <div class="mini-bar g" style="height:16px;"></div>
+            <div class="mini-bar g" style="height:20px;"></div>
+            <div class="mini-bar g" style="height:14px;"></div>
+            <div class="mini-bar g" style="height:24px;"></div>
         </div>
     </div>
 
@@ -123,19 +121,15 @@
         </a>
     </div>
 
-    {{-- Status keluarga per dept --}}
+    {{-- Top 5 Departemen Paling Aktif --}}
     <div class="card" style="padding:14px 16px;">
-        <div class="stat-sublabel" style="margin-bottom:4px;">Status Keluarga</div>
-        <div style="font-size:10px;color:#ccc;margin-bottom:10px;">% anggota keluarga terdaftar per departemen</div>
-        @foreach($perDepartemen->take(5) as $dept)
-        @php
-            $pct      = $totalKeluarga > 0 ? round(($dept->total_keluarga ?? 0) / max($dept->total, 1) * 100) : 0;
-            $dotColor = $pct >= 85 ? '#ef5350' : ($pct >= 75 ? '#ff9800' : '#3d7a47');
-        @endphp
+        <div class="stat-sublabel" style="margin-bottom:4px;">Departemen Teraktif</div>
+        <div style="font-size:10px;color:#ccc;margin-bottom:10px;">5 departemen login terbanyak</div>
+        @foreach($topDepartemen as $dept)
         <div style="display:flex;align-items:center;margin-bottom:7px;font-size:11.5px;">
-            <span style="width:8px;height:8px;border-radius:50%;background:{{ $dotColor }};flex-shrink:0;margin-right:7px;"></span>
+            <span style="width:8px;height:8px;border-radius:50%;background:#3d7a47;flex-shrink:0;margin-right:7px;"></span>
             <span style="flex:1;color:#444;">{{ $dept->departemen }}</span>
-            <span style="font-weight:600;color:#111;">{{ $pct }}%</span>
+            <span style="font-weight:600;color:#111;">{{ $dept->total_login }} login</span>
         </div>
         @endforeach
     </div>
@@ -158,11 +152,9 @@
             </div>
             <a href="{{ route('voting.index') }}" style="font-size:10px;color:rgba(255,255,255,.4);text-decoration:none;">Kelola →</a>
         </div>
-
         <div style="font-size:10px;color:rgba(255,255,255,.35);margin-bottom:10px;">
             {{ $totalVotesAll }} suara masuk
         </div>
-
         @forelse($votingTempats->take(3) as $t)
         @php $pct = $totalVotesAll > 0 ? round($t->votes_count / $totalVotesAll * 100) : 0; @endphp
         <div style="margin-bottom:8px;">
@@ -185,24 +177,62 @@
         @endforelse
     </div>
 
-    {{-- Non-Aktif --}}
-    <div style="background:#fff;border:1px solid #e8ede8;border-radius:12px;padding:16px;display:flex;align-items:center;gap:14px;">
-        <div style="position:relative;flex-shrink:0;">
-            <svg viewBox="0 0 52 52" width="56" height="56">
-                <circle cx="26" cy="26" r="20" fill="none" stroke="#f0f0f0" stroke-width="6"/>
-                <circle cx="26" cy="26" r="20" fill="none" stroke="#2196f3" stroke-width="6"
-                    stroke-dasharray="75 50" stroke-dashoffset="16" stroke-linecap="round"/>
-            </svg>
-            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:11px;font-weight:700;color:#111;">
-                {{ $totalKaryawan - $totalAktif }}
+    {{-- Last Login Guest ─── --}}
+    <div class="card" style="padding:16px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <div style="font-size:13px;font-weight:700;color:#111;">
+                <i class="fa-solid fa-right-to-bracket" style="margin-right:7px;color:#3d7a47;"></i>
+                Login Karyawan Terakhir
+            </div>
+            <a href="{{ route('aktifitas-login.index') }}"
+               style="font-size:10px;color:#94a3b8;text-decoration:none;display:flex;align-items:center;gap:4px;">
+                Lihat Semua →
+            </a>
+        </div>
+
+        @forelse($lastLoginGuests as $k)
+        <div style="display:flex;align-items:center;gap:10px;padding:7px 0;
+                    border-bottom:1px solid #f1f5f9;">
+            {{-- Avatar --}}
+            <div style="width:32px;height:32px;border-radius:9px;background:#e8f5e9;
+                        color:#2e7d32;display:flex;align-items:center;justify-content:center;
+                        font-size:12px;font-weight:800;flex-shrink:0;">
+                {{ strtoupper(substr($k->nama, 0, 2)) }}
+            </div>
+            {{-- Info --}}
+            <div style="flex:1;min-width:0;">
+                <div style="font-size:12.5px;font-weight:700;color:#111;
+                            white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                    {{ $k->nama }}
+                </div>
+                <div style="font-size:10.5px;color:#94a3b8;">{{ $k->departemen }}</div>
+            </div>
+            {{-- Waktu + detail --}}
+            <div style="text-align:right;flex-shrink:0;display:flex;align-items:center;gap:8px;">
+                <div>
+                    <div style="font-size:10.5px;color:#64748b;font-weight:600;">
+                        {{ \Carbon\Carbon::parse($k->last_login_at)->diffForHumans() }}
+                    </div>
+                    <div style="font-size:10px;color:#cbd5e1;">
+                        {{ \Carbon\Carbon::parse($k->last_login_at)->format('d M, H:i') }}
+                    </div>
+                </div>
+                <a href="{{ route('aktifitas-login.index') }}"
+                   style="width:28px;height:28px;border-radius:8px;background:#f1f5f9;
+                          display:flex;align-items:center;justify-content:center;
+                          color:#64748b;text-decoration:none;flex-shrink:0;
+                          transition:background .15s;"
+                   title="Lihat detail">
+                    <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:10px;"></i>
+                </a>
             </div>
         </div>
-        <div>
-            <div style="font-size:13px;font-weight:600;color:#111;">Karyawan Non-Aktif</div>
-            <div style="font-size:10.5px;color:#aaa;margin-top:3px;">
-                {{ $totalKaryawan - $totalAktif }} karyawan tidak aktif bulan ini
-            </div>
+        @empty
+        <div style="text-align:center;padding:24px 0;color:#aaa;">
+            <i class="fa-solid fa-user-clock" style="font-size:24px;display:block;margin-bottom:8px;"></i>
+            <div style="font-size:11px;">Belum ada Karyawan yang login</div>
         </div>
+        @endforelse
     </div>
 
 </div>

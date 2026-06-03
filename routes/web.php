@@ -16,6 +16,9 @@ use App\Http\Controllers\KonveksiController;
 use App\Http\Controllers\PenerimaanBajuController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\KetuaBusController;
+use App\Http\Controllers\PenerimaanBarangController;
+use App\Http\Controllers\PenerimaanHadiahController;
+use App\Http\Controllers\AktifitasLoginController;
 
 // ─── Landing ──────────────────────────────────────────────────────────────────
 Route::get('/', [AuthController::class, 'landing'])->name('landing');
@@ -52,11 +55,10 @@ Route::middleware(['auth', \App\Http\Middleware\AdminOnly::class])->group(functi
     Route::resource('suppliers', SupplierController::class);
 
     // Guest Menu Management
-    Route::get('/guest-menu',              [GuestMenuController::class, 'index'])->name('guest-menu.index');
-    Route::post('/guest-menu/{id}/toggle', [GuestMenuController::class, 'toggle'])->name('guest-menu.toggle');
-    Route::post('/guest-menu/reorder',     [GuestMenuController::class, 'reorder'])->name('guest-menu.reorder');
-    Route::post('/guest-menu/{id}/deadline', [GuestMenuController::class, 'updateDeadline'])
-     ->name('guest-menu.deadline');
+    Route::get('/guest-menu',                [GuestMenuController::class, 'index'])->name('guest-menu.index');
+    Route::post('/guest-menu/{id}/toggle',   [GuestMenuController::class, 'toggle'])->name('guest-menu.toggle');
+    Route::post('/guest-menu/reorder',       [GuestMenuController::class, 'reorder'])->name('guest-menu.reorder');
+    Route::post('/guest-menu/{id}/deadline', [GuestMenuController::class, 'updateDeadline'])->name('guest-menu.deadline');
 
     // Voting kandidat tempat (CRUD) + reset
     Route::get('/voting',         [VotingController::class, 'index'])->name('voting.index');
@@ -66,10 +68,10 @@ Route::middleware(['auth', \App\Http\Middleware\AdminOnly::class])->group(functi
     Route::delete('/voting/{id}', [VotingController::class, 'destroy'])->name('voting.destroy');
 
     // Transportasi
-    Route::get('/buses',             [TransportasiController::class, 'buses'])->name('buses.index');
-    Route::get('/buses/export',      [TransportasiController::class, 'exportBuses'])->name('buses.export');
-    Route::get('/kendaraans',        [TransportasiController::class, 'kendaraans'])->name('kendaraans.index');
-    Route::get('/kendaraans/export', [TransportasiController::class, 'exportKendaraans'])->name('kendaraans.export');
+    Route::get('/buses',              [TransportasiController::class, 'buses'])->name('buses.index');
+    Route::get('/buses/export',       [TransportasiController::class, 'exportBuses'])->name('buses.export');
+    Route::get('/kendaraans',         [TransportasiController::class, 'kendaraans'])->name('kendaraans.index');
+    Route::get('/kendaraans/export',  [TransportasiController::class, 'exportKendaraans'])->name('kendaraans.export');
     Route::post('buses/import-kursi', [TransportasiController::class, 'importKursi'])->name('buses.importKursi');
 
     // Pengajuan Anggota Keluarga
@@ -78,37 +80,55 @@ Route::middleware(['auth', \App\Http\Middleware\AdminOnly::class])->group(functi
     Route::post('/pengajuan/{id}/reject',  [PengajuanController::class, 'reject'])->name('pengajuan.reject');
 
     // Konveksi
-    Route::get('/konveksis',              [KonveksiController::class, 'index'])->name('konveksi.index');
-    Route::get('/konveksis/export',       [KonveksiController::class, 'export'])->name('konveksi.export');
-    Route::post('/konveksis/scan',        [KonveksiController::class, 'scan'])->name('konveksi.scan');
-    Route::post('/konveksis/reset-scan',  [KonveksiController::class, 'resetScan'])->name('konveksi.resetScan');
-    Route::get('/konveksis/print',        [KonveksiController::class, 'print'])->name('konveksi.print');
+    Route::get('/konveksis',             [KonveksiController::class, 'index'])->name('konveksi.index');
+    Route::get('/konveksis/export',      [KonveksiController::class, 'export'])->name('konveksi.export');
+    Route::post('/konveksis/scan',       [KonveksiController::class, 'scan'])->name('konveksi.scan');
+    Route::post('/konveksis/reset-scan', [KonveksiController::class, 'resetScan'])->name('konveksi.resetScan');
+    Route::get('/konveksis/print',       [KonveksiController::class, 'print'])->name('konveksi.print');
 
-    Route::get('/penerimaan-baju',                   [PenerimaanBajuController::class, 'index'])->name('penerimaan-baju.index');
-    Route::get('/penerimaan-baju/export',            [PenerimaanBajuController::class, 'export'])->name('penerimaan-baju.export');
-    Route::get('/penerimaan-baju/print',             [PenerimaanBajuController::class, 'print'])->name('penerimaan-baju.print');
-    Route::post('/penerimaan-baju/scan',             [PenerimaanBajuController::class, 'scan'])->name('penerimaan-baju.scan');
-    Route::post('/penerimaan-baju/scan-departemen',  [PenerimaanBajuController::class, 'scanDepartemen'])->name('penerimaan-baju.scanDepartemen');
-    Route::post('/penerimaan-baju/reset-nik',        [PenerimaanBajuController::class, 'resetNik'])->name('penerimaan-baju.resetNik');
-    Route::post('/penerimaan-baju/reset-scan',       [PenerimaanBajuController::class, 'resetScan'])->name('penerimaan-baju.resetScan');
+    // Penerimaan Baju
+    Route::get('/penerimaan-baju',                  [PenerimaanBajuController::class, 'index'])->name('penerimaan-baju.index');
+    Route::get('/penerimaan-baju/export',           [PenerimaanBajuController::class, 'export'])->name('penerimaan-baju.export');
+    Route::get('/penerimaan-baju/print',            [PenerimaanBajuController::class, 'print'])->name('penerimaan-baju.print');
+    Route::post('/penerimaan-baju/scan',            [PenerimaanBajuController::class, 'scan'])->name('penerimaan-baju.scan');
+    Route::post('/penerimaan-baju/scan-departemen', [PenerimaanBajuController::class, 'scanDepartemen'])->name('penerimaan-baju.scanDepartemen');
+    Route::post('/penerimaan-baju/reset-nik',       [PenerimaanBajuController::class, 'resetNik'])->name('penerimaan-baju.resetNik');
+    Route::post('/penerimaan-baju/reset-scan',      [PenerimaanBajuController::class, 'resetScan'])->name('penerimaan-baju.resetScan');
 
-    Route::get('/bus/card',          [KetuaBusController::class, 'card'])->name('bus.card');
-    Route::get('/bus/layout/{kode}', [KetuaBusController::class, 'layout'])->name('bus.layout');
-    Route::get('/bus/ketua',         [KetuaBusController::class, 'index'])->name('bus.ketua.index');
-    Route::post('/bus/ketua',        [KetuaBusController::class, 'store'])->name('bus.ketua.store');
-    Route::get('/bus/ketua/{id}/edit', [KetuaBusController::class, 'edit'])->name('bus.ketua.edit');
-    Route::put('/bus/ketua/{id}',    [KetuaBusController::class, 'update'])->name('bus.ketua.update');
-    Route::delete('/bus/ketua/{id}', [KetuaBusController::class, 'destroy'])->name('bus.ketua.destroy');
-    
+    // Bus & Ketua Bus
+    Route::get('/bus/card',              [KetuaBusController::class, 'card'])->name('bus.card');
+    Route::get('/bus/layout/{kode}',     [KetuaBusController::class, 'layout'])->name('bus.layout');
+    Route::get('/bus/ketua',             [KetuaBusController::class, 'index'])->name('bus.ketua.index');
+    Route::post('/bus/ketua',            [KetuaBusController::class, 'store'])->name('bus.ketua.store');
+    Route::get('/bus/ketua/{id}/edit',   [KetuaBusController::class, 'edit'])->name('bus.ketua.edit');
+    Route::put('/bus/ketua/{id}',        [KetuaBusController::class, 'update'])->name('bus.ketua.update');
+    Route::delete('/bus/ketua/{id}',     [KetuaBusController::class, 'destroy'])->name('bus.ketua.destroy');
+
+    // Penerimaan Barang — eksplisit HARUS di atas resource supaya tidak bentrok
+    Route::get('/penerimaan-barang/search-supplier', [PenerimaanBarangController::class, 'searchSupplier'])
+        ->name('penerimaan-barang.search-supplier');
+    Route::resource('penerimaan-barang', PenerimaanBarangController::class)
+        ->only(['index', 'store', 'edit', 'update', 'destroy']);
+
+    Route::post('/penerimaan-hadiah/scan',          [PenerimaanHadiahController::class, 'scan'])->name('penerimaan-hadiah.scan');
+    Route::post('/penerimaan-hadiah/{id}/reset',    [PenerimaanHadiahController::class, 'resetPemenang'])->name('penerimaan-hadiah.reset');
+    Route::get('/penerimaan-hadiah/{id}/print', [PenerimaanHadiahController::class, 'printView'])
+     ->name('penerimaan-hadiah.print');
+    Route::resource('penerimaan-hadiah', PenerimaanHadiahController::class)
+        ->only(['index', 'store', 'edit', 'update', 'destroy']);
+
+    Route::get('/aktifitas-login', [AktifitasLoginController::class, 'index'])
+    ->name('aktifitas-login.index');
+ 
 });
 
 // ─── Guest Routes ─────────────────────────────────────────────────────────────
 Route::middleware(['auth', \App\Http\Middleware\GuestOnly::class])->group(function () {
-    Route::get('/my',                [GuestController::class, 'dashboard'])->name('guest.dashboard');
-    Route::get('/my/menu/{key}',     [GuestController::class, 'menu'])->name('guest.menu');
-    Route::post('/my/kehadiran',     [GuestController::class, 'konfirmasiKehadiran'])->name('guest.kehadiran');
-    Route::get('/my/voting',         [VotingController::class, 'guestIndex'])->name('guest.voting');
-    Route::post('/my/voting',        [VotingController::class, 'vote'])->name('guest.voting.post');
+    Route::get('/my',            [GuestController::class, 'dashboard'])->name('guest.dashboard');
+    Route::get('/my/menu/{key}', [GuestController::class, 'menu'])->name('guest.menu');
+    Route::post('/my/kehadiran', [GuestController::class, 'konfirmasiKehadiran'])->name('guest.kehadiran');
+    Route::get('/my/voting',     [VotingController::class, 'guestIndex'])->name('guest.voting');
+    Route::post('/my/voting',    [VotingController::class, 'vote'])->name('guest.voting.post');
 
     // Transportasi
     Route::post('/my/transportasi',        [BusController::class, 'store'])->name('guest.transportasi.store');
@@ -119,4 +139,7 @@ Route::middleware(['auth', \App\Http\Middleware\GuestOnly::class])->group(functi
 
     Route::get('/my/baju',         [GuestController::class, 'baju'])->name('guest.baju.index');
     Route::post('/my/baju/update', [GuestController::class, 'bajuUpdate'])->name('guest.baju.update');
+
+    Route::get('/my/hadiah', [PenerimaanHadiahController::class, 'guestIndex'])->name('guest.hadiah');
+ 
 });

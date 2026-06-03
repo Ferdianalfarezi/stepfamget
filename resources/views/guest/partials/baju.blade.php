@@ -30,6 +30,7 @@
        data-ukuran="{{ $d->ukuran_kaos ?? '' }}"
        data-jenis="{{ $d->jenis_kaos ?? 'Dewasa' }}"
        data-lengan="{{ $d->lengan_kaos ?? '' }}"
+       data-hubungan="{{ $d->hubungan }}"
        style="padding:14px;margin-bottom:10px;">
     <div style="display:flex;align-items:center;gap:12px;">
 
@@ -82,26 +83,37 @@
     {{-- Edit mode --}}
     <div class="edit-mode" style="display:none;margin-top:12px;border-top:1px solid #f0f4f0;padding-top:12px;">
 
-      {{-- ── Jenis Kaos ── --}}
-      <div style="font-size:11px;font-weight:700;color:#999;margin-bottom:8px;letter-spacing:.3px;">
-        JENIS KAOS
-      </div>
-      <div style="display:flex;gap:8px;margin-bottom:14px;">
-        @foreach(['Dewasa','Anak'] as $jenis)
-        <button type="button"
-          onclick="selectJenis({{ $d->id }}, this, '{{ $jenis }}')"
-          class="btn-jenis"
-          data-jenis="{{ $jenis }}"
-          style="flex:1;padding:8px;border-radius:8px;border:1.5px solid #e0e0e0;
-                 background:#fff;font-size:12px;font-weight:700;color:#777;cursor:pointer;
-                 transition:all .15s;">
-          @if($jenis === 'Dewasa') 🧑 @else 👶 @endif {{ $jenis }}
-        </button>
-        @endforeach
+      {{-- ── Info otomatis (non-Saudara) ── --}}
+      <div class="auto-info" style="display:none;margin-bottom:14px;">
+        <div style="background:#f0f4f0;border-radius:8px;padding:8px 12px;
+                    font-size:11.5px;color:#555;display:flex;align-items:center;gap:6px;">
+          <i class="fa-solid fa-circle-info" style="color:#2e7d32;font-size:12px;"></i>
+          <span class="auto-info-text"></span>
+        </div>
       </div>
 
-      {{-- ── Lengan (hanya muncul kalau Dewasa) ── --}}
-      <div class="lengan-section" style="display:block;">
+      {{-- ── Jenis Kaos (hanya Saudara) ── --}}
+      <div class="jenis-section" style="display:none;">
+        <div style="font-size:11px;font-weight:700;color:#999;margin-bottom:8px;letter-spacing:.3px;">
+          JENIS KAOS
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:14px;">
+          @foreach(['Dewasa','Anak'] as $jenis)
+          <button type="button"
+            onclick="selectJenis({{ $d->id }}, this, '{{ $jenis }}')"
+            class="btn-jenis"
+            data-jenis="{{ $jenis }}"
+            style="flex:1;padding:8px;border-radius:8px;border:1.5px solid #e0e0e0;
+                   background:#fff;font-size:12px;font-weight:700;color:#777;cursor:pointer;
+                   transition:all .15s;">
+            @if($jenis === 'Dewasa') 🧑 @else 👶 @endif {{ $jenis }}
+          </button>
+          @endforeach
+        </div>
+      </div>
+
+      {{-- ── Lengan (hanya Saudara + Dewasa) ── --}}
+      <div class="lengan-section" style="display:none;">
         <div style="font-size:11px;font-weight:700;color:#999;margin-bottom:8px;letter-spacing:.3px;">
           TIPE LENGAN
         </div>
@@ -265,27 +277,23 @@ const BAJU_UPDATE_URL = "{{ route('guest.baju.update') }}";
 const CSRF            = "{{ csrf_token() }}";
 const STORAGE_KEY     = 'baju_sheet_seen_{{ $karyawan->nik }}';
 
-// State per card
 const selectedSize   = {};
 const selectedJenis  = {};
 const selectedLengan = {};
 
-// ── Toast ─────────────────────────────────────────────────────────────────────
-function showToast(msg, bg) {
-  bg = bg || '#2e7d32';
-  const t = document.createElement('div');
-  t.textContent   = msg;
-  t.style.cssText = [
-    'position:fixed', 'bottom:30px', 'left:50%',
-    'transform:translateX(-50%)',
-    'background:' + bg, 'color:#fff',
-    'padding:12px 24px', 'border-radius:100px',
-    'font-size:13px', 'font-weight:600',
-    'z-index:9999', 'box-shadow:0 4px 20px rgba(0,0,0,.2)',
-    'white-space:nowrap', 'animation:fadeInUp .3s ease',
-  ].join(';');
-  document.body.appendChild(t);
-  setTimeout(function() { t.remove(); }, 1800);
+// ── Resolve jenis & lengan otomatis dari hubungan ─────────────────────────────
+// Return: { jenis, lengan, manual }
+// manual = true  → Saudara, user pilih sendiri
+// manual = false → sudah fix, tidak perlu pilih
+function resolveAuto(hubungan) {
+  switch (hubungan) {
+    case 'Karyawan': return { jenis: 'Dewasa', lengan: 'Lengan Pendek', manual: false };
+    case 'Karyawati': return { jenis: 'Dewasa', lengan: 'Lengan Panjang', manual: false };
+    case 'Suami':    return { jenis: 'Dewasa', lengan: 'Lengan Pendek', manual: false };
+    case 'Istri':    return { jenis: 'Dewasa', lengan: 'Lengan Panjang', manual: false };
+    case 'Anak':     return { jenis: 'Anak',   lengan: null,             manual: false };
+    default:         return { jenis: null,     lengan: null,             manual: true  }; // Saudara
+  }
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -294,49 +302,125 @@ function getView(id)   { return getCard(id).querySelector('.view-mode'); }
 function getEdit(id)   { return getCard(id).querySelector('.edit-mode'); }
 function getSaving(id) { return getCard(id).querySelector('.saving-mode'); }
 
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function showToast(msg, bg) {
+  bg = bg || '#2e7d32';
+  var t = document.createElement('div');
+  t.textContent   = msg;
+  t.style.cssText = [
+    'position:fixed','bottom:30px','left:50%',
+    'transform:translateX(-50%)',
+    'background:' + bg,'color:#fff',
+    'padding:12px 24px','border-radius:100px',
+    'font-size:13px','font-weight:600',
+    'z-index:9999','box-shadow:0 4px 20px rgba(0,0,0,.2)',
+    'white-space:nowrap','animation:fadeInUp .3s ease',
+  ].join(';');
+  document.body.appendChild(t);
+  setTimeout(function() { t.remove(); }, 1800);
+}
+
 // ── Start edit ────────────────────────────────────────────────────────────────
 function startEdit(id) {
-  const card = getCard(id);
+  var card     = getCard(id);
+  var hubungan = card.dataset.hubungan || '';
+  var auto     = resolveAuto(hubungan);
 
   getView(id).style.display   = 'none';
   getEdit(id).style.display   = 'block';
   getSaving(id).style.display = 'none';
 
-  // Prefill dari data-attribute card
-  const existingUkuran = card.dataset.ukuran || '';
-  const existingJenis  = card.dataset.jenis  || 'Dewasa';
-  const existingLengan = card.dataset.lengan || '';
-
-  // Set state
+  var existingUkuran = card.dataset.ukuran || '';
   selectedSize[id]   = existingUkuran || null;
-  selectedJenis[id]  = existingJenis;
-  selectedLengan[id] = existingLengan || null;
+
+  var jenisSec  = card.querySelector('.jenis-section');
+  var lenganSec = card.querySelector('.lengan-section');
+  var autoInfo  = card.querySelector('.auto-info');
+  var autoText  = card.querySelector('.auto-info-text');
+
+  if (!auto.manual) {
+    // ── Non-Saudara: semua fixed, tampil info saja ──
+    jenisSec.style.display  = 'none';
+    lenganSec.style.display = 'none';
+    autoInfo.style.display  = 'block';
+
+    selectedJenis[id]  = auto.jenis;
+    selectedLengan[id] = auto.lengan;
+
+    // Susun teks info
+    var infoText = auto.jenis;
+    if (auto.lengan) infoText += ' · ' + auto.lengan;
+    autoText.textContent = 'Jenis & lengan otomatis: ' + infoText;
+
+  } else {
+    // ── Saudara: tampil pilihan jenis & lengan ──
+    autoInfo.style.display = 'none';
+    jenisSec.style.display = 'block';
+
+    // Prefill jenis dari data lama (default Dewasa)
+    var existingJenis  = card.dataset.jenis  || 'Dewasa';
+    var existingLengan = card.dataset.lengan || '';
+    selectedJenis[id]  = existingJenis;
+    selectedLengan[id] = existingLengan || null;
+
+    card.querySelectorAll('.btn-jenis').forEach(function(btn) {
+      btn.classList.toggle('active', btn.dataset.jenis === existingJenis);
+    });
+
+    // Tampilkan lengan kalau Dewasa
+    toggleLenganSaudara(id, existingJenis, existingLengan);
+  }
 
   // Highlight ukuran
   card.querySelectorAll('.btn-sz').forEach(function(btn) {
     btn.classList.toggle('active', btn.dataset.sz === existingUkuran);
   });
+}
 
-  // Highlight jenis
-  card.querySelectorAll('.btn-jenis').forEach(function(btn) {
-    btn.classList.toggle('active', btn.dataset.jenis === existingJenis);
-  });
+// ── Toggle lengan section (khusus Saudara) ────────────────────────────────────
+function toggleLenganSaudara(id, jenis, prefillLengan) {
+  var card      = getCard(id);
+  var lenganSec = card.querySelector('.lengan-section');
 
-  // Highlight lengan
-  card.querySelectorAll('.btn-lengan').forEach(function(btn) {
-    btn.classList.toggle('active', btn.dataset.lengan === existingLengan);
-  });
+  if (jenis === 'Anak') {
+    lenganSec.style.display = 'none';
+    selectedLengan[id] = null;
+    card.querySelectorAll('.btn-lengan').forEach(function(b) { b.classList.remove('active'); });
+  } else {
+    lenganSec.style.display = 'block';
+    var fill = prefillLengan || selectedLengan[id] || '';
+    card.querySelectorAll('.btn-lengan').forEach(function(b) {
+      b.classList.toggle('active', b.dataset.lengan === fill);
+    });
+  }
+}
 
-  // Tampilkan/sembunyikan seksi lengan sesuai jenis
-  toggleLenganSection(id, existingJenis);
+// ── Pilih jenis (hanya Saudara) ───────────────────────────────────────────────
+function selectJenis(id, btn, jenis) {
+  selectedJenis[id] = jenis;
+  getCard(id).querySelectorAll('.btn-jenis').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  toggleLenganSaudara(id, jenis, '');
+}
+
+// ── Pilih lengan (hanya Saudara Dewasa) ───────────────────────────────────────
+function selectLengan(id, btn, lengan) {
+  selectedLengan[id] = lengan;
+  getCard(id).querySelectorAll('.btn-lengan').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+}
+
+// ── Pilih ukuran ──────────────────────────────────────────────────────────────
+function selectSize(id, btn, sz) {
+  selectedSize[id] = sz;
+  getCard(id).querySelectorAll('.btn-sz').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
 }
 
 // ── Cancel edit ───────────────────────────────────────────────────────────────
 function cancelEdit(id) {
-  const card = getCard(id);
-  card.querySelectorAll('.btn-sz,.btn-jenis,.btn-lengan').forEach(function(b) {
-    b.classList.remove('active');
-  });
+  var card = getCard(id);
+  card.querySelectorAll('.btn-sz,.btn-jenis,.btn-lengan').forEach(function(b) { b.classList.remove('active'); });
   delete selectedSize[id];
   delete selectedJenis[id];
   delete selectedLengan[id];
@@ -346,59 +430,22 @@ function cancelEdit(id) {
   getSaving(id).style.display = 'none';
 }
 
-// ── Pilih jenis (Dewasa / Anak) ───────────────────────────────────────────────
-function selectJenis(id, btn, jenis) {
-  selectedJenis[id] = jenis;
-  getCard(id).querySelectorAll('.btn-jenis').forEach(function(b) {
-    b.classList.remove('active');
-  });
-  btn.classList.add('active');
-
-  // Kalau Anak, clear lengan & sembunyikan seksi lengan
-  if (jenis === 'Anak') {
-    selectedLengan[id] = null;
-    getCard(id).querySelectorAll('.btn-lengan').forEach(function(b) {
-      b.classList.remove('active');
-    });
-  }
-  toggleLenganSection(id, jenis);
-}
-
-// ── Tampilkan / sembunyikan seksi lengan ──────────────────────────────────────
-function toggleLenganSection(id, jenis) {
-  const lenganSec = getCard(id).querySelector('.lengan-section');
-  if (!lenganSec) return;
-  lenganSec.style.display = jenis === 'Anak' ? 'none' : 'block';
-}
-
-// ── Pilih lengan ──────────────────────────────────────────────────────────────
-function selectLengan(id, btn, lengan) {
-  selectedLengan[id] = lengan;
-  getCard(id).querySelectorAll('.btn-lengan').forEach(function(b) {
-    b.classList.remove('active');
-  });
-  btn.classList.add('active');
-}
-
-// ── Pilih ukuran ──────────────────────────────────────────────────────────────
-function selectSize(id, btn, sz) {
-  selectedSize[id] = sz;
-  getCard(id).querySelectorAll('.btn-sz').forEach(function(b) {
-    b.classList.remove('active');
-  });
-  btn.classList.add('active');
-}
-
 // ── Save ──────────────────────────────────────────────────────────────────────
 async function saveSize(id) {
-  const sz    = selectedSize[id];
-  const jenis = selectedJenis[id] || 'Dewasa';
+  var sz       = selectedSize[id];
+  var jenis    = selectedJenis[id];
+  var lengan   = selectedLengan[id];
+  var card     = getCard(id);
+  var hubungan = card.dataset.hubungan || '';
+  var auto     = resolveAuto(hubungan);
 
   if (!sz) {
     showToast('Pilih ukuran dulu ya.', '#e53935');
     return;
   }
-  if (jenis === 'Dewasa' && !selectedLengan[id]) {
+
+  // Validasi manual hanya untuk Saudara Dewasa
+  if (auto.manual && jenis === 'Dewasa' && !lengan) {
     showToast('Pilih tipe lengan dulu ya.', '#e53935');
     return;
   }
@@ -408,7 +455,7 @@ async function saveSize(id) {
   getSaving(id).style.display = 'flex';
 
   try {
-    const res = await fetch(BAJU_UPDATE_URL, {
+    var res = await fetch(BAJU_UPDATE_URL, {
       method : 'POST',
       headers: {
         'Content-Type' : 'application/json',
@@ -419,11 +466,11 @@ async function saveSize(id) {
         detail_id   : id,
         ukuran_kaos : sz,
         jenis_kaos  : jenis,
-        lengan_kaos : jenis === 'Dewasa' ? selectedLengan[id] : null,
+        lengan_kaos : lengan,
       }),
     });
 
-    const data = await res.json();
+    var data = await res.json();
 
     if (!res.ok) {
       showToast(data.message || 'Gagal menyimpan.', '#e53935');
@@ -431,23 +478,20 @@ async function saveSize(id) {
       return;
     }
 
-    // Update data-attribute card supaya prefill benar saat edit berikutnya
-    const card  = getCard(id);
-    const lengan = jenis === 'Dewasa' ? selectedLengan[id] : null;
+    // Update data-attribute
     card.dataset.ukuran = sz;
     card.dataset.jenis  = jenis;
     card.dataset.lengan = lengan || '';
 
     // Update tampilan view-mode
-    const viewEl = getView(id);
-    let badge    = viewEl.querySelector('.badge-ukuran');
-    let badgeDetail = viewEl.querySelector('.badge-detail');
-    const editBtn = viewEl.querySelector('button');
+    var viewEl      = getView(id);
+    var badge       = viewEl.querySelector('.badge-ukuran');
+    var badgeDetail = viewEl.querySelector('.badge-detail');
+    var editBtn     = viewEl.querySelector('button');
 
     if (!badge) {
-      // Hapus "Belum diisi", inject badge baru
-      const emptyLabel = viewEl.querySelector('.empty-label');
-      const wrapper    = document.createElement('div');
+      var emptyLabel = viewEl.querySelector('.empty-label');
+      var wrapper    = document.createElement('div');
       wrapper.style.textAlign = 'right';
 
       badge = document.createElement('span');
@@ -455,7 +499,7 @@ async function saveSize(id) {
       badge.style.cssText = 'background:#e8f5e9;color:#2e7d32;border-radius:8px;padding:5px 12px;font-size:13px;font-weight:800;display:inline-block;';
 
       badgeDetail = document.createElement('span');
-      badgeDetail.className  = 'badge-detail';
+      badgeDetail.className   = 'badge-detail';
       badgeDetail.style.cssText = 'font-size:10px;color:#999;margin-top:3px;display:block;';
 
       wrapper.appendChild(badge);
@@ -486,7 +530,7 @@ async function saveSize(id) {
 
 // ── Sheet: buka manual ────────────────────────────────────────────────────────
 function bukaSheetTahunLalu() {
-  const sheet = document.getElementById('sheetTahunLalu');
+  var sheet = document.getElementById('sheetTahunLalu');
   if (!sheet) return;
   sheet.style.display          = 'flex';
   document.body.style.overflow = 'hidden';
@@ -505,25 +549,22 @@ function sesuaikan() {
   document.getElementById('sheetTahunLalu').style.display = 'none';
   document.body.style.overflow = '';
 
-  // Reset semua card ke state kosong dulu
   document.querySelectorAll('.member-card').forEach(function(card) {
-    const id = card.dataset.id;
+    var id = card.dataset.id;
 
-    // Clear data-attribute
     card.dataset.ukuran = '';
     card.dataset.jenis  = 'Dewasa';
     card.dataset.lengan = '';
 
-    // Kembalikan view-mode ke "Belum diisi"
-    const viewEl = getView(id);
-    const wrapper = viewEl.querySelector('div');   // wrapper badge+detail
-    const badge   = viewEl.querySelector('.badge-ukuran');
+    var viewEl  = getView(id);
+    var wrapper = viewEl.querySelector('div');
+    var badge   = viewEl.querySelector('.badge-ukuran');
 
     if (badge || wrapper) {
-      const emptyLabel = document.createElement('span');
-      emptyLabel.className   = 'empty-label';
+      var emptyLabel = document.createElement('span');
+      emptyLabel.className     = 'empty-label';
       emptyLabel.style.cssText = 'font-size:11.5px;color:#ccc;font-style:italic;';
-      emptyLabel.textContent = 'Belum diisi';
+      emptyLabel.textContent   = 'Belum diisi';
       (wrapper || badge).replaceWith(emptyLabel);
     }
 

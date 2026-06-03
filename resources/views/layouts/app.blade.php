@@ -723,6 +723,28 @@
             <span class="sb-nav-label">Penerimaan Baju</span>
         </a>
     </div>
+
+    <div class="sb-nav-wrap {{ request()->routeIs('penerimaan-barang.*') ? 'active' : '' }}">
+        <a href="{{ route('penerimaan-barang.index') }}" class="sb-nav">
+            @if(request()->routeIs('penerimaan-barang.*'))
+                <div class="sb-dot"></div>
+            @else
+                <i class="fa-solid fa-boxes-stacked"></i>
+            @endif
+            <span class="sb-nav-label">Penerimaan Barang</span>
+        </a>
+    </div>
+
+    <div class="sb-nav-wrap {{ request()->routeIs('penerimaan-hadiah.*') ? 'active' : '' }}">
+        <a href="{{ route('penerimaan-hadiah.index') }}" class="sb-nav">
+            @if(request()->routeIs('penerimaan-hadiah.*'))
+                <div class="sb-dot"></div>
+            @else
+                <i class="fa-solid fa-gift"></i>
+            @endif
+            <span class="sb-nav-label">Penerimaan Hadiah</span>
+        </a>
+    </div>
         
 
     {{-- <div class="sb-nav-wrap {{ request()->routeIs('import.*') ? 'active' : '' }}">

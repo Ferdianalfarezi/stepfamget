@@ -145,22 +145,24 @@
   <div class="section-title">MENU LAYANAN</div>
 
   <div class="menu-grid">
-    @foreach($menus as $menu)
-    <a href="{{ $menu->key === 'voting' ? route('guest.voting') : route('guest.menu', $menu->key) }}"
-       class="menu-item" style="position:relative;">
-      @if(!empty($notif[$menu->key]))
-      <div style="position:absolute;top:10px;right:10px;width:9px;height:9px;border-radius:50%;background:#ef5350;border:2px solid #fff;"></div>
-      @endif
-      <div class="menu-icon" style="background:{{ $menu->bg_color }}; color:{{ $menu->color }};">
-        <i class="fa-solid {{ $menu->icon }}"></i>
-      </div>
-      <span class="menu-label">{{ $menu->label }}</span>
-      @if(!empty($notif[$menu->key]))
-      <span style="font-size:10px;font-weight:700;color:#ef5350;margin-top:-4px;line-height:1;">Perlu diisi!</span>
-      @endif
-    </a>
-    @endforeach
-</div>
+      @foreach($menus as $menu)
+      <a href="{{ $menu->key === 'voting' ? route('guest.voting') : route('guest.menu', $menu->key) }}"
+        class="menu-item" style="position:relative;">
+        @if(!empty($notif[$menu->key]))
+        <div style="position:absolute;top:10px;right:10px;width:9px;height:9px;border-radius:50%;background:#ef5350;border:2px solid #fff;"></div>
+        @endif
+        <div class="menu-icon" style="background:{{ $menu->bg_color }}; color:{{ $menu->color }};">
+          <i class="fa-solid {{ $menu->icon }}"></i>
+        </div>
+        <span class="menu-label">{{ $menu->label }}</span>
+        @if(!empty($notif[$menu->key]))
+        <span style="font-size:10px;font-weight:700;color:#ef5350;margin-top:-4px;line-height:1;">
+            {{ $menu->key === 'penerimaan_hadiah' ? 'Selamat!' : 'Perlu diisi!' }}
+        </span>
+        @endif
+      </a>
+      @endforeach
+  </div>
 
 </div>
 

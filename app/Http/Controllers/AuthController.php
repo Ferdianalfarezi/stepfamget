@@ -71,22 +71,19 @@ class AuthController extends Controller
 
         $nikLogin = trim($request->nik_login);
 
-        // Cari karyawan berdasarkan nik_login
         $karyawan = Karyawan::where('nik_login', $nikLogin)
                             ->where('keterangan', 'Aktif')
                             ->first();
 
         if (!$karyawan) {
             return back()->withErrors(['nik_login' => 'NIK Login tidak ditemukan atau karyawan tidak aktif.'])
-                         ->withInput();
+                        ->withInput();
         }
 
-        // Cek apakah sudah ada user guest untuk karyawan ini
         $guestRole = Role::where('name', 'guest')->first();
         $user = User::where('karyawan_nik', $karyawan->nik)->first();
 
         if (!$user) {
-            // Auto-create user guest (passwordless, login by NIK)
             $user = User::create([
                 'username'     => $karyawan->nik_login,
                 'nama'         => $karyawan->nama,
@@ -98,6 +95,9 @@ class AuthController extends Controller
 
         Auth::login($user, $request->boolean('remember'));
         $request->session()->regenerate();
+
+        // ── Catat waktu login ──
+        $karyawan->update(['last_login_at' => now()]);
 
         return redirect()->route('guest.dashboard');
     }

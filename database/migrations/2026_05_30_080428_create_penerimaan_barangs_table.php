@@ -1,0 +1,27 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('penerimaan_barang', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('supplier_id')->constrained('suppliers')->cascadeOnDelete();
+            $table->string('barang', 200);
+            $table->decimal('harga', 15, 2);
+            $table->decimal('qty', 10, 2);
+            $table->decimal('total', 15, 2)->default(0);
+            $table->string('pic', 150);
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('penerimaan_barang');
+    }
+};

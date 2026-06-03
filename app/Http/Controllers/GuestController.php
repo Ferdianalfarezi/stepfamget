@@ -48,6 +48,14 @@ class GuestController extends Controller
             $notif['baju'] = true;
         }
 
+        // Hadiah — ada hadiah yang siap diambil tapi belum diambil
+            $adaHadiah = \App\Models\PenerimaanHadiah::where('nik_pemenang', $karyawan->nik)
+                ->where('status', 'siap_diambil')
+                ->exists();
+            if ($adaHadiah) {
+                $notif['penerimaan_hadiah'] = true;
+            }
+
         return view('guest.dashboard', compact('karyawan', 'menus', 'notif'));
     }
 
@@ -60,6 +68,11 @@ class GuestController extends Controller
     if ($key === 'baju') {
         return redirect()->route('guest.baju.index');
     }
+
+    if ($key === 'penerimaan_hadiah') {
+        return redirect()->route('guest.hadiah');
+    }
+
 
     $menu     = GuestMenu::where('key', $key)->where('is_active', true)->firstOrFail();
     $user     = Auth::user()->load('karyawan.details');

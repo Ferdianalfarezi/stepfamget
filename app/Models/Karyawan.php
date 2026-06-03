@@ -8,11 +8,13 @@ class Karyawan extends Model
 {
     protected $fillable = [
         'nik_login', 'nik', 'nama', 'departemen',
-        'jumlah_keluarga', 'keterangan', 'status_kehadiran'
+        'jumlah_keluarga', 'keterangan', 'status_kehadiran','last_login_at'
+
     ];
 
     protected $casts = [
         'status_kehadiran' => 'boolean',
+        'last_login_at'    => 'datetime',
     ];
 
     public function details()
