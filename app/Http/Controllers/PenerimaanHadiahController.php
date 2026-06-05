@@ -200,18 +200,20 @@ class PenerimaanHadiahController extends Controller
     }
 
     public function guestIndex(Request $request)
-    {
-        $karyawan = Auth::user()->karyawan;
+{
+    $karyawan = Auth::user()->karyawan;
 
-        if (!$karyawan) {
-            return redirect()->route('landing');
-        }
-
-        $menu     = \App\Models\GuestMenu::where('key', 'penerimaan_hadiah')->first();
-        $hadiahku = PenerimaanHadiah::where('nik_pemenang', $karyawan->nik)->get();
-
-        return view('guest.partials.hadiah', compact('hadiahku', 'karyawan', 'menu'));
+    if (!$karyawan) {
+        return redirect()->route('landing');
     }
+
+    $hadiah = PenerimaanHadiah::where('nik_pemenang', $karyawan->nik)->first();
+
+    return view('guest.partials.hadiah', [
+        'hadiah'   => $hadiah,
+        'karyawan' => $karyawan,
+    ]);
+}
 
     public function printView($id)
     {

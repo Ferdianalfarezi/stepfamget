@@ -157,7 +157,7 @@
         <span class="menu-label">{{ $menu->label }}</span>
         @if(!empty($notif[$menu->key]))
         <span style="font-size:10px;font-weight:700;color:#ef5350;margin-top:-4px;line-height:1;">
-            {{ $menu->key === 'penerimaan_hadiah' ? 'Selamat!' : 'Perlu diisi!' }}
+            {{ $menu->key === 'penerimaan_hadiah' ? 'Goodluck!' : 'Perlu diisi!' }}
         </span>
         @endif
       </a>
