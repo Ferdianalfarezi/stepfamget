@@ -19,6 +19,8 @@ use App\Http\Controllers\KetuaBusController;
 use App\Http\Controllers\PenerimaanBarangController;
 use App\Http\Controllers\PenerimaanHadiahController;
 use App\Http\Controllers\AktifitasLoginController;
+use App\Http\Controllers\RundownController;
+use App\Http\Controllers\GanttController;
 
 // ─── Landing ──────────────────────────────────────────────────────────────────
 Route::get('/', [AuthController::class, 'landing'])->name('landing');
@@ -43,6 +45,11 @@ Route::middleware(['auth', \App\Http\Middleware\AdminOnly::class])->group(functi
     // Karyawan — route eksplisit HARUS di atas resource supaya tidak bentrok
     Route::get('/karyawan/export',        [KaryawanController::class, 'export'])->name('karyawan.export');
     Route::post('/karyawan/import-baju',  [KaryawanController::class, 'importBaju'])->name('karyawan.importBaju');
+    Route::get('/karyawan/detail-all',    [KaryawanController::class, 'detailAll'])->name('karyawan.detail.all');
+    Route::get('/karyawan/{id}/detail',   [KaryawanController::class, 'detailAll'])->name('karyawan.detail');
+    Route::get('/detail-karyawan/{id}',    [KaryawanController::class, 'showDetail'])->name('detail-karyawan.show');
+    Route::put('/detail-karyawan/{id}',    [KaryawanController::class, 'updateDetail'])->name('detail-karyawan.update');
+    Route::delete('/detail-karyawan/{id}', [KaryawanController::class, 'destroyDetail'])->name('detail-karyawan.destroy');
     Route::resource('karyawan', KaryawanController::class);
 
     // Import Excel (halaman terpisah)
@@ -112,14 +119,21 @@ Route::middleware(['auth', \App\Http\Middleware\AdminOnly::class])->group(functi
 
     Route::post('/penerimaan-hadiah/scan',          [PenerimaanHadiahController::class, 'scan'])->name('penerimaan-hadiah.scan');
     Route::post('/penerimaan-hadiah/{id}/reset',    [PenerimaanHadiahController::class, 'resetPemenang'])->name('penerimaan-hadiah.reset');
-    Route::get('/penerimaan-hadiah/{id}/print', [PenerimaanHadiahController::class, 'printView'])
-     ->name('penerimaan-hadiah.print');
+    Route::get('/penerimaan-hadiah/{id}/print',     [PenerimaanHadiahController::class, 'printView'])->name('penerimaan-hadiah.print');
     Route::resource('penerimaan-hadiah', PenerimaanHadiahController::class)
         ->only(['index', 'store', 'edit', 'update', 'destroy']);
 
-    Route::get('/aktifitas-login', [AktifitasLoginController::class, 'index'])
-    ->name('aktifitas-login.index');
- 
+    Route::get('/aktifitas-login', [AktifitasLoginController::class, 'index'])->name('aktifitas-login.index');
+
+    // Rundown
+    Route::post('/rundowns/bulk', [RundownController::class, 'bulk'])->name('rundowns.bulk');
+    Route::resource('rundowns', RundownController::class)->only(['index', 'edit', 'update', 'destroy']);
+
+    // Gantt Chart
+    Route::get('/gantt',                [GanttController::class, 'index'])->name('gantt.index');
+    Route::post('/gantt',               [GanttController::class, 'store'])->name('gantt.store');
+    Route::put('/gantt/{ganttActivity}', [GanttController::class, 'update'])->name('gantt.update');
+    Route::delete('/gantt/{ganttActivity}', [GanttController::class, 'destroy'])->name('gantt.destroy');
 });
 
 // ─── Guest Routes ─────────────────────────────────────────────────────────────
@@ -133,7 +147,7 @@ Route::middleware(['auth', \App\Http\Middleware\GuestOnly::class])->group(functi
     // Transportasi
     Route::post('/my/transportasi',        [BusController::class, 'store'])->name('guest.transportasi.store');
     Route::post('/my/transportasi/cancel', [BusController::class, 'cancel'])->name('guest.transportasi.cancel');
-
+    Route::get('/my/kursi-bus', [GuestController::class, 'kursisBus'])->name('guest.kursi-bus');
     // Pengajuan Anggota Keluarga
     Route::post('/my/pengajuan', [PengajuanController::class, 'store'])->name('guest.pengajuan.store');
 
@@ -141,5 +155,4 @@ Route::middleware(['auth', \App\Http\Middleware\GuestOnly::class])->group(functi
     Route::post('/my/baju/update', [GuestController::class, 'bajuUpdate'])->name('guest.baju.update');
 
     Route::get('/my/hadiah', [PenerimaanHadiahController::class, 'guestIndex'])->name('guest.hadiah');
- 
 });

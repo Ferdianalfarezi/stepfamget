@@ -3,6 +3,90 @@
 @section('page-title', 'Karyawan')
 
 @section('content')
+
+{{-- ── SUMMARY CARDS ── --}}
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px;">
+
+    {{-- Total Semua --}}
+    <div class="card" style="padding:14px 18px;display:flex;align-items:center;gap:12px;">
+        <div style="width:40px;height:40px;border-radius:10px;background:#dcfce7;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <i class="fa-solid fa-users" style="color:#16a34a;font-size:16px;"></i>
+        </div>
+        <div>
+            <div style="font-size:11px;color:#64748b;font-weight:600;">Total Karyawan</div>
+            <div style="font-size:20px;font-weight:800;color:#16a34a;">{{ $totalKaryawan }}</div>
+        </div>
+    </div>
+
+    {{-- Karyawan STEP --}}
+    <div class="card" style="padding:14px 18px;display:flex;align-items:center;gap:12px;">
+        <div style="width:40px;height:40px;border-radius:10px;background:#e0f2fe;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <i class="fa-solid fa-user-check" style="color:#0369a1;font-size:16px;"></i>
+        </div>
+        <div>
+            <div style="font-size:11px;color:#64748b;font-weight:600;">Karyawan STEP</div>
+            <div style="font-size:20px;font-weight:800;color:#0369a1;">{{ $totalValid }}</div>
+        </div>
+    </div>
+
+    {{-- Eksternal --}}
+    <div class="card" style="padding:14px 18px;display:flex;align-items:center;gap:12px;">
+        <div style="width:40px;height:40px;border-radius:10px;background:#fef9c3;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <i class="fa-solid fa-user-slash" style="color:#ca8a04;font-size:16px;"></i>
+        </div>
+        <div>
+            <div style="font-size:11px;color:#64748b;font-weight:600;">Eksternal</div>
+            <div style="font-size:20px;font-weight:800;color:#ca8a04;">{{ $totalEksternal }}</div>
+            <div style="font-size:10px;color:#94a3b8;margin-top:1px;">RJU, SPARE, dll</div>
+        </div>
+    </div>
+
+</div>
+
+{{-- ── SUMMARY PER DEPARTEMEN ── --}}
+@if($deptNormal->isNotEmpty())
+
+<p style="font-size:11px;font-weight:600;color:#94a3b8;letter-spacing:.6px;text-transform:uppercase;margin:0 0 8px;">
+    Rekap per Departemen
+</p>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-bottom:10px;">
+    @foreach($deptNormal as $dept => $jumlah)
+    <div class="card" style="padding:12px 14px;display:flex;align-items:center;gap:10px;">
+        <div style="width:34px;height:34px;border-radius:9px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:#f0fdf4;">
+            <i class="fa-solid fa-building" style="font-size:13px;color:#16a34a;"></i>
+        </div>
+        <div style="min-width:0;">
+            <div style="font-size:10px;color:#64748b;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ $dept }}</div>
+            <div style="font-size:18px;font-weight:800;color:#0b4614;">{{ $jumlah }}</div>
+        </div>
+    </div>
+    @endforeach
+</div>
+
+@if($deptExcluded->isNotEmpty())
+<p style="font-size:11px;font-weight:600;color:#94a3b8;letter-spacing:.6px;text-transform:uppercase;margin:0 0 8px;">
+    Eksternal
+</p>
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-bottom:14px;">
+    @foreach($deptExcluded as $dept => $jumlah)
+    <div class="card" style="padding:12px 14px;display:flex;align-items:center;gap:10px;opacity:.5;">
+        <div style="width:34px;height:34px;border-radius:9px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:#f1f5f9;">
+            <i class="fa-solid fa-building" style="font-size:13px;color:#000000;"></i>
+        </div>
+        <div style="min-width:0;">
+            <div style="font-size:10px;color:#000000;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ $dept }}</div>
+            <div style="font-size:18px;font-weight:800;color:#000000;">{{ $jumlah }}</div>
+        </div>
+    </div>
+    @endforeach
+</div>
+@else
+<div style="margin-bottom:14px;"></div>
+@endif
+
+@endif
+
 <!-- FILTER BAR -->
 <div class="card" style="margin-bottom:5px;">
     <div class="card-body" style="padding:16px 20px;">
@@ -47,14 +131,15 @@
         {{-- Grup tombol kanan --}}
         <div style="display:flex;gap:8px;align-items:center;">
             <a href="{{ route('karyawan.export', request()->query()) }}"
-            class="btn"
-            style="background:#16a34a;color:#fff;border:none;display:inline-flex;align-items:center;gap:6px;">
+               class="btn"
+               style="background:#16a34a;color:#fff;border:none;display:inline-flex;align-items:center;gap:6px;">
                 <i class="fa-solid fa-file-excel"></i> Export Excel
             </a>
-            {{-- <button class="btn" onclick="openModalImport()"
-                    style="background:#0369a1;color:#fff;border:none;display:inline-flex;align-items:center;gap:6px;">
-                <i class="fa-solid fa-file-arrow-up"></i> Import Baju
-            </button> --}}
+            <a href="{{ route('karyawan.detail.all') }}"
+               class="btn"
+               style="background:#0369a1;color:#fff;border:none;display:inline-flex;align-items:center;gap:6px;">
+                <i class="fa-solid fa-table-list"></i> Detail View
+            </a>
             <button class="btn btn-primary" onclick="openModalCreate()">
                 <i class="fa-solid fa-plus"></i> Tambah Karyawan
             </button>
@@ -89,7 +174,13 @@
                         <div style="font-weight:600;font-size:13.5px;">{{ $k->nama }}</div>
                         <div style="font-size:11px;color:#0b4614;">NIK Login: {{ $k->nik_login }}</div>
                     </td>
-                    <td><span class="badge badge-success">{{ $k->departemen }}</span></td>
+                    <td>
+                        @if(in_array($k->departemen, $excludedDept))
+                            <span class="badge badge-gray">{{ $k->departemen }}</span>
+                        @else
+                            <span class="badge badge-success">{{ $k->departemen }}</span>
+                        @endif
+                    </td>
                     <td>
                         <span style="display:inline-flex;align-items:center;gap:5px;font-size:13px;">
                             <i class="fa-solid fa-people-group" style="color:#0b4614;font-size:12px;"></i>
@@ -117,7 +208,7 @@
                     <td>
                         <div style="display:flex;gap:6px;">
                             <button class="action-btn" onclick="showDetail({{ $k->id }}, '{{ addslashes($k->nama) }}')">
-                                <i class="fa-solid fa-eye"></i> 
+                                <i class="fa-solid fa-eye"></i>
                             </button>
                             <button class="action-btn action-btn-warning" onclick="openModalEdit({{ $k->id }})">
                                 <i class="fa-solid fa-pen"></i>

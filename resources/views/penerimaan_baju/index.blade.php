@@ -163,6 +163,7 @@
                 <tr data-nik="{{ $d->nik }}"
                     data-nama="{{ $k->nama ?? '' }}"
                     data-dept="{{ $k->departemen ?? '' }}"
+                    data-is-first="{{ $isNewNik ? '1' : '0' }}"
                     class="scan-row{{ $d->is_scanned_baju ? ' row-scanned' : '' }}">
                     <td style="color:#94a3b8;font-size:12px;">
                         {{ $loop->iteration + ($details->currentPage() - 1) * $details->perPage() }}
@@ -222,34 +223,34 @@
                             <span style="color:#cbd5e1;font-size:12px;">-</span>
                         @endif
                     </td>
-                    <td>
-                    <div style="display:flex;align-items:center;gap:6px;">
-                        @if($d->is_scanned_baju)
-                            <div>
-                                <span class="badge" style="background:#dbeafe;color:#1d4ed8;">
-                                    <i class="fa-solid fa-check" style="font-size:10px;margin-right:2px;"></i>Sudah
-                                </span>
-                                @if($d->scanned_baju_at)
-                                    <div style="font-size:10px;color:#94a3b8;margin-top:2px;">
-                                        {{ $d->scanned_baju_at->format('d/m/Y H:i') }}
-                                    </div>
+                    <td class="status-cell">
+                        <div class="status-wrap" style="display:flex;align-items:center;gap:6px;">
+                            @if($d->is_scanned_baju)
+                                <div class="status-sudah">
+                                    <span class="badge" style="background:#dbeafe;color:#1d4ed8;">
+                                        <i class="fa-solid fa-check" style="font-size:10px;margin-right:2px;"></i>Sudah
+                                    </span>
+                                    @if($d->scanned_baju_at)
+                                        <div style="font-size:10px;color:#94a3b8;margin-top:2px;">
+                                            {{ $d->scanned_baju_at->format('d/m/Y H:i') }}
+                                        </div>
+                                    @endif
+                                </div>
+                                @if($isNewNik)
+                                    <button onclick="resetSingleNik('{{ $d->nik }}', '{{ addslashes($k->nama ?? '') }}')"
+                                        title="Reset penerimaan NIK ini"
+                                        class="btn-reset-nik"
+                                        style="border:1.5px solid #fecaca;background:#fef2f2;color:#f87171;border-radius:7px;padding:5px 8px;cursor:pointer;font-size:12px;display:inline-flex;align-items:center;flex-shrink:0;transition:all .15s;"
+                                        onmouseover="this.style.background='#fee2e2';this.style.color='#dc2626';this.style.borderColor='#f87171';"
+                                        onmouseout="this.style.background='#fef2f2';this.style.color='#f87171';this.style.borderColor='#fecaca';">
+                                        <i class="fa-solid fa-rotate-left"></i>
+                                    </button>
                                 @endif
-                            </div>
-                            @if($isNewNik)
-                                <button onclick="resetSingleNik('{{ $d->nik }}', '{{ addslashes($k->nama ?? '') }}')"
-                                    title="Reset penerimaan NIK ini"
-                                    style="border:none;background:#fef2f2;color:#f87171;border:1.5px solid #fecaca;border-radius:7px;padding:5px 8px;cursor:pointer;font-size:12px;display:inline-flex;align-items:center;flex-shrink:0;transition:all .15s;"
-                                    onmouseover="this.style.background='#fee2e2';this.style.color='#dc2626';this.style.borderColor='#f87171';"
-                                    onmouseout="this.style.background='#fef2f2';this.style.color='#f87171';this.style.borderColor='#fecaca';">
-                                <i class="fa-solid fa-rotate-left"></i>
-                            </button>
+                            @else
+                                <span class="badge badge-gray">Belum</span>
                             @endif
-                        @else
-                            <span class="badge badge-gray">Belum</span>
-                        @endif
-                    </div>
-                </td>
-
+                        </div>
+                    </td>
                 </tr>
                 @empty
                 <tr>
@@ -345,11 +346,12 @@
 @endsection
 @push('scripts')
 <script>
-const CSRF           = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
-const SCAN_URL       = '{{ route("penerimaan-baju.scan") }}';
-const SCAN_DEPT_URL  = '{{ route("penerimaan-baju.scanDepartemen") }}';
-const RESET_NIK_URL  = '{{ route("penerimaan-baju.resetNik") }}';
-const PRINT_URL      = '{{ route("penerimaan-baju.print") }}';
+const CSRF          = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
+const SCAN_URL      = '{{ route("penerimaan-baju.scan") }}';
+const SCAN_DEPT_URL = '{{ route("penerimaan-baju.scanDepartemen") }}';
+const RESET_NIK_URL = '{{ route("penerimaan-baju.resetNik") }}';
+const RESET_ALL_URL = '{{ route("penerimaan-baju.resetScan") }}';
+const PRINT_URL     = '{{ route("penerimaan-baju.print") }}';
 
 const scanInput  = document.getElementById('scanInput');
 const btnClear   = document.getElementById('btnClearScan');
@@ -381,15 +383,13 @@ function showToast(msg, type = 'success') {
 let confirmCallback = null;
 
 function showConfirm({ title, subtitle, msg, okLabel = 'Ya', okClass = 'btn-primary', onConfirm }) {
-    document.getElementById('confirmTitle').innerHTML    = title;
+    document.getElementById('confirmTitle').innerHTML      = title;
     document.getElementById('confirmSubtitle').textContent = subtitle ?? '';
-    document.getElementById('confirmMsg').innerHTML      = msg;
-    document.getElementById('confirmOkLabel').textContent = okLabel;
-
+    document.getElementById('confirmMsg').innerHTML        = msg;
+    document.getElementById('confirmOkLabel').textContent  = okLabel;
     const btn = document.getElementById('btnConfirmOk');
     btn.className = `btn ${okClass}`;
     confirmCallback = onConfirm;
-
     document.getElementById('modalConfirm').classList.add('show');
 }
 
@@ -398,10 +398,11 @@ function closeConfirm() {
     confirmCallback = null;
 }
 
-document.getElementById('btnConfirmOk').addEventListener('click', () => {
+document.getElementById('btnConfirmOk').onclick = function () {
+    const cb = confirmCallback;
     closeConfirm();
-    if (typeof confirmCallback === 'function') confirmCallback();
-});
+    if (typeof cb === 'function') cb();
+};
 
 // ── Input scan ────────────────────────────────────────────────────────────────
 scanInput.addEventListener('input', function () {
@@ -446,7 +447,7 @@ async function doScan(nik) {
         pendingNama = data.nama;
         pendingDept = data.departemen;
 
-        markRowsScanned(nik);
+        markRowsScanned(nik, data.nama);
         updateCounters(data.count, -data.count);
         setStatus(data.nama + ' — ' + data.count + ' anggota ditandai', 'success');
 
@@ -457,6 +458,7 @@ async function doScan(nik) {
 
         clearInputDelayed();
     } catch (e) {
+        console.error('doScan error', e);
         setStatus('Gagal menghubungi server.', 'error');
     }
 }
@@ -466,23 +468,32 @@ async function confirmBulkDept() {
     closeBulkModal();
     if (!pendingDept) return;
 
-    setStatus('Scanning departemen ' + pendingDept + '...', 'loading');
+    const dept = pendingDept;
+    setStatus('Scanning departemen ' + dept + '...', 'loading');
     try {
         const res  = await fetch(SCAN_DEPT_URL, {
             method : 'POST',
             headers: { 'Content-Type':'application/json', 'X-CSRF-TOKEN':CSRF, 'Accept':'application/json' },
-            body   : JSON.stringify({ departemen: pendingDept }),
+            body   : JSON.stringify({ departemen: dept }),
         });
         const data = await res.json();
 
+        const processedNiks = new Set();
         document.querySelectorAll('.scan-row').forEach(tr => {
-            if (tr.dataset.dept === pendingDept) tr.classList.add('row-scanned');
+            if (tr.dataset.dept !== dept) return;
+            tr.classList.add('row-scanned');
+            const nik = tr.dataset.nik;
+            if (tr.dataset.isFirst === '1' && !processedNiks.has(nik)) {
+                processedNiks.add(nik);
+                setRowScanned(tr, nik, tr.dataset.nama);
+            }
         });
 
         updateCounters(data.count, -data.count);
-        setStatus('Departemen ' + pendingDept + ' — ' + data.count + ' anggota ditandai', 'success');
-        showToast('Departemen ' + pendingDept + ' berhasil di-scan!');
+        setStatus('Departemen ' + dept + ' — ' + data.count + ' anggota ditandai', 'success');
+        showToast('Departemen ' + dept + ' berhasil di-scan!');
     } catch (e) {
+        console.error('confirmBulkDept error', e);
         setStatus('Gagal scan departemen.', 'error');
         showToast('Gagal scan departemen.', 'error');
     }
@@ -505,17 +516,24 @@ function doResetAll() {
         okClass  : 'k-btn-danger',
         onConfirm: async () => {
             try {
-                await fetch('{{ route("penerimaan-baju.resetScan") }}', {
+                const res = await fetch(RESET_ALL_URL, {
                     method : 'POST',
-                    headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' },
+                    headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json', 'Content-Type': 'application/json' },
                 });
-                document.querySelectorAll('.row-scanned').forEach(tr => tr.classList.remove('row-scanned'));
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    showToast(err.message ?? 'Gagal reset.', 'error');
+                    return;
+                }
+                document.querySelectorAll('.scan-row').forEach(tr => tr.classList.remove('row-scanned'));
+                document.querySelectorAll('.status-wrap').forEach(wrap => setWrapBelum(wrap));
                 const total = parseInt('{{ $totalScanned + $totalUnscanned }}');
                 document.getElementById('counterScanned').textContent   = '0';
                 document.getElementById('counterUnscanned').textContent = total;
                 setStatus('Semua penerimaan direset.', 'error');
                 showToast('Semua penerimaan berhasil direset.', 'error');
             } catch (e) {
+                console.error('doResetAll error', e);
                 showToast('Gagal reset.', 'error');
             }
         }
@@ -536,23 +554,29 @@ function resetSingleNik(nik, nama) {
         okClass  : 'k-btn-danger',
         onConfirm: async () => {
             try {
-                const res  = await fetch(RESET_NIK_URL, {
+                const res = await fetch(RESET_NIK_URL, {
                     method : 'POST',
                     headers: { 'Content-Type':'application/json', 'X-CSRF-TOKEN':CSRF, 'Accept':'application/json' },
                     body   : JSON.stringify({ nik }),
                 });
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    showToast(err.message ?? 'Gagal reset.', 'error');
+                    return;
+                }
                 const data = await res.json();
 
                 document.querySelectorAll(`.scan-row[data-nik="${nik}"]`).forEach(tr => {
                     tr.classList.remove('row-scanned');
+                    const wrap = tr.querySelector('.status-wrap');
+                    if (wrap) setWrapBelum(wrap);
                 });
 
                 updateCounters(-data.count, data.count);
                 setStatus(data.message, 'error');
                 showToast(data.message, 'error');
-
-                setTimeout(() => location.reload(), 1000);
             } catch (e) {
+                console.error('resetSingleNik error', e);
                 showToast('Gagal reset.', 'error');
             }
         }
@@ -562,17 +586,43 @@ function resetSingleNik(nik, nama) {
 // ── Print per departemen ──────────────────────────────────────────────────────
 function doPrintDept() {
     const dept = document.getElementById('selectDeptPrint').value;
-    if (!dept) {
-        showToast('Pilih departemen terlebih dahulu.', 'warning');
-        return;
-    }
+    if (!dept) { showToast('Pilih departemen terlebih dahulu.', 'warning'); return; }
     window.open(PRINT_URL + '?departemen=' + encodeURIComponent(dept), '_blank');
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-function markRowsScanned(nik) {
-    document.querySelectorAll(`.scan-row[data-nik="${nik}"]`).forEach(tr => tr.classList.add('row-scanned'));
+// ── DOM helpers ───────────────────────────────────────────────────────────────
+function setWrapBelum(wrap) {
+    if (!wrap) return;
+    wrap.innerHTML = '<span class="badge badge-gray">Belum</span>';
+}
+
+function setRowScanned(tr, nik, nama) {
+    const wrap = tr.querySelector('.status-wrap');
+    if (!wrap) return;
+    if (wrap.querySelector('.btn-reset-nik')) return;
+    const safeName = (nama ?? '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+    wrap.innerHTML = `
+        <div class="status-sudah">
+            <span class="badge" style="background:#dbeafe;color:#1d4ed8;">
+                <i class="fa-solid fa-check" style="font-size:10px;margin-right:2px;"></i>Sudah
+            </span>
+            <div style="font-size:10px;color:#94a3b8;margin-top:2px;">Baru saja</div>
+        </div>
+        <button onclick="resetSingleNik('${nik}', '${safeName}')"
+            title="Reset penerimaan NIK ini"
+            class="btn-reset-nik"
+            style="border:1.5px solid #fecaca;background:#fef2f2;color:#f87171;border-radius:7px;padding:5px 8px;cursor:pointer;font-size:12px;display:inline-flex;align-items:center;flex-shrink:0;transition:all .15s;"
+            onmouseover="this.style.background='#fee2e2';this.style.color='#dc2626';this.style.borderColor='#f87171';"
+            onmouseout="this.style.background='#fef2f2';this.style.color='#f87171';this.style.borderColor='#fecaca';">
+            <i class="fa-solid fa-rotate-left"></i>
+        </button>`;
+}
+
+function markRowsScanned(nik, nama) {
     const rows = document.querySelectorAll(`.scan-row[data-nik="${nik}"]`);
+    rows.forEach(tr => tr.classList.add('row-scanned'));
+    const firstRow = document.querySelector(`.scan-row[data-nik="${nik}"][data-is-first="1"]`);
+    if (firstRow) setRowScanned(firstRow, nik, nama);
     if (rows.length) rows[0].scrollIntoView({ behavior:'smooth', block:'center' });
 }
 

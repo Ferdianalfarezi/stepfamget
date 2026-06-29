@@ -19,7 +19,7 @@
   /* ── Status Card ── */
   .status-card {
     background: var(--white); border: 1px solid var(--border);
-    border-radius: 20px; padding: 20px; margin-bottom: 20px;
+    border-radius: 20px; padding: 20px; margin-bottom: 12px;
     display: flex; align-items: center; gap: 16px;
   }
   .status-icon-wrap {
@@ -31,7 +31,7 @@
   .status-detail { flex: 1; min-width: 0; }
   .status-label  { font-size: 11px; font-weight: 600; color: var(--text-light); letter-spacing:.8px; }
   .status-value  { font-size: 16px; font-weight: 800; color: var(--text); margin-top: 2px; }
-  .status-sub    { font-size: 12px; color: var(--text-light); margin-top: 2px; }
+  .status-sub    { font-size: 12px; color: var(--text-light); margin-top: 4px; }
 
   /* ── Pilihan Grid ── */
   .pilihan-grid {
@@ -157,8 +157,6 @@
   @keyframes spin { to { transform:rotate(360deg); } }
   .fa-spin-custom { animation:spin .7s linear infinite; }
 </style>
-</head>
-<body>
 
 <div class="toast" id="toast"></div>
 
@@ -214,7 +212,7 @@
       <div class="status-sub" id="statusSub">
         @if($currentPilihan === 'kendaraan' && $pilihanKendaraan)
           <i class="fa-solid fa-hashtag" style="font-size:10px;margin-right:3px;"></i>{{ $pilihanKendaraan->plat_no }}
-        @else
+        @elseif($currentPilihan !== 'bus')
           Sudah terdaftar
         @endif
       </div>
@@ -225,6 +223,32 @@
       </span>
     </div>
   </div>
+
+  {{-- Bawah card: khusus pilihan bus --}}
+  @if($currentPilihan === 'bus')
+    @if($pilihanBus?->kursi)
+      <a href="{{ route('guest.kursi-bus') }}" id="btnLihatKursi"
+         style="display:flex;align-items:center;justify-content:center;gap:8px;
+                margin-bottom:16px;padding:13px;
+                background:#1a3320;color:#fff;border-radius:14px;
+                font-size:14px;font-weight:700;text-decoration:none;
+                transition:opacity .2s,transform .15s;"
+         ontouchstart="this.style.opacity='.8';this.style.transform='scale(.98)'"
+         ontouchend="this.style.opacity='';this.style.transform=''">
+        <i class="fa-solid fa-couch" style="font-size:15px;"></i>
+        Lihat Kursi Saya — {{ $pilihanBus->kursi }}
+      </a>
+    @else
+      <div id="badgeMenunggu"
+           style="display:flex;align-items:center;justify-content:center;gap:8px;
+                  margin-bottom:16px;padding:13px;
+                  background:#fef9c3;border:1px solid #fde68a;border-radius:14px;
+                  font-size:13px;font-weight:600;color:#92400e;">
+        <i class="fa-solid fa-hourglass-half" style="font-size:13px;"></i>
+        Menunggu penempatan kursi
+      </div>
+    @endif
+  @endif
 
   {{-- Pilihan Transport --}}
   <div class="pilihan-grid">
@@ -265,7 +289,9 @@
            value="{{ $pilihanKendaraan->plat_no ?? '' }}">
   </div>
 
-  <button class="btn-simpan" id="btnSimpan" onclick="simpanPilihan()" disabled>
+  {{-- Tombol simpan: hidden kalau sudah ada pilihan, muncul saat user klik kartu --}}
+  <button class="btn-simpan" id="btnSimpan" onclick="simpanPilihan()"
+          disabled style="{{ $currentPilihan ? 'display:none;' : 'display:flex;' }}">
     <i class="fa-solid fa-floppy-disk"></i> Simpan Pilihan
   </button>
   <button class="btn-batal {{ $currentPilihan ? 'show' : '' }}" id="btnBatal" onclick="batalkanPilihan()">
@@ -346,7 +372,6 @@ if (IS_EXPIRED) {
       ? `${d}h ${String(h).padStart(2,'0')}j ${String(m).padStart(2,'0')}m`
       : `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
 
-    // Warna hero icon saat < 1 jam
     if (diff < 3600000 && heroIcon) {
       heroIcon.style.color = '#ff8a80';
       heroIcon.className   = 'fa-solid fa-hourglass-end';
@@ -381,6 +406,8 @@ function selectPilihan(pilihan) {
   } else {
     platWrap.classList.remove('show');
   }
+  // Munculkan tombol simpan saat user klik kartu
+  document.getElementById('btnSimpan').style.display = 'flex';
   updateSimpanBtn();
 }
 
@@ -444,6 +471,8 @@ function simpanPilihan() {
       showToast(body.message, 'success');
       updateStatusCard(body);
       document.getElementById('btnBatal').classList.add('show');
+      // Sembunyikan tombol simpan setelah berhasil simpan
+      document.getElementById('btnSimpan').style.display = 'none';
     } else {
       const errMsg = body.errors
         ? Object.values(body.errors)[0][0]
@@ -485,9 +514,16 @@ function batalkanPilihan() {
     document.querySelectorAll('.jenis-btn').forEach(el => {
       el.classList.toggle('selected', el.dataset.jenis === 'mobil');
     });
+    // Reset tombol: simpan hidden, batal hidden
     document.getElementById('btnSimpan').disabled = true;
+    document.getElementById('btnSimpan').style.display = 'none';
     document.getElementById('btnBatal').classList.remove('show');
     document.getElementById('statusCard').style.display = 'none';
+    // Sembunyikan badge/button kursi bus kalau ada
+    const badge = document.getElementById('badgeMenunggu');
+    if (badge) badge.style.display = 'none';
+    const btnKursi = document.getElementById('btnLihatKursi');
+    if (btnKursi) btnKursi.style.display = 'none';
   })
   .catch(() => showToast('Gagal membatalkan pilihan', 'error'))
   .finally(() => {
@@ -507,19 +543,37 @@ function updateStatusCard(body) {
     icon.className    = 'status-icon-wrap bus';
     icon.innerHTML    = '<i class="fa-solid fa-bus"></i>';
     value.textContent = 'Naik Bus';
-    sub.textContent   = 'Sudah terdaftar';
+    sub.innerHTML     = '';
+    // Tampilkan badge menunggu di bawah card
+    const badge = document.getElementById('badgeMenunggu');
+    if (badge) {
+      badge.style.display = 'flex';
+    } else {
+      // Buat badge dinamis kalau belum ada (misal sebelumnya pilih kendaraan)
+      const newBadge = document.createElement('div');
+      newBadge.id = 'badgeMenunggu';
+      newBadge.style.cssText = 'display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:16px;padding:13px;background:#fef9c3;border:1px solid #fde68a;border-radius:14px;font-size:13px;font-weight:600;color:#92400e;';
+      newBadge.innerHTML = '<i class="fa-solid fa-hourglass-half" style="font-size:13px;"></i> Menunggu penempatan kursi';
+      card.insertAdjacentElement('afterend', newBadge);
+    }
+    const btnKursi = document.getElementById('btnLihatKursi');
+    if (btnKursi) btnKursi.style.display = 'none';
   } else {
     const j = body.jenis_kendaraan ?? 'mobil';
     icon.className    = 'status-icon-wrap kendaraan';
     icon.innerHTML    = '<i class="fa-solid fa-car"></i>';
     value.textContent = (jenisLabel[j] ?? 'Kendaraan') + ' Pribadi';
     sub.innerHTML     = `<i class="fa-solid fa-hashtag" style="font-size:10px;margin-right:3px;"></i>${body.plat_no}`;
+    // Sembunyikan badge/button kursi kalau sebelumnya bus
+    const badge = document.getElementById('badgeMenunggu');
+    if (badge) badge.style.display = 'none';
+    const btnKursi = document.getElementById('btnLihatKursi');
+    if (btnKursi) btnKursi.style.display = 'none';
   }
   card.style.display = 'flex';
 }
 
 updateSimpanBtn();
 </script>
-</body>
-</html>
+
 @endsection

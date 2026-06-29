@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use App\Models\Karyawan;
+use App\Models\DetailKaryawan;
 use Illuminate\Support\Facades\View;
 use App\Models\PenerimaanBarang;
 use App\Observers\PenerimaanBarangObserver;
@@ -24,6 +25,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         View::share('countKaryawan', Karyawan::count());
+        View::share('countDetailKaryawan', DetailKaryawan::count());
         PenerimaanBarang::observe(PenerimaanBarangObserver::class);
     }
 }

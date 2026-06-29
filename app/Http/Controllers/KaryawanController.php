@@ -16,8 +16,10 @@ class KaryawanController extends Controller
     // ─────────────────────────────────────────
     public function index(Request $request)
     {
+        $excludedDept = ['RJU', 'spare', 'SECURITY', 'KYOEI', 'GA ASB', 'USTADZ','Driver Ops','TEJA'];
+ 
         $query = Karyawan::query();
-
+ 
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
@@ -26,20 +28,43 @@ class KaryawanController extends Controller
                   ->orWhere('departemen', 'like', "%$search%");
             });
         }
-
+ 
         if ($request->filled('departemen')) {
             $query->where('departemen', $request->departemen);
         }
-
+ 
         if ($request->filled('keterangan')) {
             $query->where('keterangan', $request->keterangan);
         }
-
-        $karyawans      = $query->orderBy('nama')->paginate(15)->withQueryString();
+ 
+        $karyawans      = $query->with('details')->orderBy('nama')->paginate(15)->withQueryString();
         $departemenList = Karyawan::select('departemen')->distinct()->orderBy('departemen')->pluck('departemen');
-
-        return view('karyawan.index', compact('karyawans', 'departemenList'));
+ 
+        // ── Summary ──
+        $allKaryawan       = Karyawan::all();
+        $totalKaryawan     = $allKaryawan->count();
+        $totalValid        = $allKaryawan->whereNotIn('departemen', $excludedDept)->count();
+        $totalEksternal    = $totalKaryawan - $totalValid;
+ 
+        $summaryDept = $allKaryawan
+            ->groupBy('departemen')
+            ->map(fn($group) => $group->count());
+ 
+        // Merge HR + HRD
+        $hrTotal     = ($summaryDept->get('HR') ?? 0) + ($summaryDept->get('HRD') ?? 0);
+        $summaryDept = $summaryDept->forget(['HR', 'HRD']);
+        if ($hrTotal > 0) $summaryDept->put('HR / HRD', $hrTotal);
+ 
+        $deptNormal   = $summaryDept->filter(fn($v, $k) => !in_array($k, $excludedDept))->sortKeys();
+        $deptExcluded = $summaryDept->filter(fn($v, $k) =>  in_array($k, $excludedDept))->sortKeys();
+ 
+        return view('karyawan.index', compact(
+            'karyawans', 'departemenList',
+            'totalKaryawan', 'totalValid', 'totalEksternal',
+            'deptNormal', 'deptExcluded', 'excludedDept'
+        ));
     }
+ 
 
     // ─────────────────────────────────────────
     // STORE (AJAX)
@@ -222,6 +247,57 @@ class KaryawanController extends Controller
     }
 
     // ─────────────────────────────────────────
+    // DETAIL ALL
+    // ─────────────────────────────────────────
+    public function detailAll(Request $request)
+    {
+        $query = Karyawan::with('details');
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('nama', 'like', "%$search%")
+                  ->orWhere('nik', 'like', "%$search%")
+                  ->orWhere('departemen', 'like', "%$search%");
+            });
+        }
+
+        if ($request->filled('departemen')) {
+            $query->where('departemen', $request->departemen);
+        }
+
+        if ($request->filled('hubungan')) {
+            $query->whereHas('details', fn($q) => $q->where('hubungan', $request->hubungan));
+        }
+
+        $karyawans      = $query->orderBy('nama')->paginate(15)->withQueryString();
+        $departemenList = Karyawan::select('departemen')->distinct()->orderBy('departemen')->pluck('departemen');
+        $total          = DetailKaryawan::count();
+
+        $excludedDept = ['RJU', 'spare', 'SECURITY', 'KYOEI', 'GA ASB', 'USTADZ','Driver Ops','TEJA'];
+
+        $summaryDept = Karyawan::withCount('details')
+            ->get()
+            ->groupBy('departemen')
+            ->map(fn($group) => $group->sum('details_count'));
+
+        // Merge HR + HRD jadi satu
+        $hrTotal     = ($summaryDept->get('HR') ?? 0) + ($summaryDept->get('HRD') ?? 0);
+        $summaryDept = $summaryDept->forget(['HR', 'HRD']);
+        if ($hrTotal > 0) $summaryDept->put('HR / HRD', $hrTotal);
+
+        $totalAnggota      = DetailKaryawan::count();
+        $totalAnggotaValid = DetailKaryawan::whereHas('karyawan', fn($q) =>
+            $q->whereNotIn('departemen', $excludedDept)
+        )->count();
+
+        return view('karyawan.detail', compact(
+            'karyawans', 'departemenList', 'total',
+            'summaryDept', 'totalAnggota', 'totalAnggotaValid', 'excludedDept'
+        ));
+    }
+
+    // ─────────────────────────────────────────
     // HELPER
     // ─────────────────────────────────────────
     private function buildDetailPayload(string $nik, array $d): array
@@ -237,7 +313,6 @@ class KaryawanController extends Controller
             'umur'          => $d['umur'] ?? 0,
             'ukuran_kaos'   => $d['ukuran_kaos'] ?? null,
             'jenis_kaos'    => $jenisKaos,
-            // kalau Anak, lengan tidak relevan → simpan null
             'lengan_kaos'   => $jenisKaos === 'Anak' ? null : ($d['lengan_kaos'] ?? null),
         ];
     }
@@ -251,11 +326,11 @@ class KaryawanController extends Controller
             'file_excel.mimes'    => 'File harus berformat .xlsx atau .xls.',
             'file_excel.max'      => 'Ukuran file maksimal 5MB.',
         ]);
- 
+
         try {
             $import = new BajuFamilyGatheringImport();
             Excel::import($import, $request->file('file_excel'));
- 
+
             return response()->json([
                 'message'  => "Import berhasil! {$import->imported} data diproses, {$import->skipped} baris dilewati.",
                 'imported' => $import->imported,
@@ -267,5 +342,58 @@ class KaryawanController extends Controller
             ], 500);
         }
     }
- 
+
+    // ─────────────────────────────────────────
+    // DETAIL KARYAWAN (CRUD per anggota)
+    // ─────────────────────────────────────────
+    public function showDetail($id)
+    {
+        $detail = DetailKaryawan::findOrFail($id);
+        return response()->json($detail);
+    }
+
+    public function updateDetail(Request $request, $id)
+    {
+        $detail = DetailKaryawan::findOrFail($id);
+
+        $validated = $request->validate([
+            'nama_keluarga' => 'required|string|max:100',
+            'hubungan'      => 'required|in:Karyawan,Karyawati,Istri,Suami,Anak,Saudara',
+            'jenis_kelamin' => 'required|in:Laki-laki,Perempuan',
+            'tanggal_lahir' => 'nullable|date',
+            'umur'          => 'nullable|integer|min:0',
+            'ukuran_kaos'   => 'nullable|string|max:10',
+            'jenis_kaos'    => 'nullable|in:Dewasa,Anak',
+            'lengan_kaos'   => 'nullable|in:Lengan Pendek,Lengan Panjang',
+        ]);
+
+        $jenisKaos = $validated['jenis_kaos'] ?? 'Dewasa';
+        $detail->update([
+            'nama_keluarga' => $validated['nama_keluarga'],
+            'hubungan'      => $validated['hubungan'],
+            'jenis_kelamin' => $validated['jenis_kelamin'],
+            'tanggal_lahir' => $validated['tanggal_lahir'] ?? null,
+            'umur'          => $validated['umur'] ?? 0,
+            'ukuran_kaos'   => $validated['ukuran_kaos'] ?? null,
+            'jenis_kaos'    => $jenisKaos,
+            'lengan_kaos'   => $jenisKaos === 'Anak' ? null : ($validated['lengan_kaos'] ?? null),
+        ]);
+
+        return response()->json(['message' => 'Data anggota berhasil diupdate.']);
+    }
+
+    public function destroyDetail($id)
+    {
+        $detail   = DetailKaryawan::findOrFail($id);
+        $karyawan = Karyawan::where('nik', $detail->nik)->first();
+        $detail->delete();
+
+        if ($karyawan) {
+            $karyawan->update([
+                'jumlah_keluarga' => $karyawan->details()->count(),
+            ]);
+        }
+
+        return response()->json(['message' => 'Anggota berhasil dihapus.']);
+    }
 }

@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+    <link rel="icon" type="image/png" href="{{ asset('images/logostep31.png') }}">
     <style>
         :root {
             --sb-w:       228px;
@@ -601,15 +602,29 @@
         </a>
     </div>
 
-    <div class="sb-nav-wrap {{ request()->routeIs('karyawan.*') ? 'active' : '' }}">
+        {{-- Data Karyawan --}}
+    <div class="sb-nav-wrap {{ request()->routeIs('karyawan.index') || (request()->routeIs('karyawan.*') && !request()->routeIs('karyawan.detail.all')) ? 'active' : '' }}">
         <a href="{{ route('karyawan.index') }}" class="sb-nav">
-            @if(request()->routeIs('karyawan.*'))
+            @if(request()->routeIs('karyawan.index') || (request()->routeIs('karyawan.*') && !request()->routeIs('karyawan.detail.all')))
                 <div class="sb-dot"></div>
             @else
                 <i class="fa-solid fa-users"></i>
             @endif
             <span class="sb-nav-label">Data Karyawan</span>
             <span class="sb-badge">{{ $countKaryawan }}</span>
+        </a>
+    </div>
+
+    {{-- Keluarga Karyawan --}}
+    <div class="sb-nav-wrap {{ request()->routeIs('karyawan.detail.all') ? 'active' : '' }}">
+        <a href="{{ route('karyawan.detail.all') }}" class="sb-nav">
+            @if(request()->routeIs('karyawan.detail.all'))
+                <div class="sb-dot"></div>
+            @else
+                <i class="fa-solid fa-people-group"></i>
+            @endif
+            <span class="sb-nav-label">Keluarga Karyawan</span>
+            <span class="sb-badge">{{ $countDetailKaryawan }}</span>
         </a>
     </div>
 
@@ -745,7 +760,29 @@
             <span class="sb-nav-label">Penerimaan Hadiah</span>
         </a>
     </div>
-        
+
+    <div class="sb-nav-wrap {{ request()->routeIs('rundowns.*') ? 'active' : '' }}">
+        <a href="{{ route('rundowns.index') }}" class="sb-nav">
+            @if(request()->routeIs('rundowns.*'))
+                <div class="sb-dot"></div>
+            @else
+                <i class="fa-solid fa-calendar-days"></i>
+            @endif
+            <span class="sb-nav-label">Rundown Acara</span>
+        </a>
+    </div>
+
+    <div class="sb-nav-wrap {{ request()->routeIs('gantt.*') ? 'active' : '' }}">
+        <a href="{{ route('gantt.index') }}" class="sb-nav">
+            @if(request()->routeIs('gantt.*'))
+                <div class="sb-dot"></div>
+            @else
+                <i class="fa-solid fa-chart-gantt"></i>
+            @endif
+            <span class="sb-nav-label">Gantt Chart</span>
+        </a>
+    </div>
+            
 
     {{-- <div class="sb-nav-wrap {{ request()->routeIs('import.*') ? 'active' : '' }}">
         <a href="{{ route('import.index') }}" class="sb-nav">

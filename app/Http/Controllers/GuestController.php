@@ -5,8 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\GuestMenu;
 use App\Models\PengajuanAnggota;
 use App\Models\DetailKaryawan;
+use App\Models\Rundown;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Bus;
+use App\Models\KetuaBus;
+
 
 class GuestController extends Controller
 {
@@ -49,63 +53,69 @@ class GuestController extends Controller
         }
 
         // Hadiah — ada hadiah yang siap diambil tapi belum diambil
-            $adaHadiah = \App\Models\PenerimaanHadiah::where('nik_pemenang', $karyawan->nik)
-                ->where('status', 'siap_diambil')
-                ->exists();
-            if ($adaHadiah) {
-                $notif['penerimaan_hadiah'] = true;
-            }
+        $adaHadiah = \App\Models\PenerimaanHadiah::where('nik_pemenang', $karyawan->nik)
+            ->where('status', 'siap_diambil')
+            ->exists();
+        if ($adaHadiah) {
+            $notif['penerimaan_hadiah'] = true;
+        }
 
         return view('guest.dashboard', compact('karyawan', 'menus', 'notif'));
     }
 
     public function menu(string $key)
-{
-    if ($key === 'voting') {
-        return redirect()->route('guest.voting');
+    {
+        if ($key === 'voting') {
+            return redirect()->route('guest.voting');
+        }
+
+        if ($key === 'baju') {
+            return redirect()->route('guest.baju.index');
+        }
+
+        if ($key === 'penerimaan_hadiah') {
+            return redirect()->route('guest.hadiah');
+        }
+
+        if ($key === 'rundown') {
+            $rundowns = Rundown::orderBy('mulai')->get();
+            $karyawan = Auth::user()->karyawan;  // ← tambah ini
+            return view('guest.partials.rundown', compact('rundowns', 'karyawan'));
+        }
+        // ────────────────────────────────────────────────────────────────────
+
+        $menu     = GuestMenu::where('key', $key)->where('is_active', true)->firstOrFail();
+        $user     = Auth::user()->load('karyawan.details');
+        $karyawan = $user->karyawan;
+        $viewPath = 'guest.partials.' . $key;
+
+        if (!view()->exists($viewPath)) {
+            return view('guest.partials.coming_soon', compact('menu', 'karyawan'));
+        }
+
+        $pengajuanPending = null;
+        $riwayatPengajuan = collect();
+
+        if ($key === 'keluarga') {
+            $pengajuanPending = PengajuanAnggota::where('nik', $karyawan->nik)
+                ->where('status', 'pending')
+                ->latest()
+                ->first();
+
+            $riwayatPengajuan = PengajuanAnggota::where('nik', $karyawan->nik)
+                ->whereIn('status', ['approved', 'rejected'])
+                ->latest()
+                ->take(5)
+                ->get();
+        }
+
+        // ── Expired check ────────────────────────────────────────────────────
+        $isExpired = $menu->berlaku_hingga !== null
+                     && \Carbon\Carbon::now()->isAfter($menu->berlaku_hingga);
+        // ────────────────────────────────────────────────────────────────────
+
+        return view($viewPath, compact('menu', 'karyawan', 'pengajuanPending', 'riwayatPengajuan', 'isExpired'));
     }
-
-    if ($key === 'baju') {
-        return redirect()->route('guest.baju.index');
-    }
-
-    if ($key === 'penerimaan_hadiah') {
-        return redirect()->route('guest.hadiah');
-    }
-
-
-    $menu     = GuestMenu::where('key', $key)->where('is_active', true)->firstOrFail();
-    $user     = Auth::user()->load('karyawan.details');
-    $karyawan = $user->karyawan;
-    $viewPath = 'guest.partials.' . $key;
-
-    if (!view()->exists($viewPath)) {
-        return view('guest.partials.coming_soon', compact('menu', 'karyawan'));
-    }
-
-    $pengajuanPending = null;
-    $riwayatPengajuan = collect();
-
-    if ($key === 'keluarga') {
-        $pengajuanPending = PengajuanAnggota::where('nik', $karyawan->nik)
-            ->where('status', 'pending')
-            ->latest()
-            ->first();
-
-        $riwayatPengajuan = PengajuanAnggota::where('nik', $karyawan->nik)
-            ->whereIn('status', ['approved', 'rejected'])
-            ->latest()
-            ->take(5)
-            ->get();
-    }
-
-    // ── Expired check ──────────────────────────────
-    $isExpired = $menu->berlaku_hingga !== null
-                 && \Carbon\Carbon::now()->isAfter($menu->berlaku_hingga);
-    // ───────────────────────────────────────────────
-
-    return view($viewPath, compact('menu', 'karyawan', 'pengajuanPending', 'riwayatPengajuan', 'isExpired'));
-}
 
     public function konfirmasiKehadiran(Request $request)
     {
@@ -184,5 +194,33 @@ class GuestController extends Controller
             'jenis_kaos'  => $detail->jenis_kaos,
             'lengan_kaos' => $detail->lengan_kaos,
         ]);
+    }
+
+    public function kursisBus()
+    {
+        $karyawan = Auth::user()->karyawan;
+        $bus      = Bus::where('nik', $karyawan->nik)->first();
+
+        if (!$bus || !$bus->kursi) {
+            return redirect()->route('guest.menu', 'bus')
+                ->with('error', 'Kursi belum ditentukan.');
+        }
+
+        // Parse "B-12" → kode=B, nomorKursi=12
+        [$kode, $nomorKursi] = explode('-', $bus->kursi, 2);
+
+        // Ambil semua penumpang bus ini (kursi diawali kode bus)
+        $terisi = Bus::whereNotNull('kursi')
+            ->where('kursi', 'like', $kode . '-%')
+            ->get()
+            ->keyBy('kursi');
+
+        $ketua = KetuaBus::with('karyawan')
+            ->where('kode_bus', $kode)
+            ->first();
+
+        return view('guest.partials.kursi-bus', compact(
+            'kode', 'terisi', 'ketua', 'karyawan', 'bus', 'nomorKursi'
+        ));
     }
 }

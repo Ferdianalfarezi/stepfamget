@@ -85,7 +85,7 @@
                         Rp {{ number_format($item->harga, 0, ',', '.') }}
                     </td>
                     <td style="text-align:right;font-size:13px;color:#475569;">
-                        {{ number_format($item->qty, 2, ',', '.') }}
+                        {{ number_format($item->qty, 0, ',', '.') }}
                     </td>
                     <td style="text-align:right;font-size:13px;font-weight:600;color:#0b4614;">
                         Rp {{ number_format($item->total, 0, ',', '.') }}
