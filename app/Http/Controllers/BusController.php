@@ -46,6 +46,9 @@ class BusController extends Controller
                 'nama_karyawan' => $karyawan->nama,
             ]);
 
+            // Set trans_confirmed_at
+            $karyawan->update(['trans_confirmed_at' => now()]);
+
             return response()->json([
                 'message' => 'Pilihan bus berhasil disimpan.',
                 'pilihan' => 'bus',
@@ -59,6 +62,9 @@ class BusController extends Controller
             'plat_no'         => strtoupper($request->plat_no),
             'jenis_kendaraan' => $request->jenis_kendaraan ?? 'mobil',
         ]);
+
+        // Set trans_confirmed_at
+        $karyawan->update(['trans_confirmed_at' => now()]);
 
         return response()->json([
             'message'         => 'Kendaraan pribadi berhasil disimpan.',
@@ -81,6 +87,9 @@ class BusController extends Controller
 
         Bus::where('nik', $karyawan->nik)->delete();
         Kendaraan::where('nik', $karyawan->nik)->delete();
+
+        // Reset trans_confirmed_at
+        $karyawan->update(['trans_confirmed_at' => null]);
 
         return response()->json([
             'message' => 'Pilihan transportasi berhasil dibatalkan.',

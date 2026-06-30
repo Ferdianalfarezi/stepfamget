@@ -130,9 +130,9 @@ Route::middleware(['auth', \App\Http\Middleware\AdminOnly::class])->group(functi
     Route::resource('rundowns', RundownController::class)->only(['index', 'edit', 'update', 'destroy']);
 
     // Gantt Chart
-    Route::get('/gantt',                [GanttController::class, 'index'])->name('gantt.index');
-    Route::post('/gantt',               [GanttController::class, 'store'])->name('gantt.store');
-    Route::put('/gantt/{ganttActivity}', [GanttController::class, 'update'])->name('gantt.update');
+    Route::get('/gantt',                    [GanttController::class, 'index'])->name('gantt.index');
+    Route::post('/gantt',                   [GanttController::class, 'store'])->name('gantt.store');
+    Route::put('/gantt/{ganttActivity}',    [GanttController::class, 'update'])->name('gantt.update');
     Route::delete('/gantt/{ganttActivity}', [GanttController::class, 'destroy'])->name('gantt.destroy');
 });
 
@@ -147,12 +147,15 @@ Route::middleware(['auth', \App\Http\Middleware\GuestOnly::class])->group(functi
     // Transportasi
     Route::post('/my/transportasi',        [BusController::class, 'store'])->name('guest.transportasi.store');
     Route::post('/my/transportasi/cancel', [BusController::class, 'cancel'])->name('guest.transportasi.cancel');
-    Route::get('/my/kursi-bus', [GuestController::class, 'kursisBus'])->name('guest.kursi-bus');
+    Route::get('/my/kursi-bus',            [GuestController::class, 'kursisBus'])->name('guest.kursi-bus');
+
     // Pengajuan Anggota Keluarga
     Route::post('/my/pengajuan', [PengajuanController::class, 'store'])->name('guest.pengajuan.store');
 
-    Route::get('/my/baju',         [GuestController::class, 'baju'])->name('guest.baju.index');
-    Route::post('/my/baju/update', [GuestController::class, 'bajuUpdate'])->name('guest.baju.update');
+    // Baju
+    Route::get('/my/baju',                        [GuestController::class, 'baju'])->name('guest.baju.index');
+    Route::post('/my/baju/update',                [GuestController::class, 'bajuUpdate'])->name('guest.baju.update');
+    Route::post('/my/baju/konfirmasi-tahun-lalu', [GuestController::class, 'bajuKonfirmasiTahunLalu'])->name('guest.baju.konfirmasiTahunLalu');
 
     Route::get('/my/hadiah', [PenerimaanHadiahController::class, 'guestIndex'])->name('guest.hadiah');
 });

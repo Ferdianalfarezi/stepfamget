@@ -144,4 +144,5 @@ class KaryawanExport implements FromQuery, WithHeadings, WithMapping, WithStyles
 
         return [];
     }
+    
 }

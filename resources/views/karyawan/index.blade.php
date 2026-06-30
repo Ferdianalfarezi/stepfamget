@@ -41,75 +41,109 @@
         </div>
     </div>
 
-</div>
-
-{{-- ── SUMMARY PER DEPARTEMEN ── --}}
-@if($deptNormal->isNotEmpty())
-
-<p style="font-size:11px;font-weight:600;color:#94a3b8;letter-spacing:.6px;text-transform:uppercase;margin:0 0 8px;">
-    Rekap per Departemen
-</p>
-
-<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-bottom:10px;">
-    @foreach($deptNormal as $dept => $jumlah)
-    <div class="card" style="padding:12px 14px;display:flex;align-items:center;gap:10px;">
-        <div style="width:34px;height:34px;border-radius:9px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:#f0fdf4;">
-            <i class="fa-solid fa-building" style="font-size:13px;color:#16a34a;"></i>
+    {{-- Konfirmasi Baju --}}
+    <div class="card" style="padding:14px 18px;display:flex;align-items:center;gap:12px;">
+        <div style="width:40px;height:40px;border-radius:10px;background:#f0fdf4;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <i class="fa-solid fa-shirt" style="color:#16a34a;font-size:16px;"></i>
         </div>
-        <div style="min-width:0;">
-            <div style="font-size:10px;color:#64748b;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ $dept }}</div>
-            <div style="font-size:18px;font-weight:800;color:#0b4614;">{{ $jumlah }}</div>
+        <div>
+            <div style="font-size:11px;color:#64748b;font-weight:600;">Konfirmasi Baju</div>
+            <div style="font-size:20px;font-weight:800;color:#16a34a;">
+                {{ $totalBajuConfirmed }}<span style="font-size:13px;font-weight:500;color:#94a3b8;">/{{ $totalKaryawan }}</span>
+            </div>
         </div>
     </div>
-    @endforeach
-</div>
 
-@if($deptExcluded->isNotEmpty())
-<p style="font-size:11px;font-weight:600;color:#94a3b8;letter-spacing:.6px;text-transform:uppercase;margin:0 0 8px;">
-    Eksternal
-</p>
-<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-bottom:14px;">
-    @foreach($deptExcluded as $dept => $jumlah)
-    <div class="card" style="padding:12px 14px;display:flex;align-items:center;gap:10px;opacity:.5;">
-        <div style="width:34px;height:34px;border-radius:9px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:#f1f5f9;">
-            <i class="fa-solid fa-building" style="font-size:13px;color:#000000;"></i>
+    {{-- Konfirmasi Transport --}}
+    <div class="card" style="padding:14px 18px;display:flex;align-items:center;gap:12px;">
+        <div style="width:40px;height:40px;border-radius:10px;background:#f0f9ff;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <i class="fa-solid fa-bus" style="color:#0369a1;font-size:16px;"></i>
         </div>
-        <div style="min-width:0;">
-            <div style="font-size:10px;color:#000000;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ $dept }}</div>
-            <div style="font-size:18px;font-weight:800;color:#000000;">{{ $jumlah }}</div>
+        <div>
+            <div style="font-size:11px;color:#64748b;font-weight:600;">Konfirmasi Transport</div>
+            <div style="font-size:20px;font-weight:800;color:#0369a1;">
+                {{ $totalTransConfirmed }}<span style="font-size:13px;font-weight:500;color:#94a3b8;">/{{ $totalKaryawan }}</span>
+            </div>
         </div>
     </div>
-    @endforeach
-</div>
-@else
-<div style="margin-bottom:14px;"></div>
-@endif
 
-@endif
+    {{-- Kehadiran --}}
+    <div class="card" style="padding:14px 18px;display:flex;align-items:center;gap:12px;">
+        
+        <div>
+            <div style="font-size:11px;color:#64748b;font-weight:600;margin-bottom:5px;">Kehadiran</div>
+            <div style="display:flex;gap:10px;align-items:center;">
+                <span style="font-size:12px;font-weight:700;color:#16a34a;display:flex;align-items:center;gap:3px;"><i class="fa-solid fa-circle-check"></i> {{ $totalHadir }}</span>
+                <span style="color:#e2e8f0;">|</span>
+                <span style="font-size:12px;font-weight:700;color:#ef4444;display:flex;align-items:center;gap:3px;"><i class="fa-solid fa-circle-xmark"></i> {{ $totalTidakHadir }}</span>
+                <span style="color:#e2e8f0;">|</span>
+                <span style="font-size:12px;font-weight:700;color:#94a3b8;display:flex;align-items:center;gap:3px;"><i class="fa-solid fa-clock"></i> {{ $totalBelumHadir }}</span>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+</div>
+
+<div class="card" style="padding:16px 18px;margin-bottom:14px;">
+    <p style="font-size:11px;font-weight:500;color:#94a3b8;letter-spacing:.6px;text-transform:uppercase;margin:0 0 12px;">
+        Rekap per Departemen
+    </p>
+    <div style="position:relative;width:100%;height:260px;">
+        <canvas id="deptChart" role="img" aria-label="Bar chart jumlah karyawan per departemen">
+            Data karyawan per departemen.
+        </canvas>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:12px;font-size:12px;color:#64748b;">
+        <span style="display:flex;align-items:center;gap:5px;">
+            <span style="width:10px;height:10px;border-radius:2px;background:#16a34a;"></span>Karyawan STEP
+        </span>
+        <span style="display:flex;align-items:center;gap:5px;">
+            <span style="width:10px;height:10px;border-radius:2px;background:#c3c2b7;"></span>Eksternal
+        </span>
+    </div>
+</div>
 
 <!-- FILTER BAR -->
 <div class="card" style="margin-bottom:5px;">
-    <div class="card-body" style="padding:16px 20px;">
+    <div class="card-body" style="padding:16px 20px;overflow-x:auto;">
         <form method="GET" action="{{ route('karyawan.index') }}">
-            <div class="filters">
+            <div class="filters" style="flex-wrap:nowrap;min-width:max-content;">
                 <div class="search-wrap">
                     <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" name="search" class="form-control" placeholder="Cari nama, NIK, departemen..."
-                           value="{{ request('search') }}" style="width:280px;">
+                    <input type="text" name="search" class="form-control" placeholder="Cari nama / NIK..."
+                           value="{{ request('search') }}" style="width:180px;">
                 </div>
-                <select name="departemen" class="form-control" style="width:auto;min-width:160px;">
-                    <option value="">Semua Departemen</option>
+                <select name="departemen" class="form-control" style="width:auto;min-width:120px;">
+                    <option value="">Semua Dept.</option>
                     @foreach($departemenList as $dept)
                         <option value="{{ $dept }}" {{ request('departemen') == $dept ? 'selected' : '' }}>{{ $dept }}</option>
                     @endforeach
                 </select>
-                <select name="keterangan" class="form-control" style="width:auto;min-width:130px;">
+                <select name="keterangan" class="form-control" style="width:auto;min-width:100px;">
                     <option value="">Semua Status</option>
-                    <option value="Aktif" {{ request('keterangan') == 'Aktif' ? 'selected' : '' }}>Aktif</option>
+                    <option value="Aktif"     {{ request('keterangan') == 'Aktif'     ? 'selected' : '' }}>Aktif</option>
                     <option value="Non-Aktif" {{ request('keterangan') == 'Non-Aktif' ? 'selected' : '' }}>Non-Aktif</option>
                 </select>
+                <select name="baju" class="form-control" style="width:auto;min-width:110px;">
+                    <option value="">Semua Baju</option>
+                    <option value="confirmed" {{ request('baju') == 'confirmed' ? 'selected' : '' }}>✓ Konfirmasi</option>
+                    <option value="belum"     {{ request('baju') == 'belum'     ? 'selected' : '' }}>○ Belum</option>
+                </select>
+                <select name="trans" class="form-control" style="width:auto;min-width:110px;">
+                    <option value="">Semua Trans</option>
+                    <option value="confirmed" {{ request('trans') == 'confirmed' ? 'selected' : '' }}>✓ Konfirmasi</option>
+                    <option value="belum"     {{ request('trans') == 'belum'     ? 'selected' : '' }}>○ Belum</option>
+                </select>
+                <select name="hadir" class="form-control" style="width:auto;min-width:110px;">
+                    <option value="">Semua Hadir</option>
+                    <option value="2" {{ request('hadir') == '2'  ? 'selected' : '' }}>✓ Hadir</option>
+                    <option value="1" {{ request('hadir') == '1'  ? 'selected' : '' }}>✗ Tidak</option>
+                    <option value="0" {{ request('hadir') === '0' ? 'selected' : '' }}>○ Belum</option>
+                </select>
                 <button type="submit" class="btn btn-primary"><i class="fa-solid fa-filter"></i> Filter</button>
-                @if(request()->hasAny(['search','departemen','keterangan']))
+                @if(request()->hasAny(['search','departemen','keterangan','baju','trans','hadir']))
                     <a href="{{ route('karyawan.index') }}" class="btn btn-outline"><i class="fa-solid fa-xmark"></i> Reset</a>
                 @endif
             </div>
@@ -156,6 +190,8 @@
                     <th>Jml. Keluarga</th>
                     <th>Status</th>
                     <th>Hadir</th>
+                    <th style="width:110px;">Baju</th>
+                    <th style="width:110px;">Transport</th>
                     <th style="width:150px;">Aksi</th>
                 </tr>
             </thead>
@@ -199,10 +235,38 @@
                         @endif
                     </td>
                     <td>
-                        @if($k->status_kehadiran)
-                            <span class="badge badge-success">Ya</span>
+                        @if($k->status_kehadiran == 2)
+                            <span class="badge badge-success">Hadir</span>
+                        @elseif($k->status_kehadiran == 1)
+                            <span class="badge badge-danger">Tidak Hadir</span>
                         @else
-                            <span class="badge badge-gray">Tidak</span>
+                            <span class="badge badge-gray">Belum</span>
+                        @endif
+                    </td>
+                    <td>
+                        @if($k->isBajuConfirmedThisYear())
+                            <span class="badge badge-success">
+                                <i class="fa-solid fa-circle-check" style="font-size:9px;"></i>
+                                Konfirmasi
+                            </span>
+                        @else
+                            <span class="badge badge-gray">
+                                <i class="fa-solid fa-clock" style="font-size:9px;"></i>
+                                Belum
+                            </span>
+                        @endif
+                    </td>
+                    <td>
+                        @if($k->isTransConfirmedThisYear())
+                            <span class="badge badge-success">
+                                <i class="fa-solid fa-circle-check" style="font-size:9px;"></i>
+                                Konfirmasi
+                            </span>
+                        @else
+                            <span class="badge badge-gray">
+                                <i class="fa-solid fa-clock" style="font-size:9px;"></i>
+                                Belum
+                            </span>
                         @endif
                     </td>
                     <td>
@@ -423,6 +487,7 @@
 </div>
 
 @endsection
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 @push('scripts')
 <script>
 // ─────────────────────────────────────────────
@@ -537,7 +602,7 @@ function openModalEdit(id) {
         document.getElementById('edit_nama').value             = k.nama ?? '';
         document.getElementById('edit_departemen').value       = k.departemen ?? '';
         document.getElementById('edit_keterangan').value       = k.keterangan ?? 'Aktif';
-        document.getElementById('edit_status_kehadiran').value = k.status_kehadiran ? '1' : '0';
+        document.getElementById('edit_status_kehadiran').value = k.status_kehadiran;
         document.getElementById('editModalSub').textContent    = `NIK: ${k.nik}`;
 
         if (typeof loadEditFamilyRows === 'function') loadEditFamilyRows(details);
@@ -729,9 +794,11 @@ function showDetail(id, nama) {
                 <div class="info-item">
                     <div class="info-item-label">Status Kehadiran</div>
                     <div class="info-item-value">
-                        ${k.status_kehadiran
-                            ? '<span class="badge badge-success">Hadir</span>'
-                            : '<span class="badge badge-gray">Tidak</span>'}
+                        ${k.status_kehadiran == 2
+                        ? '<span class="badge badge-success">Hadir</span>'
+                        : k.status_kehadiran == 1
+                            ? '<span class="badge badge-danger">Tidak Hadir</span>'
+                            : '<span class="badge badge-gray">Belum Konfirmasi</span>'}
                     </div>
                 </div>
                 <div class="info-item">
@@ -861,5 +928,85 @@ document.addEventListener('keydown', e => {
         });
     }
 });
+
+(function () {
+    const deptNormal   = @json($deptNormal);
+    const deptExcluded = @json($deptExcluded);
+
+    const labelsNormal   = Object.keys(deptNormal);
+    const labelsExcluded = Object.keys(deptExcluded);
+
+    const allLabels = [...labelsNormal, ...labelsExcluded];
+    const allData   = [...Object.values(deptNormal), ...Object.values(deptExcluded)];
+    const isDark    = matchMedia('(prefers-color-scheme: dark)').matches;
+
+    const colors = [
+        ...labelsNormal.map(() => '#16a34a'),
+        ...labelsExcluded.map(() => isDark ? '#444441' : '#c3c2b7'),
+    ];
+
+    const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+    const textMuted = '#898781';
+    const textSec   = isDark ? '#c3c2b7' : '#52514e';
+
+    new Chart(document.getElementById('deptChart'), {
+        type: 'bar',
+        data: {
+            labels: allLabels,
+            datasets: [{
+                data: allData,
+                backgroundColor: colors,
+                borderRadius: { topLeft: 4, topRight: 4 },
+                borderSkipped: 'bottom',
+                barThickness: 28,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => ` ${ctx.raw} orang` } }
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: {
+                        color: textSec,
+                        font: { size: 11 },
+                        maxRotation: 45,
+                        minRotation: 30,
+                        autoSkip: false,
+                    },
+                    border: { display: false },
+                },
+                y: {
+                    grid: { color: gridColor },
+                    ticks: { color: textMuted, font: { size: 11 } },
+                    border: { color: gridColor },
+                    beginAtZero: true,
+                }
+            },
+            layout: { padding: { top: 20 } }
+        },
+        plugins: [{
+            id: 'valueLabel',
+            afterDatasetsDraw(chart) {
+                const { ctx } = chart;
+                chart.data.datasets[0].data.forEach((val, i) => {
+                    const meta = chart.getDatasetMeta(0);
+                    const bar  = meta.data[i];
+                    ctx.save();
+                    ctx.fillStyle    = textSec;
+                    ctx.font         = '500 11px sans-serif';
+                    ctx.textAlign    = 'center';
+                    ctx.textBaseline = 'bottom';
+                    ctx.fillText(val, bar.x, bar.y - 4);
+                    ctx.restore();
+                });
+            }
+        }]
+    });
+})();
 </script>
 @endpush

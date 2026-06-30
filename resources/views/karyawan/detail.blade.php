@@ -7,7 +7,6 @@
 {{-- ── SUMMARY CARDS ── --}}
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px;">
 
-    {{-- Total Semua --}}
     <div class="card" style="padding:14px 18px;display:flex;align-items:center;gap:12px;">
         <div style="width:40px;height:40px;border-radius:10px;background:#dcfce7;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
             <i class="fa-solid fa-people-group" style="color:#16a34a;font-size:16px;"></i>
@@ -18,7 +17,6 @@
         </div>
     </div>
 
-    {{-- Total Valid (non-excluded dept) --}}
     <div class="card" style="padding:14px 18px;display:flex;align-items:center;gap:12px;">
         <div style="width:40px;height:40px;border-radius:10px;background:#e0f2fe;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
             <i class="fa-solid fa-user-check" style="color:#0369a1;font-size:16px;"></i>
@@ -26,11 +24,9 @@
         <div>
             <div style="font-size:11px;color:#64748b;font-weight:600;">Karyawan STEP</div>
             <div style="font-size:20px;font-weight:800;color:#0369a1;">{{ $totalAnggotaValid }}</div>
-           
         </div>
     </div>
 
-    {{-- Total Excluded --}}
     <div class="card" style="padding:14px 18px;display:flex;align-items:center;gap:12px;">
         <div style="width:40px;height:40px;border-radius:10px;background:#fef9c3;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
             <i class="fa-solid fa-user-slash" style="color:#ca8a04;font-size:16px;"></i>
@@ -42,55 +38,57 @@
         </div>
     </div>
 
+    <div class="card" style="padding:14px 18px;display:flex;align-items:center;gap:12px;">
+        <div style="width:40px;height:40px;border-radius:10px;background:#f0fdf4;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <i class="fa-solid fa-shirt" style="color:#16a34a;font-size:16px;"></i>
+        </div>
+        <div>
+            <div style="font-size:11px;color:#64748b;font-weight:600;">Konfirmasi Baju</div>
+            <div style="font-size:20px;font-weight:800;color:#16a34a;">
+                {{ $totalBajuConfirmed }}<span style="font-size:13px;font-weight:500;color:#94a3b8;">/{{ $totalKaryawan }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card" style="padding:14px 18px;display:flex;align-items:center;gap:12px;">
+        <div style="width:40px;height:40px;border-radius:10px;background:#f0f9ff;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <i class="fa-solid fa-bus" style="color:#0369a1;font-size:16px;"></i>
+        </div>
+        <div>
+            <div style="font-size:11px;color:#64748b;font-weight:600;">Konfirmasi Transport</div>
+            <div style="font-size:20px;font-weight:800;color:#0369a1;">
+                {{ $totalTransConfirmed }}<span style="font-size:13px;font-weight:500;color:#94a3b8;">/{{ $totalKaryawan }}</span>
+            </div>
+        </div>
+    </div>
+
 </div>
 
-{{-- ── SUMMARY PER DEPARTEMEN ── --}}
+{{-- ── BARCHART PER DEPARTEMEN ── --}}
 @if($summaryDept->isNotEmpty())
 @php
     $deptNormal   = $summaryDept->filter(fn($v, $k) => !in_array($k, $excludedDept))->sortKeys();
     $deptExcluded = $summaryDept->filter(fn($v, $k) =>  in_array($k, $excludedDept))->sortKeys();
 @endphp
 
-<p style="font-size:11px;font-weight:600;color:#94a3b8;letter-spacing:.6px;text-transform:uppercase;margin:0 0 8px;">
-    Rekap per Departemen
-</p>
-
-<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-bottom:10px;">
-    @foreach($deptNormal as $dept => $jumlah)
-    <div class="card" style="padding:12px 14px;display:flex;align-items:center;gap:10px;">
-        <div style="width:34px;height:34px;border-radius:9px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:#f0fdf4;">
-            <i class="fa-solid fa-building" style="font-size:13px;color:#16a34a;"></i>
-        </div>
-        <div style="min-width:0;">
-            <div style="font-size:10px;color:#64748b;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ $dept }}</div>
-            <div style="font-size:18px;font-weight:800;color:#0b4614;">{{ $jumlah }}</div>
-        </div>
+<div class="card" style="padding:16px 18px;margin-bottom:14px;">
+    <p style="font-size:11px;font-weight:500;color:#94a3b8;letter-spacing:.6px;text-transform:uppercase;margin:0 0 12px;">
+        Rekap per Departemen
+    </p>
+    <div style="position:relative;width:100%;height:260px;">
+        <canvas id="deptChart" role="img" aria-label="Bar chart jumlah anggota per departemen">
+            Data anggota per departemen.
+        </canvas>
     </div>
-    @endforeach
-</div>
-
-@if($deptExcluded->isNotEmpty())
-
-<p style="font-size:11px;font-weight:600;color:#94a3b8;letter-spacing:.6px;text-transform:uppercase;margin:0 0 8px;">
-    Eksternal
-</p>
-<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-bottom:14px;">
-    @foreach($deptExcluded as $dept => $jumlah)
-    <div class="card" style="padding:12px 14px;display:flex;align-items:center;gap:10px;opacity:.5;">
-        <div style="width:34px;height:34px;border-radius:9px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:#f1f5f9;">
-            <i class="fa-solid fa-building" style="font-size:13px;color:#000000;"></i>
-        </div>
-        <div style="min-width:0;">
-            <div style="font-size:10px;color:#000000;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ $dept }}</div>
-            <div style="font-size:18px;font-weight:800;color:#000000;">{{ $jumlah }}</div>
-        </div>
+    <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:12px;font-size:12px;color:#64748b;">
+        <span style="display:flex;align-items:center;gap:5px;">
+            <span style="width:10px;height:10px;border-radius:2px;background:#16a34a;"></span>Karyawan STEP
+        </span>
+        <span style="display:flex;align-items:center;gap:5px;">
+            <span style="width:10px;height:10px;border-radius:2px;background:#c3c2b7;"></span>Eksternal
+        </span>
     </div>
-    @endforeach
 </div>
-@else
-<div style="margin-bottom:14px;"></div>
-@endif
-
 @endif
 
 {{-- ── FILTER BAR ── --}}
@@ -400,6 +398,7 @@
 
 @endsection
 @push('scripts')
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
 const CSRF = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
 
@@ -556,5 +555,84 @@ document.addEventListener('keydown', e => {
         });
     }
 });
+
+(function () {
+    @if($summaryDept->isNotEmpty())
+    @php
+        $dn = $summaryDept->filter(fn($v, $k) => !in_array($k, $excludedDept))->sortKeys();
+        $de = $summaryDept->filter(fn($v, $k) =>  in_array($k, $excludedDept))->sortKeys();
+    @endphp
+    const deptNormal   = @json($dn);
+    const deptExcluded = @json($de);
+
+    const labelsNormal   = Object.keys(deptNormal);
+    const labelsExcluded = Object.keys(deptExcluded);
+    const allLabels      = [...labelsNormal, ...labelsExcluded];
+    const allData        = [...Object.values(deptNormal), ...Object.values(deptExcluded)];
+    const isDark         = matchMedia('(prefers-color-scheme: dark)').matches;
+
+    const colors = [
+        ...labelsNormal.map(()   => '#16a34a'),
+        ...labelsExcluded.map(() => isDark ? '#444441' : '#c3c2b7'),
+    ];
+
+    const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+    const textMuted = '#898781';
+    const textSec   = isDark ? '#c3c2b7' : '#52514e';
+
+    new Chart(document.getElementById('deptChart'), {
+        type: 'bar',
+        data: {
+            labels: allLabels,
+            datasets: [{
+                data: allData,
+                backgroundColor: colors,
+                borderRadius: { topLeft: 4, topRight: 4 },
+                borderSkipped: 'bottom',
+                barThickness: 28,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => ` ${ctx.raw} orang` } }
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: { color: textSec, font: { size: 11 }, maxRotation: 45, minRotation: 30, autoSkip: false },
+                    border: { display: false },
+                },
+                y: {
+                    grid: { color: gridColor },
+                    ticks: { color: textMuted, font: { size: 11 } },
+                    border: { color: gridColor },
+                    beginAtZero: true,
+                }
+            },
+            layout: { padding: { top: 20 } }
+        },
+        plugins: [{
+            id: 'valueLabel',
+            afterDatasetsDraw(chart) {
+                const { ctx } = chart;
+                chart.data.datasets[0].data.forEach((val, i) => {
+                    const meta = chart.getDatasetMeta(0);
+                    const bar  = meta.data[i];
+                    ctx.save();
+                    ctx.fillStyle    = textSec;
+                    ctx.font         = '500 11px sans-serif';
+                    ctx.textAlign    = 'center';
+                    ctx.textBaseline = 'bottom';
+                    ctx.fillText(val, bar.x, bar.y - 4);
+                    ctx.restore();
+                });
+            }
+        }]
+    });
+    @endif
+})();
 </script>
 @endpush

@@ -13,7 +13,7 @@ class DashboardController extends Controller
         $totalAktif    = Karyawan::where('keterangan', 'Aktif')->count();
 
         $totalHadir    = Karyawan::where('keterangan', 'Aktif')
-                            ->where('status_kehadiran', true)
+                            ->where('status_kehadiran', 2)
                             ->count();
 
         $topDepartemen = Karyawan::selectRaw('departemen, COUNT(*) as total_login')
@@ -26,7 +26,7 @@ class DashboardController extends Controller
         // Keluarga dari karyawan yang HADIR saja (exclude karyawan/karyawati itu sendiri)
         $totalKeluargaHadir = DetailKaryawan::whereHas('karyawan', function ($q) {
                                     $q->where('keterangan', 'Aktif')
-                                      ->where('status_kehadiran', true);
+                                      ->where('status_kehadiran', 2);
                                 })
                                 ->whereNotIn('hubungan', ['Karyawan', 'Karyawati'])
                                 ->count();

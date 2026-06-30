@@ -42,13 +42,8 @@ class GuestController extends Controller
             $notif['bus'] = true;
         }
 
-        // Baju — ada member yang belum isi ukuran kaos
-        $belumIsiBaju = $karyawan->details()
-            ->where(function ($q) {
-                $q->whereNull('ukuran_kaos')->orWhere('ukuran_kaos', '');
-            })
-            ->exists();
-        if ($belumIsiBaju) {
+        // Baju — belum konfirmasi di tahun ini
+        if (!$karyawan->isBajuConfirmedThisYear()) {
             $notif['baju'] = true;
         }
 
@@ -79,10 +74,9 @@ class GuestController extends Controller
 
         if ($key === 'rundown') {
             $rundowns = Rundown::orderBy('mulai')->get();
-            $karyawan = Auth::user()->karyawan;  // ← tambah ini
+            $karyawan = Auth::user()->karyawan;
             return view('guest.partials.rundown', compact('rundowns', 'karyawan'));
         }
-        // ────────────────────────────────────────────────────────────────────
 
         $menu     = GuestMenu::where('key', $key)->where('is_active', true)->firstOrFail();
         $user     = Auth::user()->load('karyawan.details');
@@ -109,10 +103,8 @@ class GuestController extends Controller
                 ->get();
         }
 
-        // ── Expired check ────────────────────────────────────────────────────
         $isExpired = $menu->berlaku_hingga !== null
                      && \Carbon\Carbon::now()->isAfter($menu->berlaku_hingga);
-        // ────────────────────────────────────────────────────────────────────
 
         return view($viewPath, compact('menu', 'karyawan', 'pengajuanPending', 'riwayatPengajuan', 'isExpired'));
     }
@@ -125,10 +117,18 @@ class GuestController extends Controller
             return response()->json(['message' => 'Data tidak ditemukan.'], 404);
         }
 
-        $karyawan->status_kehadiran = !$karyawan->status_kehadiran;
+        // 0 (belum) → 2 (hadir), 2 (hadir) → 1 (tidak hadir), 1 (tidak hadir) → 2 (hadir)
+        if ($karyawan->status_kehadiran == 0) {
+            $karyawan->status_kehadiran = 2;
+        } elseif ($karyawan->status_kehadiran == 2) {
+            $karyawan->status_kehadiran = 1;
+        } else {
+            $karyawan->status_kehadiran = 2;
+        }
+
         $karyawan->save();
 
-        $label = $karyawan->status_kehadiran ? 'Hadir' : 'Tidak Hadir';
+        $label = $karyawan->status_kehadiran == 2 ? 'Hadir' : 'Tidak Hadir';
 
         return response()->json([
             'message'          => "Status kehadiran diperbarui: $label",
@@ -182,11 +182,22 @@ class GuestController extends Controller
         $detail->update([
             'ukuran_kaos' => $validated['ukuran_kaos'],
             'jenis_kaos'  => $validated['jenis_kaos'],
-            // Anak tidak perlu lengan
             'lengan_kaos' => $validated['jenis_kaos'] === 'Anak'
                                 ? null
                                 : ($validated['lengan_kaos'] ?? null),
         ]);
+
+        // ── Auto-confirm kalau semua anggota sudah punya ukuran ──────────────
+        $semuaLengkap = !$karyawan->details()
+            ->where(function ($q) {
+                $q->whereNull('ukuran_kaos')->orWhere('ukuran_kaos', '');
+            })
+            ->exists();
+
+        if ($semuaLengkap && !$karyawan->isBajuConfirmedThisYear()) {
+            $karyawan->update(['baju_confirmed_at' => now()]);
+        }
+        // ─────────────────────────────────────────────────────────────────────
 
         return response()->json([
             'message'     => 'Ukuran kaos berhasil disimpan.',
@@ -194,6 +205,31 @@ class GuestController extends Controller
             'jenis_kaos'  => $detail->jenis_kaos,
             'lengan_kaos' => $detail->lengan_kaos,
         ]);
+    }
+
+    // ─────────────────────────────────────────
+    // BAJU — Konfirmasi pakai data tahun lalu
+    // ─────────────────────────────────────────
+    public function bajuKonfirmasiTahunLalu(Request $request)
+    {
+        $karyawan = Auth::user()->karyawan;
+
+        // Validasi: semua anggota harus sudah punya ukuran
+        $belumLengkap = $karyawan->details()
+            ->where(function ($q) {
+                $q->whereNull('ukuran_kaos')->orWhere('ukuran_kaos', '');
+            })
+            ->exists();
+
+        if ($belumLengkap) {
+            return response()->json([
+                'message' => 'Masih ada anggota yang belum memiliki ukuran baju.',
+            ], 422);
+        }
+
+        $karyawan->update(['baju_confirmed_at' => now()]);
+
+        return response()->json(['message' => 'Konfirmasi berhasil.']);
     }
 
     public function kursisBus()
@@ -206,10 +242,8 @@ class GuestController extends Controller
                 ->with('error', 'Kursi belum ditentukan.');
         }
 
-        // Parse "B-12" → kode=B, nomorKursi=12
         [$kode, $nomorKursi] = explode('-', $bus->kursi, 2);
 
-        // Ambil semua penumpang bus ini (kursi diawali kode bus)
         $terisi = Bus::whereNotNull('kursi')
             ->where('kursi', 'like', $kode . '-%')
             ->get()

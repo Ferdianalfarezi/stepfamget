@@ -409,7 +409,6 @@ function refreshDurasiPreview(tr) {
     if (el) el.textContent = calcDurasi(mulai, selesai);
 }
 
-// Cascade jam selesai row ini → jam mulai row berikutnya (durasi tetap)
 function cascadeNextRow(tr) {
     const selesaiVal = tr.querySelector('.td-selesai input')?.value ?? tr.dataset.selesai;
     if (!selesaiVal) return;
@@ -486,7 +485,7 @@ function cancelEdit(btn) {
     currentEditRow = null;
 }
 
-function saveEdit(btn) {
+async function saveEdit(btn) {
     const tr = btn.closest('tr');
     const id = tr.dataset.id;
 
@@ -517,18 +516,19 @@ function saveEdit(btn) {
     fd.append('properti',   properti);
     fd.append('keterangan', keterangan);
 
-    fetch(`/rundowns/${id}`, {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': CSRF,
-            'X-Requested-With': 'XMLHttpRequest',
-            'Accept': 'application/json',
-        },
-        body: fd,
-    })
-    .then(r => r.json().then(d => ({ status: r.status, body: d })))
-    .then(({ status, body }) => {
-        if (status === 200) {
+    try {
+        const r    = await fetch(`/rundowns/${id}`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': CSRF,
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+            },
+            body: fd,
+        });
+        const body = await r.json();
+
+        if (r.ok) {
             tr.dataset.mulai      = mulai;
             tr.dataset.selesai    = selesai;
             tr.dataset.kegiatan   = kegiatan;
@@ -543,19 +543,20 @@ function saveEdit(btn) {
             tr.querySelector('.row-actions-edit').style.display = 'none';
             currentEditRow = null;
 
-            showToast('Kegiatan berhasil diupdate!');
-        } else if (status === 422) {
+            showToast(body.message ?? 'Kegiatan berhasil diupdate!');
+        } else if (r.status === 422) {
             const firstErr = Object.values(body.errors)[0][0];
             showToast(firstErr, 'error');
         } else {
             showToast(body.message ?? 'Terjadi kesalahan', 'error');
         }
-    })
-    .catch(() => showToast('Gagal menghubungi server', 'error'))
-    .finally(() => {
+    } catch (err) {
+        console.error('saveEdit error:', err);
+        showToast('Gagal menghubungi server', 'error');
+    } finally {
         savBtn.innerHTML = '<i class="fa-solid fa-check"></i>';
         savBtn.disabled  = false;
-    });
+    }
 }
 
 // ── INLINE ADD ROWS ────────────────────────
@@ -635,7 +636,7 @@ function removeRow(id) {
     toggleSimpanBtn();
 }
 
-function submitBulk() {
+async function submitBulk() {
     const rows   = document.querySelectorAll('.inline-row');
     const items  = [];
     let hasError = false;
@@ -677,19 +678,20 @@ function submitBulk() {
     btn.classList.add('loading');
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...';
 
-    fetch('{{ route('rundowns.bulk') }}', {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': CSRF,
-            'X-Requested-With': 'XMLHttpRequest',
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ items }),
-    })
-    .then(r => r.json().then(d => ({ status: r.status, body: d })))
-    .then(({ status, body }) => {
-        if (status === 200 || status === 201) {
+    try {
+        const r    = await fetch('{{ route('rundowns.bulk') }}', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': CSRF,
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ items }),
+        });
+        const body = await r.json();
+
+        if (r.ok) {
             document.getElementById('inlineRows').innerHTML = '';
             document.getElementById('inlineHeader').style.display = 'none';
             toggleSimpanBtn();
@@ -698,12 +700,13 @@ function submitBulk() {
         } else {
             showToast(body.message ?? 'Terjadi kesalahan', 'error');
         }
-    })
-    .catch(() => showToast('Gagal menghubungi server', 'error'))
-    .finally(() => {
+    } catch (err) {
+        console.error('submitBulk error:', err);
+        showToast('Gagal menghubungi server', 'error');
+    } finally {
         btn.classList.remove('loading');
         btn.innerHTML = '<i class="fa-solid fa-check"></i> Simpan Semua';
-    });
+    }
 }
 
 // ── DELETE ─────────────────────────────────
@@ -718,37 +721,41 @@ function closeModalDelete() {
     deleteTargetRow = null;
     document.getElementById('modalDelete').classList.remove('show');
 }
-function doDelete() {
+
+async function doDelete() {
     if (!deleteTargetRow) return;
-    const id  = deleteTargetRow.dataset.id;
-    const btn = document.getElementById('btnConfirmDelete');
+    const id        = deleteTargetRow.dataset.id;
+    const targetRow = deleteTargetRow; // ← simpan reference lokal
+    const btn       = document.getElementById('btnConfirmDelete');
     btn.classList.add('loading');
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menghapus...';
 
-    fetch(`/rundowns/${id}`, {
-        method: 'DELETE',
-        headers: {
-            'X-CSRF-TOKEN': CSRF,
-            'X-Requested-With': 'XMLHttpRequest',
-            'Accept': 'application/json',
-        },
-    })
-    .then(r => r.json().then(d => ({ status: r.status, body: d })))
-    .then(({ status, body }) => {
-        if (status === 200) {
+    try {
+        const r    = await fetch(`/rundowns/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': CSRF,
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+            },
+        });
+        const body = await r.json();
+
+        if (r.ok) {
             closeModalDelete();
-            deleteTargetRow.remove();
+            targetRow.remove(); // ← pakai local variable
             renumberRows();
-            showToast('Kegiatan berhasil dihapus!');
+            showToast(body.message ?? 'Kegiatan berhasil dihapus!');
         } else {
             showToast(body.message ?? 'Gagal menghapus', 'error');
         }
-    })
-    .catch(() => showToast('Gagal menghubungi server', 'error'))
-    .finally(() => {
+    } catch (err) {
+        console.error('doDelete error:', err);
+        showToast('Gagal menghubungi server', 'error');
+    } finally {
         btn.classList.remove('loading');
         btn.innerHTML = '<i class="fa-solid fa-trash"></i> Hapus';
-    });
+    }
 }
 
 function renumberRows() {

@@ -10,7 +10,14 @@ class KonveksiController extends Controller
 {
     public function index(Request $request)
     {
+        $year = now()->year;
+
+        $confirmedNiks = Karyawan::whereNotNull('baju_confirmed_at')
+            ->whereYear('baju_confirmed_at', $year)
+            ->pluck('nik');
+
         $query = DetailKaryawan::with('karyawan')
+            ->whereIn('nik', $confirmedNiks)
             ->orderBy('id');
 
         // Filter by NIK / nama karyawan / nama anggota
@@ -18,8 +25,8 @@ class KonveksiController extends Controller
             $s = $request->search;
             $query->where(function ($q) use ($s) {
                 $q->where('nama_keluarga', 'like', "%$s%")
-                  ->orWhere('nik', 'like', "%$s%")
-                  ->orWhereHas('karyawan', fn($k) => $k->where('nama', 'like', "%$s%"));
+                    ->orWhere('nik', 'like', "%$s%")
+                    ->orWhereHas('karyawan', fn($k) => $k->where('nama', 'like', "%$s%"));
             });
         }
 
@@ -52,30 +59,79 @@ class KonveksiController extends Controller
             }
         }
 
+        // Filter sudah/belum konfirmasi baju
+        if ($request->filled('status_konfirmasi')) {
+            if ($request->status_konfirmasi === 'sudah') {
+                $query->whereHas('karyawan', fn($k) => $k
+                    ->whereNotNull('baju_confirmed_at')
+                    ->whereYear('baju_confirmed_at', $year)
+                );
+            } elseif ($request->status_konfirmasi === 'belum') {
+                $query->whereHas('karyawan', fn($k) => $k->where(function ($q) use ($year) {
+                    $q->whereNull('baju_confirmed_at')
+                        ->orWhereYear('baju_confirmed_at', '!=', $year);
+                }));
+            }
+        }
+
         $details = $query->paginate(20)->withQueryString();
 
-        // Summary rekap ukuran
-        $rekap = DetailKaryawan::selectRaw('ukuran_kaos, jenis_kaos, lengan_kaos, COUNT(*) as total')
+        // Summary rekap ukuran — hanya dari karyawan yg sudah konfirmasi
+        $rekap = DetailKaryawan::whereIn('nik', $confirmedNiks)
+            ->selectRaw('ukuran_kaos, jenis_kaos, lengan_kaos, COUNT(*) as total')
             ->whereNotNull('ukuran_kaos')
             ->where('ukuran_kaos', '!=', '')
             ->groupBy('ukuran_kaos', 'jenis_kaos', 'lengan_kaos')
             ->orderByRaw("FIELD(ukuran_kaos,'XS','S','M','L','XL','XXL','XXXL')")
             ->get();
 
-        $totalBelum = DetailKaryawan::where(fn($q) => $q->whereNull('ukuran_kaos')->orWhere('ukuran_kaos', ''))->count();
-        $totalSudah = DetailKaryawan::whereNotNull('ukuran_kaos')->where('ukuran_kaos', '!=', '')->count();
+        $totalKonfirmasi = Karyawan::whereNotNull('baju_confirmed_at')
+            ->whereYear('baju_confirmed_at', $year)
+            ->count();
 
-        $totalScanned   = DetailKaryawan::where('is_scanned', 1)->count();
-        $totalUnscanned = DetailKaryawan::where('is_scanned', 0)->count();
+        $totalBelumKonfirmasi = Karyawan::where(function ($q) use ($year) {
+            $q->whereNull('baju_confirmed_at')
+                ->orWhereYear('baju_confirmed_at', '!=', $year);
+        })->count();
 
-        return view('konveksis.index', compact('details', 'rekap', 'totalBelum', 'totalSudah', 'totalScanned', 'totalUnscanned'));
+        $totalBelum = DetailKaryawan::whereIn('nik', $confirmedNiks)
+            ->where(fn($q) => $q->whereNull('ukuran_kaos')->orWhere('ukuran_kaos', ''))
+            ->count();
+
+        $totalSudah = DetailKaryawan::whereIn('nik', $confirmedNiks)
+            ->whereNotNull('ukuran_kaos')
+            ->where('ukuran_kaos', '!=', '')
+            ->count();
+
+        $totalScanned   = DetailKaryawan::whereIn('nik', $confirmedNiks)->where('is_scanned', 1)->count();
+        $totalUnscanned = DetailKaryawan::whereIn('nik', $confirmedNiks)->where('is_scanned', 0)->count();
+
+        return view('konveksis.index', compact(
+            'details', 'rekap', 'totalBelum', 'totalSudah',
+            'totalScanned', 'totalUnscanned',
+            'totalKonfirmasi', 'totalBelumKonfirmasi'
+        ));
     }
 
     // Scan NIK
     public function scan(Request $request)
     {
         $request->validate(['nik' => 'required|string']);
-        $nik   = trim($request->nik);
+        $nik = trim($request->nik);
+
+        $year = now()->year;
+        $karyawan = Karyawan::where('nik', $nik)
+            ->whereNotNull('baju_confirmed_at')
+            ->whereYear('baju_confirmed_at', $year)
+            ->first();
+
+        if (!$karyawan) {
+            return response()->json([
+                'found'   => false,
+                'message' => 'NIK tidak ditemukan atau belum konfirmasi baju.',
+            ], 404);
+        }
+
         $count = DetailKaryawan::where('nik', $nik)->count();
 
         if ($count === 0) {
@@ -83,7 +139,6 @@ class KonveksiController extends Controller
         }
 
         DetailKaryawan::where('nik', $nik)->update(['is_scanned' => 1]);
-        $karyawan = \App\Models\Karyawan::where('nik', $nik)->first();
 
         return response()->json([
             'found'   => true,

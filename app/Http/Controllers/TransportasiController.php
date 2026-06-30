@@ -19,14 +19,15 @@ class TransportasiController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('nama_karyawan', 'like', "%$search%")
-                  ->orWhere('nik', 'like', "%$search%");
+                ->orWhere('nik', 'like', "%$search%");
             });
         }
 
-        $buses = $query->orderBy('nama_karyawan')->paginate(15)->withQueryString();
-        $total = Bus::count();
+        $buses     = $query->orderBy('nama_karyawan')->paginate(15)->withQueryString();
+        $total     = Bus::count();
+        $jumlahBus = (int) ceil($total / 54); // 1-54 = 1 bus, 55-108 = 2 bus, dst
 
-        return view('buses.index', compact('buses', 'total'));
+        return view('buses.index', compact('buses', 'total', 'jumlahBus'));
     }
 
     public function kendaraans(Request $request)

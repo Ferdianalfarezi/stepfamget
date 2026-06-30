@@ -52,8 +52,9 @@
         <div class="k-form-group">
             <label class="k-form-label">Status Kehadiran</label>
             <select name="status_kehadiran" id="edit_status_kehadiran" class="k-form-input">
-                <option value="0">Tidak</option>
-                <option value="1">Ya</option>
+                <option value="0">Belum Konfirmasi</option>
+                <option value="1">Tidak Hadir</option>
+                <option value="2">Hadir</option>
             </select>
         </div>
         <input type="hidden" name="jumlah_keluarga" id="edit_jumlah_keluarga" value="0">

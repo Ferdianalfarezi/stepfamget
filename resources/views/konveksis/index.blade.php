@@ -7,23 +7,25 @@
 {{-- ── REKAP CARD ───────────────────────────────────────────────────────────── --}}
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px;">
 
+    {{-- WAS: Sudah Isi --}}
     <div class="card" style="padding:14px 18px;display:flex;align-items:center;gap:12px;">
         <div style="width:40px;height:40px;border-radius:10px;background:#dcfce7;display:flex;align-items:center;justify-content:center;">
-            <i class="fa-solid fa-shirt" style="color:#16a34a;font-size:16px;"></i>
+            <i class="fa-solid fa-circle-check" style="color:#16a34a;font-size:16px;"></i>
         </div>
         <div>
-            <div style="font-size:11px;color:#64748b;font-weight:600;">Sudah Isi</div>
-            <div style="font-size:20px;font-weight:800;color:#16a34a;">{{ $totalSudah }}</div>
+            <div style="font-size:11px;color:#64748b;font-weight:600;">Sudah Konfirmasi</div>
+            <div style="font-size:20px;font-weight:800;color:#16a34a;">{{ $totalKonfirmasi }}</div>
         </div>
     </div>
 
+    {{-- WAS: Belum Isi --}}
     <div class="card" style="padding:14px 18px;display:flex;align-items:center;gap:12px;">
         <div style="width:40px;height:40px;border-radius:10px;background:#fee2e2;display:flex;align-items:center;justify-content:center;">
             <i class="fa-solid fa-circle-exclamation" style="color:#ef4444;font-size:16px;"></i>
         </div>
         <div>
-            <div style="font-size:11px;color:#64748b;font-weight:600;">Belum Isi</div>
-            <div style="font-size:20px;font-weight:800;color:#ef4444;">{{ $totalBelum }}</div>
+            <div style="font-size:11px;color:#64748b;font-weight:600;">Belum Konfirmasi</div>
+            <div style="font-size:20px;font-weight:800;color:#ef4444;">{{ $totalBelumKonfirmasi }}</div>
         </div>
     </div>
 
@@ -194,11 +196,17 @@
                     <option value="belum" {{ request('status_baju') == 'belum' ? 'selected' : '' }}>Belum Isi</option>
                 </select>
 
+                <select name="status_konfirmasi" class="form-control" style="width:105px;">
+                    <option value="">Status baju</option>
+                    <option value="sudah" {{ request('status_konfirmasi') == 'sudah' ? 'selected' : '' }}>Sudah Konfirmasi</option>
+                    <option value="belum" {{ request('status_konfirmasi') == 'belum' ? 'selected' : '' }}>Belum Konfirmasi</option>
+                </select>
+
                 <button type="submit" class="btn btn-primary">
                     <i class="fa-solid fa-filter"></i> Filter
                 </button>
 
-                @if(request()->hasAny(['search','hubungan','ukuran','jenis','lengan','status_baju']))
+                @if(request()->hasAny(['search','hubungan','ukuran','jenis','lengan','status_baju','status_konfirmasi']))
                     <a href="{{ route('konveksi.index') }}" class="btn btn-outline">
                         <i class="fa-solid fa-xmark"></i> Reset
                     </a>

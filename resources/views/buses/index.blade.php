@@ -37,6 +37,9 @@
             </div>
             <div style="font-size:12px;color:#64748b;margin-top:4px;">
                 Total <strong>{{ $total }}</strong> karyawan naik bus
+                &nbsp;·&nbsp;
+                Estimasi <strong>{{ $jumlahBus }}</strong> bus
+                <span style="color:#94a3b8;">(kapasitas 54 kursi/bus)</span>
             </div>
         </div>
         <div style="display:flex;gap:8px;align-items:center;">

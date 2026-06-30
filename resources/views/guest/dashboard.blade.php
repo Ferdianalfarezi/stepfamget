@@ -119,21 +119,25 @@
   <div style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:18px;padding:18px 18px 16px;margin-top:16px;position:relative;overflow:hidden;">
     <div style="position:absolute;top:-30px;right:-30px;width:110px;height:110px;border-radius:50%;background:rgba(61,122,71,.3);pointer-events:none;"></div>
     <div style="font-size:10px;font-weight:600;color:rgba(255,255,255,.4);letter-spacing:1px;margin-bottom:10px;">STATUS KEHADIRAN GATHERING</div>
-    <div id="bigStatus" style="font-size:28px;font-weight:800;line-height:1.1;margin-bottom:4px;color:{{ $karyawan->status_kehadiran ? '#7ec88a' : '#ef9a9a' }};">
-      {{ $karyawan->status_kehadiran ? '✓ Hadir' : '✗ Belum Hadir' }}
+
+    <div id="bigStatus" style="font-size:28px;font-weight:800;line-height:1.1;margin-bottom:4px;
+      color:{{ $karyawan->status_kehadiran == 2 ? '#7ec88a' : ($karyawan->status_kehadiran == 1 ? '#ef9a9a' : '#aaaaaa') }};">
+      {{ $karyawan->status_kehadiran == 2 ? '✓ Hadir' : ($karyawan->status_kehadiran == 1 ? '✗ Tidak Hadir' : '? Belum Konfirmasi') }}
     </div>
+
     <div id="statusSub" style="font-size:12px;color:rgba(255,255,255,.4);margin-bottom:16px;">
-      {{ $karyawan->status_kehadiran ? 'Kehadiran sudah tercatat' : 'Ketuk tombol untuk konfirmasi' }}
+      {{ $karyawan->status_kehadiran == 2 ? 'Kehadiran sudah tercatat' : ($karyawan->status_kehadiran == 1 ? 'Kamu tidak hadir di gathering' : 'Ketuk tombol untuk konfirmasi') }}
     </div>
+
     <button id="btnHadir" onclick="toggleKehadiran()"
             style="width:100%;padding:13px;border-radius:12px;
                    font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;
                    transition:all .2s;position:relative;z-index:1;
-                   background:{{ $karyawan->status_kehadiran ? 'rgba(126,200,138,.18)' : 'rgba(245,158,11,.18)' }};
-                   border:1px solid {{ $karyawan->status_kehadiran ? 'rgba(126,200,138,.35)' : 'rgba(245,158,11,.35)' }};
-                   color:{{ $karyawan->status_kehadiran ? '#7ec88a' : '#fcd97d' }};">
+                   background:{{ $karyawan->status_kehadiran == 2 ? 'rgba(126,200,138,.18)' : 'rgba(245,158,11,.18)' }};
+                   border:1px solid {{ $karyawan->status_kehadiran == 2 ? 'rgba(126,200,138,.35)' : 'rgba(245,158,11,.35)' }};
+                   color:{{ $karyawan->status_kehadiran == 2 ? '#7ec88a' : '#fcd97d' }};">
       <span id="btnText">
-        <i class="fa-solid {{ $karyawan->status_kehadiran ? 'fa-calendar-xmark' : 'fa-calendar-check' }}" style="margin-right:8px;"></i>{{ $karyawan->status_kehadiran ? 'Batalkan Kehadiran' : 'Konfirmasi Hadir Sekarang' }}
+        <i class="fa-solid {{ $karyawan->status_kehadiran == 2 ? 'fa-calendar-xmark' : 'fa-calendar-check' }}" style="margin-right:8px;"></i>{{ $karyawan->status_kehadiran == 2 ? 'Batalkan Kehadiran' : 'Konfirmasi Hadir Sekarang' }}
       </span>
     </button>
   </div>
@@ -192,13 +196,36 @@ function showToast(msg, type = 'success') {
   setTimeout(() => t.classList.remove('show'), 2800);
 }
 
+function updateUI(status) {
+  const btn = document.getElementById('btnHadir');
+
+  // warna & teks bigStatus
+  document.getElementById('bigStatus').style.color =
+    status == 2 ? '#7ec88a' : (status == 1 ? '#ef9a9a' : '#aaaaaa');
+  document.getElementById('bigStatus').textContent =
+    status == 2 ? '✓ Hadir' : (status == 1 ? '✗ Tidak Hadir' : '? Belum Konfirmasi');
+
+  // sub teks
+  document.getElementById('statusSub').textContent =
+    status == 2 ? 'Kehadiran sudah tercatat'
+    : (status == 1 ? 'Kamu tidak hadir di gathering' : 'Ketuk tombol untuk konfirmasi');
+
+  // style button
+  btn.style.background  = status == 2 ? 'rgba(126,200,138,.18)' : 'rgba(245,158,11,.18)';
+  btn.style.borderColor = status == 2 ? 'rgba(126,200,138,.35)'  : 'rgba(245,158,11,.35)';
+  btn.style.color       = status == 2 ? '#7ec88a' : '#fcd97d';
+
+  // label & icon button
+  document.getElementById('btnText').innerHTML = status == 2
+    ? '<i class="fa-solid fa-calendar-xmark" style="margin-right:8px;"></i>Batalkan Kehadiran'
+    : '<i class="fa-solid fa-calendar-check" style="margin-right:8px;"></i>Konfirmasi Hadir Sekarang';
+}
+
 function toggleKehadiran() {
   if (loading) return;
   loading = true;
 
-  const btn  = document.getElementById('btnHadir');
-  const text = document.getElementById('btnText');
-  text.innerHTML = '<i class="fa-solid fa-circle-notch spinner"></i>';
+  document.getElementById('btnText').innerHTML = '<i class="fa-solid fa-circle-notch spinner"></i>';
 
   fetch('{{ route('guest.kehadiran') }}', {
     method: 'POST',
@@ -207,25 +234,12 @@ function toggleKehadiran() {
   })
   .then(r => r.json())
   .then(data => {
-    const hadir = data.status_kehadiran;
-    const btn   = document.getElementById('btnHadir');
-
-    document.getElementById('bigStatus').style.color = hadir ? '#7ec88a' : '#ef9a9a';
-    document.getElementById('bigStatus').textContent  = hadir ? '✓ Hadir' : '✗ Belum Hadir';
-    document.getElementById('statusSub').textContent  = hadir ? 'Kehadiran sudah tercatat' : 'Ketuk tombol untuk konfirmasi';
-
-    btn.style.background  = hadir ? 'rgba(126,200,138,.18)' : 'rgba(245,158,11,.18)';
-    btn.style.borderColor = hadir ? 'rgba(126,200,138,.35)'  : 'rgba(245,158,11,.35)';
-    btn.style.color       = hadir ? '#7ec88a' : '#fcd97d';
-    document.getElementById('btnText').innerHTML = hadir
-      ? '<i class="fa-solid fa-calendar-xmark" style="margin-right:8px;"></i>Batalkan Kehadiran'
-      : '<i class="fa-solid fa-calendar-check" style="margin-right:8px;"></i>Konfirmasi Hadir Sekarang';
-
+    updateUI(data.status_kehadiran);
     showToast(data.message, 'success');
   })
   .catch(() => {
     showToast('Gagal memperbarui kehadiran', 'error');
-    text.textContent = '{{ $karyawan->status_kehadiran ? "Batalkan" : "Konfirmasi" }}';
+    updateUI({{ $karyawan->status_kehadiran }}); // rollback ke state awal
   })
   .finally(() => { loading = false; });
 }

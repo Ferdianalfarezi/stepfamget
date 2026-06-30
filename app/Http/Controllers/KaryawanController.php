@@ -15,56 +15,104 @@ class KaryawanController extends Controller
     // INDEX
     // ─────────────────────────────────────────
     public function index(Request $request)
-    {
-        $excludedDept = ['RJU', 'spare', 'SECURITY', 'KYOEI', 'GA ASB', 'USTADZ','Driver Ops','TEJA'];
- 
-        $query = Karyawan::query();
- 
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('nama', 'like', "%$search%")
-                  ->orWhere('nik', 'like', "%$search%")
-                  ->orWhere('departemen', 'like', "%$search%");
+{
+    $excludedDept = ['RJU', 'spare', 'SECURITY', 'KYOEI', 'GA ASB', 'USTADZ','Driver Ops','TEJA'];
+
+    $query = Karyawan::query();
+
+    if ($request->filled('search')) {
+        $search = $request->search;
+        $query->where(function ($q) use ($search) {
+            $q->where('nama', 'like', "%$search%")
+            ->orWhere('nik', 'like', "%$search%")
+            ->orWhere('departemen', 'like', "%$search%");
+        });
+    }
+
+    if ($request->filled('departemen')) {
+        $query->where('departemen', $request->departemen);
+    }
+
+    if ($request->filled('keterangan')) {
+        $query->where('keterangan', $request->keterangan);
+    }
+
+    // ── Filter Baju ──
+    if ($request->filled('baju')) {
+        $year = now()->year;
+        if ($request->baju === 'confirmed') {
+            $query->whereNotNull('baju_confirmed_at')
+                ->whereYear('baju_confirmed_at', $year);
+        } elseif ($request->baju === 'belum') {
+            $query->where(function ($q) use ($year) {
+                $q->whereNull('baju_confirmed_at')
+                ->orWhereYear('baju_confirmed_at', '!=', $year);
             });
         }
- 
-        if ($request->filled('departemen')) {
-            $query->where('departemen', $request->departemen);
-        }
- 
-        if ($request->filled('keterangan')) {
-            $query->where('keterangan', $request->keterangan);
-        }
- 
-        $karyawans      = $query->with('details')->orderBy('nama')->paginate(15)->withQueryString();
-        $departemenList = Karyawan::select('departemen')->distinct()->orderBy('departemen')->pluck('departemen');
- 
-        // ── Summary ──
-        $allKaryawan       = Karyawan::all();
-        $totalKaryawan     = $allKaryawan->count();
-        $totalValid        = $allKaryawan->whereNotIn('departemen', $excludedDept)->count();
-        $totalEksternal    = $totalKaryawan - $totalValid;
- 
-        $summaryDept = $allKaryawan
-            ->groupBy('departemen')
-            ->map(fn($group) => $group->count());
- 
-        // Merge HR + HRD
-        $hrTotal     = ($summaryDept->get('HR') ?? 0) + ($summaryDept->get('HRD') ?? 0);
-        $summaryDept = $summaryDept->forget(['HR', 'HRD']);
-        if ($hrTotal > 0) $summaryDept->put('HR / HRD', $hrTotal);
- 
-        $deptNormal   = $summaryDept->filter(fn($v, $k) => !in_array($k, $excludedDept))->sortKeys();
-        $deptExcluded = $summaryDept->filter(fn($v, $k) =>  in_array($k, $excludedDept))->sortKeys();
- 
-        return view('karyawan.index', compact(
-            'karyawans', 'departemenList',
-            'totalKaryawan', 'totalValid', 'totalEksternal',
-            'deptNormal', 'deptExcluded', 'excludedDept'
-        ));
     }
- 
+
+    // ── Filter Trans ──
+    if ($request->filled('trans')) {
+        $year = now()->year;
+        if ($request->trans === 'confirmed') {
+            $query->whereNotNull('trans_confirmed_at')
+                ->whereYear('trans_confirmed_at', $year);
+        } elseif ($request->trans === 'belum') {
+            $query->where(function ($q) use ($year) {
+                $q->whereNull('trans_confirmed_at')
+                ->orWhereYear('trans_confirmed_at', '!=', $year);
+            });
+        }
+    }
+
+    // ── Filter Hadir ──
+    if ($request->filled('hadir') || $request->hadir === '0') {
+        $query->where('status_kehadiran', $request->hadir);
+    }
+
+    $karyawans      = $query->with('details')->orderBy('nama')->paginate(15)->withQueryString();
+    $departemenList = Karyawan::select('departemen')->distinct()->orderBy('departemen')->pluck('departemen');
+
+    // ── Summary ──
+    $allKaryawan    = Karyawan::all();
+    $totalKaryawan  = $allKaryawan->count();
+    $totalValid     = $allKaryawan->whereNotIn('departemen', $excludedDept)->count();
+    $totalEksternal = $totalKaryawan - $totalValid;
+    $totalHadir      = Karyawan::where('status_kehadiran', 2)->count();
+    $totalTidakHadir = Karyawan::where('status_kehadiran', 1)->count();
+    $totalBelumHadir = Karyawan::where('status_kehadiran', 0)->count();
+
+    $summaryDept = $allKaryawan
+        ->groupBy('departemen')
+        ->map(fn($group) => $group->count());
+
+    // Merge HR + HRD
+    $hrTotal     = ($summaryDept->get('HR') ?? 0) + ($summaryDept->get('HRD') ?? 0);
+    $summaryDept = $summaryDept->forget(['HR', 'HRD']);
+    if ($hrTotal > 0) $summaryDept->put('HR / HRD', $hrTotal);
+
+    $deptNormal   = $summaryDept->filter(fn($v, $k) => !in_array($k, $excludedDept))->sortKeys();
+    $deptExcluded = $summaryDept->filter(fn($v, $k) =>  in_array($k, $excludedDept))->sortKeys();
+
+    $year = now()->year;
+
+    $totalBajuConfirmed  = Karyawan::whereNotNull('baju_confirmed_at')
+        ->whereYear('baju_confirmed_at', $year)
+        ->count();
+
+    $totalTransConfirmed = Karyawan::whereNotNull('trans_confirmed_at')
+        ->whereYear('trans_confirmed_at', $year)
+        ->count();
+
+    return view('karyawan.index', compact(
+        'karyawans', 'departemenList',
+        'totalKaryawan', 'totalValid', 'totalEksternal',
+        'totalBajuConfirmed', 'totalTransConfirmed',
+        'totalHadir', 'totalTidakHadir', 'totalBelumHadir',  // tambah ini
+        'deptNormal', 'deptExcluded', 'excludedDept'
+    ));
+}
+
 
     // ─────────────────────────────────────────
     // STORE (AJAX)
@@ -240,15 +288,6 @@ class KaryawanController extends Controller
     // ─────────────────────────────────────────
     // EXPORT
     // ─────────────────────────────────────────
-    public function export(Request $request)
-    {
-        $filename = 'data-karyawan-' . now()->format('Ymd-His') . '.xlsx';
-        return Excel::download(new KaryawanExport($request), $filename);
-    }
-
-    // ─────────────────────────────────────────
-    // DETAIL ALL
-    // ─────────────────────────────────────────
     public function detailAll(Request $request)
     {
         $query = Karyawan::with('details');
@@ -257,8 +296,8 @@ class KaryawanController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('nama', 'like', "%$search%")
-                  ->orWhere('nik', 'like', "%$search%")
-                  ->orWhere('departemen', 'like', "%$search%");
+                ->orWhere('nik', 'like', "%$search%")
+                ->orWhere('departemen', 'like', "%$search%");
             });
         }
 
@@ -281,7 +320,6 @@ class KaryawanController extends Controller
             ->groupBy('departemen')
             ->map(fn($group) => $group->sum('details_count'));
 
-        // Merge HR + HRD jadi satu
         $hrTotal     = ($summaryDept->get('HR') ?? 0) + ($summaryDept->get('HRD') ?? 0);
         $summaryDept = $summaryDept->forget(['HR', 'HRD']);
         if ($hrTotal > 0) $summaryDept->put('HR / HRD', $hrTotal);
@@ -291,9 +329,17 @@ class KaryawanController extends Controller
             $q->whereNotIn('departemen', $excludedDept)
         )->count();
 
+        $year                = now()->year;
+        $totalKaryawan       = Karyawan::count();
+        $totalBajuConfirmed  = Karyawan::whereNotNull('baju_confirmed_at')
+                                    ->whereYear('baju_confirmed_at', $year)->count();
+        $totalTransConfirmed = Karyawan::whereNotNull('trans_confirmed_at')
+                                    ->whereYear('trans_confirmed_at', $year)->count();
+
         return view('karyawan.detail', compact(
             'karyawans', 'departemenList', 'total',
-            'summaryDept', 'totalAnggota', 'totalAnggotaValid', 'excludedDept'
+            'summaryDept', 'totalAnggota', 'totalAnggotaValid', 'excludedDept',
+            'totalBajuConfirmed', 'totalTransConfirmed', 'totalKaryawan'
         ));
     }
 
@@ -395,5 +441,10 @@ class KaryawanController extends Controller
         }
 
         return response()->json(['message' => 'Anggota berhasil dihapus.']);
+    }
+
+    public function export(Request $request)
+    {
+        return Excel::download(new KaryawanExport($request), 'karyawan-' . now()->format('Ymd-His') . '.xlsx');
     }
 }
