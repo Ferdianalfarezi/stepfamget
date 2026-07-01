@@ -41,6 +41,25 @@
         </div>
     </div>
 
+    {{-- Karyawan vs Karyawati --}}
+    <div class="card" style="padding:14px 18px;display:flex;align-items:center;gap:12px;">
+        <div style="width:40px;height:40px;border-radius:10px;background:#ede9fe;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <i class="fa-solid fa-venus-mars" style="color:#7c3aed;font-size:16px;"></i>
+        </div>
+        <div>
+            <div style="font-size:11px;color:#64748b;font-weight:600;margin-bottom:5px;">Karyawan / Karyawati</div>
+            <div style="display:flex;gap:10px;align-items:center;">
+                <span style="font-size:12px;font-weight:700;color:#3b82f6;display:flex;align-items:center;gap:3px;">
+                    <i class="fa-solid fa-mars"></i> {{ $totalKaryawanLaki }}
+                </span>
+                <span style="color:#e2e8f0;">|</span>
+                <span style="font-size:12px;font-weight:700;color:#ec4899;display:flex;align-items:center;gap:3px;">
+                    <i class="fa-solid fa-venus"></i> {{ $totalKaryawanWanita }}
+                </span>
+            </div>
+        </div>
+    </div>
+
     {{-- Konfirmasi Baju --}}
     <div class="card" style="padding:14px 18px;display:flex;align-items:center;gap:12px;">
         <div style="width:40px;height:40px;border-radius:10px;background:#f0fdf4;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
@@ -142,8 +161,17 @@
                     <option value="1" {{ request('hadir') == '1'  ? 'selected' : '' }}>✗ Tidak</option>
                     <option value="0" {{ request('hadir') === '0' ? 'selected' : '' }}>○ Belum</option>
                 </select>
+                <select name="hubungan" class="form-control" style="width:auto;min-width:120px;">
+                    <option value="">Semua Hubungan</option>
+                    <option value="Karyawan"   {{ request('hubungan') == 'Karyawan'   ? 'selected' : '' }}>
+                        ♂ Karyawan
+                    </option>
+                    <option value="Karyawati"  {{ request('hubungan') == 'Karyawati'  ? 'selected' : '' }}>
+                        ♀ Karyawati
+                    </option>
+                </select>
                 <button type="submit" class="btn btn-primary"><i class="fa-solid fa-filter"></i> Filter</button>
-                @if(request()->hasAny(['search','departemen','keterangan','baju','trans','hadir']))
+                @if(request()->hasAny(['search','departemen','keterangan','baju','trans','hadir','hubungan']))
                     <a href="{{ route('karyawan.index') }}" class="btn btn-outline"><i class="fa-solid fa-xmark"></i> Reset</a>
                 @endif
             </div>
@@ -240,7 +268,10 @@
                         @elseif($k->status_kehadiran == 1)
                             <span class="badge badge-danger">Tidak Hadir</span>
                         @else
-                            <span class="badge badge-gray">Belum</span>
+                            <span class="badge badge-gray">
+                                <i class="fa-solid fa-clock" style="font-size:9px;"></i>
+                                Belum
+                            </span>
                         @endif
                     </td>
                     <td>

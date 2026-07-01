@@ -573,7 +573,7 @@
             <div class="sb-brand-sub">HR System</div>
         </div>
     </div>
-
+    @if(auth()->user()->nama !== 'Hitz')
     {{-- Navigation --}}
     <div class="sb-section-label"></div>
 
@@ -782,8 +782,17 @@
             <span class="sb-nav-label">Gantt Chart</span>
         </a>
     </div>
-            
-
+     @endif       
+    <div class="sb-nav-wrap {{ request()->routeIs('konsumsis.*') ? 'active' : '' }}">
+        <a href="{{ route('konsumsis.index') }}" class="sb-nav">
+            @if(request()->routeIs('konsumsis.*'))
+                <div class="sb-dot"></div>
+            @else
+                <i class="fa-solid fa-utensils"></i>
+            @endif
+            <span class="sb-nav-label">Konsumsi</span>
+        </a>
+    </div>
     {{-- <div class="sb-nav-wrap {{ request()->routeIs('import.*') ? 'active' : '' }}">
         <a href="{{ route('import.index') }}" class="sb-nav">
             @if(request()->routeIs('import.*'))
@@ -795,28 +804,7 @@
         </a>
     </div> --}}
 
-    {{-- Services --}}
-    <div class="sb-section-label">Service · 2</div>
-    <div class="sb-service-block">
-        <a href="#" class="sb-svc-item">
-            <div class="sb-svc-dot" style="background:#e3f2fd;color:#1565c0;">
-                <i class="fa-solid fa-file-excel" style="font-size:11px;"></i>
-            </div>
-            <span class="sb-svc-label" style="font-size:12px;color:#444;">Export Data</span>
-        </a>
-        <a href="#" class="sb-svc-item">
-            <div class="sb-svc-dot" style="background:#f3e8ff;color:#7c3aed;">
-                <i class="fa-solid fa-chart-pie" style="font-size:10px;"></i>
-            </div>
-            <span class="sb-svc-label" style="font-size:12px;color:#444;">Statistik</span>
-        </a>
-        <a href="#" class="sb-svc-item">
-            <div class="sb-svc-dot" style="background:#f0f3f0;color:#9aa0ab;border:0.5px dashed #ccc;">
-                <i class="fa-solid fa-plus" style="font-size:10px;"></i>
-            </div>
-            <span class="sb-svc-label" style="font-size:12px;color:#9aa0ab;">Tambah modul</span>
-        </a>
-    </div>
+    
 
     {{-- Footer --}}
     <div class="sb-footer">

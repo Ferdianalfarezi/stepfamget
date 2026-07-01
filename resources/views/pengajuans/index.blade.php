@@ -139,14 +139,21 @@
                                 <span><i class="fa-solid fa-cake-candles" style="color:#3d7a47;width:14px;"></i> {{ $p->tanggal_lahir->format('d M Y') }}</span>
                             @endif
                             @if($p->ukuran_kaos)
-                                <span><i class="fa-solid fa-shirt" style="color:#3d7a47;width:14px;"></i> Kaos {{ $p->ukuran_kaos }}</span>
+                                <span>
+                                    <i class="fa-solid fa-shirt" style="color:#3d7a47;width:14px;"></i>
+                                    <span style="font-weight:700;color:#111;">{{ $p->ukuran_kaos }}</span>
+                                    @if($p->jenis_kaos || $p->lengan_kaos)
+                                        <span style="color:#94a3b8;font-size:11px;">
+                                            · {{ $p->jenis_kaos }}{{ $p->lengan_kaos ? ' · '.$p->lengan_kaos : '' }}
+                                        </span>
+                                    @endif
+                                </span>
                             @endif
                             @if(!$p->umur && !$p->tanggal_lahir && !$p->ukuran_kaos)
                                 <span style="color:#cbd5e1;">—</span>
                             @endif
                         </div>
                     </td>
-
                     {{-- Status --}}
                     <td>
                         @php

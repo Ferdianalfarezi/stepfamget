@@ -7,7 +7,6 @@
 {{-- ── REKAP CARD ───────────────────────────────────────────────────────────── --}}
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px;">
 
-    {{-- WAS: Sudah Isi --}}
     <div class="card" style="padding:14px 18px;display:flex;align-items:center;gap:12px;">
         <div style="width:40px;height:40px;border-radius:10px;background:#dcfce7;display:flex;align-items:center;justify-content:center;">
             <i class="fa-solid fa-circle-check" style="color:#16a34a;font-size:16px;"></i>
@@ -18,7 +17,6 @@
         </div>
     </div>
 
-    {{-- WAS: Belum Isi --}}
     <div class="card" style="padding:14px 18px;display:flex;align-items:center;gap:12px;">
         <div style="width:40px;height:40px;border-radius:10px;background:#fee2e2;display:flex;align-items:center;justify-content:center;">
             <i class="fa-solid fa-circle-exclamation" style="color:#ef4444;font-size:16px;"></i>
@@ -271,14 +269,14 @@
                     <th>Ukuran Baju</th>
                     <th>Jenis Kaos</th>
                     <th>Lengan</th>
-                    <th style="width:60px;">Aksi</th>
+                    <th style="width:80px;">Aksi</th>
                 </tr>
             </thead>
             <tbody>
                 @php $prevNik = null; @endphp
                 @forelse($details as $d)
                 @php $k = $d->karyawan; $isNewNik = $d->nik !== $prevNik; $prevNik = $d->nik; @endphp
-                <tr data-nik="{{ $d->nik }}" class="scan-row{{ $d->is_scanned ? ' row-scanned' : '' }}">
+                <tr data-nik="{{ $d->nik }}" data-id="{{ $d->id }}" class="scan-row{{ $d->is_scanned ? ' row-scanned' : '' }}">
                     <td style="color:#94a3b8;font-size:12px;">
                         {{ $loop->iteration + ($details->currentPage() - 1) * $details->perPage() }}
                     </td>
@@ -350,7 +348,15 @@
                             <span style="color:#cbd5e1;font-size:12px;">-</span>
                         @endif
                     </td>
-                    <td>
+                    <td style="display:flex;gap:4px;align-items:center;">
+                        {{-- Tombol Edit --}}
+                        <button onclick="openEdit({{ $d->id }})"
+                                class="action-btn"
+                                style="color:#ca8a04;"
+                                title="Edit {{ $d->nama_keluarga }}">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        {{-- Tombol Print (khusus Karyawan/Karyawati) --}}
                         @if(in_array($d->hubungan, ['Karyawan','Karyawati']))
                             <a href="{{ route('konveksi.print', ['nik' => $d->nik]) }}"
                                target="_blank"
@@ -407,7 +413,7 @@
     @endif
 </div>
 
-{{-- MODAL: GENERIC CONFIRM --}}
+{{-- ── MODAL: GENERIC CONFIRM ──────────────────────────────────────────────── --}}
 <div class="modal-overlay" id="modalConfirm">
     <div class="modal-box" style="max-width:400px;">
         <div class="modal-header">
@@ -431,15 +437,92 @@
     </div>
 </div>
 
+{{-- ── MODAL: EDIT DETAIL KARYAWAN ─────────────────────────────────────────── --}}
+<div class="modal-overlay" id="modalEdit">
+    <div class="modal-box" style="max-width:460px;">
+        <div class="modal-header">
+            <div>
+                <div class="modal-title">
+                    <i class="fa-solid fa-pen-to-square" style="color:#ca8a04;margin-right:6px;"></i>Edit Data Anggota
+                </div>
+                <div class="modal-subtitle" id="editSubtitle">–</div>
+            </div>
+            <button class="modal-close" onclick="closeEdit()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body">
+            <div style="display:grid;gap:14px;">
+
+                <div>
+                    <label style="font-size:12px;font-weight:600;color:#64748b;display:block;margin-bottom:5px;">
+                        Nama Anggota <span style="color:#ef4444;">*</span>
+                    </label>
+                    <input type="text" id="editNama" class="form-control" placeholder="Nama anggota keluarga">
+                </div>
+
+                <div>
+                    <label style="font-size:12px;font-weight:600;color:#64748b;display:block;margin-bottom:5px;">
+                        Hubungan <span style="color:#ef4444;">*</span>
+                    </label>
+                    <select id="editHubungan" class="form-control">
+                        <option value="">-- Pilih --</option>
+                        @foreach(['Karyawan','Karyawati','Istri','Suami','Anak','Saudara'] as $h)
+                            <option value="{{ $h }}">{{ $h }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+                    <div>
+                        <label style="font-size:12px;font-weight:600;color:#64748b;display:block;margin-bottom:5px;">Ukuran</label>
+                        <select id="editUkuran" class="form-control">
+                            <option value="">-</option>
+                            @foreach(['XS','S','M','L','XL','XXL','XXXL'] as $u)
+                                <option value="{{ $u }}">{{ $u }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:12px;font-weight:600;color:#64748b;display:block;margin-bottom:5px;">Jenis</label>
+                        <select id="editJenis" class="form-control">
+                            <option value="">-</option>
+                            <option value="Dewasa">Dewasa</option>
+                            <option value="Anak">Anak</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:12px;font-weight:600;color:#64748b;display:block;margin-bottom:5px;">Lengan</label>
+                        <select id="editLengan" class="form-control">
+                            <option value="">-</option>
+                            <option value="Lengan Pendek">Pendek</option>
+                            <option value="Lengan Panjang">Panjang</option>
+                        </select>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="k-form-actions" style="margin-top:20px;">
+                <button type="button" class="btn btn-outline" onclick="closeEdit()">
+                    <i class="fa-solid fa-xmark"></i> Batal
+                </button>
+                <button type="button" class="btn btn-primary" id="btnSimpanEdit" onclick="submitEdit()">
+                    <i class="fa-solid fa-floppy-disk"></i> Simpan
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @push('scripts')
 <script>
-const CSRF          = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
-const SCAN_URL      = '{{ route("konveksi.scan") }}';
-const RESET_URL     = '{{ route("konveksi.resetScan") }}';
-const scanInput     = document.getElementById('scanInput');
-const btnClear      = document.getElementById('btnClearScan');
-const scanStatus    = document.getElementById('scanStatus');
-let   scanTimer     = null;
+const CSRF      = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
+const SCAN_URL  = '{{ route("konveksi.scan") }}';
+const RESET_URL = '{{ route("konveksi.resetScan") }}';
+const EDIT_BASE = '{{ url("konveksis") }}';
+const scanInput = document.getElementById('scanInput');
+const btnClear  = document.getElementById('btnClearScan');
+const scanStatus= document.getElementById('scanStatus');
+let   scanTimer = null;
 
 // ── Toast ─────────────────────────────────────────────────────────────────────
 function showToast(msg, type = 'success') {
@@ -573,7 +656,7 @@ function doResetScan() {
     });
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// ── Helpers scan ──────────────────────────────────────────────────────────────
 function clearScan() {
     scanInput.value          = '';
     btnClear.style.display   = 'none';
@@ -596,12 +679,105 @@ function setStatus(msg, type) {
     scanStatus.style.border     = border;
 }
 
+// ── Edit modal ────────────────────────────────────────────────────────────────
+let editId = null;
+
+async function openEdit(id) {
+    editId = id;
+    const btn = document.getElementById('btnSimpanEdit');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memuat...';
+
+    document.getElementById('modalEdit').classList.add('show');
+
+    try {
+        const res  = await fetch(`${EDIT_BASE}/${id}/edit`, {
+            headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF }
+        });
+        const data = await res.json();
+
+        document.getElementById('editSubtitle').textContent = data.nama_keluarga ?? '-';
+        document.getElementById('editNama').value           = data.nama_keluarga ?? '';
+        document.getElementById('editHubungan').value       = data.hubungan      ?? '';
+        document.getElementById('editUkuran').value         = data.ukuran_kaos   ?? '';
+        document.getElementById('editJenis').value          = data.jenis_kaos    ?? '';
+        document.getElementById('editLengan').value         = data.lengan_kaos   ?? '';
+
+    } catch (e) {
+        showToast('Gagal memuat data.', 'error');
+        closeEdit();
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Simpan';
+    }
+}
+
+function closeEdit() {
+    document.getElementById('modalEdit').classList.remove('show');
+    editId = null;
+    // reset fields
+    ['editNama','editHubungan','editUkuran','editJenis','editLengan'].forEach(id => {
+        document.getElementById(id).value = '';
+    });
+    document.getElementById('editSubtitle').textContent = '–';
+}
+
+async function submitEdit() {
+    if (!editId) return;
+
+    const nama     = document.getElementById('editNama').value.trim();
+    const hubungan = document.getElementById('editHubungan').value;
+
+    if (!nama || !hubungan) {
+        showToast('Nama dan hubungan wajib diisi.', 'warning');
+        return;
+    }
+
+    const btn = document.getElementById('btnSimpanEdit');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...';
+
+    try {
+        const res = await fetch(`${EDIT_BASE}/${editId}`, {
+            method : 'POST',
+            headers: { 'Content-Type':'application/json', 'X-CSRF-TOKEN':CSRF, 'Accept':'application/json' },
+            body   : JSON.stringify({
+                _method       : 'PUT',
+                nama_keluarga : nama,
+                hubungan      : hubungan,
+                ukuran_kaos   : document.getElementById('editUkuran').value  || null,
+                jenis_kaos    : document.getElementById('editJenis').value   || null,
+                lengan_kaos   : document.getElementById('editLengan').value  || null,
+            }),
+        });
+
+        if (!res.ok) {
+            const err = await res.json();
+            showToast(err.message ?? 'Gagal menyimpan.', 'error');
+            return;
+        }
+
+        showToast('Data berhasil diupdate!');
+        closeEdit();
+        setTimeout(() => location.reload(), 800);
+
+    } catch (e) {
+        showToast('Gagal menghubungi server.', 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Simpan';
+    }
+}
+
 // ── Close modal on overlay / ESC ─────────────────────────────────────────────
 document.getElementById('modalConfirm').addEventListener('click', function(e) {
     if (e.target === this) closeConfirm();
 });
+document.getElementById('modalEdit').addEventListener('click', function(e) {
+    if (e.target === this) closeEdit();
+});
 document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') closeConfirm();
+    if (e.key === 'Escape') { closeConfirm(); closeEdit(); }
 });
 
 scanInput.focus();

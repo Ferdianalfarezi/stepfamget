@@ -94,7 +94,7 @@
 
     <div class="info-box">
       <i class="fa-solid fa-circle-info"></i>
-      <p>Masukkan <strong style="color:rgba(255,255,255,.7)">NIK Login</strong> yang telah diberikan oleh admin. Hubungi HRD jika belum memiliki NIK Login.</p>
+      <p>Masukkan <strong style="color:rgba(255,255,255,.7)">NIK Login</strong> dengan kombinasi NIK + Tanggal lahir (ddmmyy) untuk tahun ambil 2 digit terakhir.</p>
     </div>
 
     @if($errors->any())

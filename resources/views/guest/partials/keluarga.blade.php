@@ -141,7 +141,7 @@
   style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.45);
          align-items:flex-end;justify-content:center;">
   <div style="background:#fff;border-radius:24px 24px 0 0;width:100%;max-width:480px;
-              padding:24px 20px 36px;animation:slideUp .3s ease;">
+              padding:24px 20px 36px;animation:slideUp .3s ease;max-height:90vh;overflow-y:auto;">
 
     {{-- Handle --}}
     <div style="width:40px;height:4px;background:#e0e0e0;border-radius:2px;margin:0 auto 20px;"></div>
@@ -171,7 +171,7 @@
             Hubungan <span style="color:#e53935;">*</span>
           </label>
           <select id="pHubungan"
-            onchange="autoJenisKelamin(this.value)"
+            onchange="onHubunganChange(this.value)"
             style="width:100%;padding:11px 14px;border-radius:10px;border:1.5px solid #e0e0e0;
                    font-size:13px;outline:none;box-sizing:border-box;background:#fff;appearance:none;
                    background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%23999' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E\");
@@ -219,11 +219,37 @@
 
       {{-- Ukuran Kaos --}}
       <div>
-        <label style="font-size:11.5px;font-weight:700;color:#555;display:block;margin-bottom:5px;">Ukuran Kaos</label>
+        <label style="font-size:11.5px;font-weight:700;color:#555;display:block;margin-bottom:8px;">Ukuran Kaos</label>
+
+        {{-- Auto info (Suami / Istri) --}}
+        <div id="pAutoInfo" style="display:none;margin-bottom:10px;">
+          <div style="background:#f0f4f0;border-radius:8px;padding:8px 12px;
+                      font-size:11.5px;color:#555;display:flex;align-items:center;gap:6px;">
+            <i class="fa-solid fa-circle-info" style="color:#2e7d32;font-size:12px;"></i>
+            <span id="pAutoInfoText"></span>
+          </div>
+        </div>
+
+        {{-- Jenis kaos (hanya Anak) --}}
+        <div id="pJenisSection" style="display:none;margin-bottom:14px;">
+          <div style="font-size:11px;font-weight:700;color:#999;margin-bottom:8px;letter-spacing:.3px;">JENIS KAOS</div>
+          <div style="display:flex;gap:8px;">
+            @foreach(['Dewasa','Anak'] as $jenis)
+            <button type="button" onclick="selectPJenis(this, '{{ $jenis }}')"
+              class="btn-p-jenis" data-jenis="{{ $jenis }}"
+              style="flex:1;padding:8px;border-radius:8px;border:1.5px solid #e0e0e0;
+                     background:#fff;font-size:12px;font-weight:700;color:#777;cursor:pointer;transition:all .15s;">
+              @if($jenis === 'Dewasa') 🧑 @else 👶 @endif {{ $jenis }}
+            </button>
+            @endforeach
+          </div>
+        </div>
+
+        {{-- Size grid --}}
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          @foreach(['XS','S','M','L','XL','XXL','XXXL'] as $sz)
-          <button type="button" onclick="selectUkuran(this, '{{ $sz }}')"
-            class="btn-ukuran"
+          @foreach(['S','M','L','XL','XXL','XXXL'] as $sz)
+          <button type="button" onclick="selectPUkuran(this, '{{ $sz }}')"
+            class="btn-p-ukuran" data-sz="{{ $sz }}"
             style="padding:7px 14px;border-radius:8px;border:1.5px solid #e0e0e0;
                    background:#fff;font-size:12px;font-weight:700;color:#777;cursor:pointer;
                    transition:all .15s;">
@@ -231,7 +257,10 @@
           </button>
           @endforeach
         </div>
+
         <input type="hidden" id="pUkuranKaos">
+        <input type="hidden" id="pJenisKaos">
+        <input type="hidden" id="pLenganKaos">
       </div>
 
       {{-- Error alert --}}
@@ -256,16 +285,30 @@
   </div>
 </div>
 
-{{-- CSS tambahan --}}
+{{-- CSS --}}
 <style>
 @keyframes slideUp {
   from { transform: translateY(100%); opacity: 0; }
   to   { transform: translateY(0);    opacity: 1; }
 }
-.btn-ukuran.active {
+@keyframes fadeInUp {
+  from { transform:translateX(-50%) translateY(10px); opacity:0; }
+  to   { transform:translateX(-50%) translateY(0);    opacity:1; }
+}
+.btn-p-jenis.active {
   background: #e8f5e9 !important;
   border-color: #3d7a47 !important;
   color: #2e7d32 !important;
+}
+.btn-p-ukuran.active {
+  background: #e8f5e9 !important;
+  border-color: #3d7a47 !important;
+  color: #2e7d32 !important;
+}
+.btn-p-ukuran.active-anak {
+  background: #fff8e1 !important;
+  border-color: #f9a825 !important;
+  color: #e65100 !important;
 }
 </style>
 
@@ -274,7 +317,102 @@
 const PENGAJUAN_URL = "{{ route('guest.pengajuan.store') }}";
 const CSRF_TOKEN    = "{{ csrf_token() }}";
 
-// ── Modal open/close ─────────────────────────────────────────────────────────
+// ── State baju pengajuan ──────────────────────────────────────────────────────
+let pSelectedJenis  = null;
+let pSelectedLengan = null;
+let pSelectedUkuran = null;
+
+// ── Resolve auto berdasarkan hubungan ─────────────────────────────────────────
+// Suami  → Dewasa, Lengan Pendek (auto)
+// Istri  → Dewasa, Lengan Panjang (auto)
+// Anak   → manual pilih jenis (Dewasa/Anak), lengan selalu Lengan Pendek
+function resolvePAuto(hubungan) {
+  switch (hubungan) {
+    case 'Suami': return { jenis: 'Dewasa', lengan: 'Lengan Pendek',  manual: false };
+    case 'Istri': return { jenis: 'Dewasa', lengan: 'Lengan Panjang', manual: false };
+    default:      return { jenis: null,     lengan: null,             manual: true  };
+  }
+}
+
+// ── Trigger saat hubungan berubah ─────────────────────────────────────────────
+function onHubunganChange(hubungan) {
+  // Auto jenis kelamin
+  const jkEl = document.getElementById('pJenisKelamin');
+  if      (hubungan === 'Suami') jkEl.value = 'Laki-laki';
+  else if (hubungan === 'Istri') jkEl.value = 'Perempuan';
+  else                           jkEl.value = '';
+
+  // Reset state baju
+  resetBajuState();
+
+  const auto         = resolvePAuto(hubungan);
+  const jenisSection = document.getElementById('pJenisSection');
+  const autoInfo     = document.getElementById('pAutoInfo');
+  const autoInfoText = document.getElementById('pAutoInfoText');
+
+  if (!hubungan) {
+    jenisSection.style.display = 'none';
+    autoInfo.style.display     = 'none';
+    return;
+  }
+
+  if (!auto.manual) {
+    // Suami / Istri → auto, sembunyikan jenis section
+    jenisSection.style.display = 'none';
+    autoInfo.style.display     = 'block';
+    autoInfoText.textContent   = 'Jenis & lengan otomatis: ' + auto.jenis + ' · ' + auto.lengan;
+    pSelectedJenis  = auto.jenis;
+    pSelectedLengan = auto.lengan;
+    document.getElementById('pJenisKaos').value  = auto.jenis;
+    document.getElementById('pLenganKaos').value = auto.lengan;
+  } else {
+    // Anak → tampilkan pilihan jenis kaos
+    autoInfo.style.display     = 'none';
+    jenisSection.style.display = 'block';
+  }
+}
+
+// ── Pilih jenis kaos (flow Anak) ──────────────────────────────────────────────
+// Apapun yang dipilih (Dewasa/Anak), lengan selalu Lengan Pendek
+function selectPJenis(btn, jenis) {
+  pSelectedJenis  = jenis;
+  pSelectedLengan = 'Lengan Pendek'; // selalu pendek untuk flow Anak
+  document.querySelectorAll('.btn-p-jenis').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('pJenisKaos').value  = jenis;
+  document.getElementById('pLenganKaos').value = 'Lengan Pendek';
+
+  // Recolor size buttons sesuai jenis
+  document.querySelectorAll('.btn-p-ukuran').forEach(b => {
+    b.classList.remove('active', 'active-anak');
+    if (b.dataset.sz === pSelectedUkuran)
+      b.classList.add(jenis === 'Anak' ? 'active-anak' : 'active');
+  });
+}
+
+// ── Pilih ukuran ──────────────────────────────────────────────────────────────
+function selectPUkuran(btn, sz) {
+  pSelectedUkuran = sz;
+  document.getElementById('pUkuranKaos').value = sz;
+  document.querySelectorAll('.btn-p-ukuran').forEach(b => b.classList.remove('active', 'active-anak'));
+  btn.classList.add(pSelectedJenis === 'Anak' ? 'active-anak' : 'active');
+}
+
+// ── Reset state baju ──────────────────────────────────────────────────────────
+function resetBajuState() {
+  pSelectedJenis  = null;
+  pSelectedLengan = null;
+  pSelectedUkuran = null;
+  document.getElementById('pUkuranKaos').value = '';
+  document.getElementById('pJenisKaos').value  = '';
+  document.getElementById('pLenganKaos').value = '';
+  document.querySelectorAll('.btn-p-jenis, .btn-p-ukuran')
+    .forEach(b => b.classList.remove('active', 'active-anak'));
+  document.getElementById('pJenisSection').style.display = 'none';
+  document.getElementById('pAutoInfo').style.display     = 'none';
+}
+
+// ── Modal open/close ──────────────────────────────────────────────────────────
 function openModalPengajuan() {
   resetFormPengajuan();
   const modal = document.getElementById('modalPengajuan');
@@ -287,20 +425,11 @@ function closeModalPengajuan() {
   document.body.style.overflow = '';
 }
 
-// Tutup modal kalau klik di luar
 document.getElementById('modalPengajuan').addEventListener('click', function(e) {
   if (e.target === this) closeModalPengajuan();
 });
 
-// ── Auto jenis kelamin berdasarkan hubungan ──────────────────────────────────
-function autoJenisKelamin(hubungan) {
-  const jkEl = document.getElementById('pJenisKelamin');
-  if (hubungan === 'Suami')    jkEl.value = 'Laki-laki';
-  else if (hubungan === 'Istri') jkEl.value = 'Perempuan';
-  else jkEl.value = '';
-}
-
-// ── Hitung umur otomatis dari tanggal lahir ──────────────────────────────────
+// ── Hitung umur otomatis dari tanggal lahir ───────────────────────────────────
 function hitungUmur() {
   const tgl = document.getElementById('pTanggalLahir').value;
   if (!tgl) return;
@@ -312,77 +441,68 @@ function hitungUmur() {
   document.getElementById('pUmur').value = age >= 0 ? age : 0;
 }
 
-// ── Pilih ukuran kaos ────────────────────────────────────────────────────────
-function selectUkuran(btn, sz) {
-  document.querySelectorAll('.btn-ukuran').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById('pUkuranKaos').value = sz;
-}
-
-// ── Reset form ───────────────────────────────────────────────────────────────
+// ── Reset form ────────────────────────────────────────────────────────────────
 function resetFormPengajuan() {
   document.getElementById('pNama').value         = '';
   document.getElementById('pHubungan').value     = '';
   document.getElementById('pJenisKelamin').value = '';
   document.getElementById('pTanggalLahir').value = '';
   document.getElementById('pUmur').value         = '';
-  document.getElementById('pUkuranKaos').value   = '';
-  document.querySelectorAll('.btn-ukuran').forEach(b => b.classList.remove('active'));
+  resetBajuState();
   hideError();
 }
 
-// ── Error helper ─────────────────────────────────────────────────────────────
+// ── Error helper ──────────────────────────────────────────────────────────────
 function showError(msg) {
   const el = document.getElementById('pErrorAlert');
-  el.textContent = msg;
+  el.textContent   = msg;
   el.style.display = 'block';
 }
 function hideError() {
   document.getElementById('pErrorAlert').style.display = 'none';
 }
 
-// ── Submit ───────────────────────────────────────────────────────────────────
+// ── Submit ────────────────────────────────────────────────────────────────────
 async function submitPengajuan() {
   hideError();
 
-  const nama       = document.getElementById('pNama').value.trim();
-  const hubungan   = document.getElementById('pHubungan').value;
-  const jk         = document.getElementById('pJenisKelamin').value;
-  const tglLahir   = document.getElementById('pTanggalLahir').value;
-  const umur       = document.getElementById('pUmur').value;
-  const ukuran     = document.getElementById('pUkuranKaos').value;
+  const nama     = document.getElementById('pNama').value.trim();
+  const hubungan = document.getElementById('pHubungan').value;
+  const jk       = document.getElementById('pJenisKelamin').value;
+  const tglLahir = document.getElementById('pTanggalLahir').value;
+  const umur     = document.getElementById('pUmur').value;
 
-  // Validasi client-side
   if (!nama)     return showError('Nama anggota keluarga wajib diisi.');
   if (!hubungan) return showError('Hubungan wajib dipilih.');
   if (!jk)       return showError('Jenis kelamin wajib dipilih.');
 
   const btn = document.getElementById('btnSubmitPengajuan');
-  btn.disabled = true;
+  btn.disabled    = true;
   btn.textContent = 'Mengirim...';
 
   try {
     const res = await fetch(PENGAJUAN_URL, {
-      method: 'POST',
+      method : 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': CSRF_TOKEN,
-        'Accept': 'application/json',
+        'Content-Type' : 'application/json',
+        'X-CSRF-TOKEN' : CSRF_TOKEN,
+        'Accept'       : 'application/json',
       },
       body: JSON.stringify({
         nama_keluarga : nama,
         hubungan      : hubungan,
         jenis_kelamin : jk,
-        tanggal_lahir : tglLahir || null,
-        umur          : umur     || null,
-        ukuran_kaos   : ukuran   || null,
+        tanggal_lahir : tglLahir        || null,
+        umur          : umur            || null,
+        ukuran_kaos   : pSelectedUkuran || null,
+        jenis_kaos    : pSelectedJenis  || null,
+        lengan_kaos   : pSelectedLengan || null,
       }),
     });
 
     const data = await res.json();
 
     if (!res.ok) {
-      // Laravel validation errors → ambil pesan pertama
       if (data.errors) {
         const firstErr = Object.values(data.errors)[0];
         return showError(Array.isArray(firstErr) ? firstErr[0] : firstErr);
@@ -390,31 +510,26 @@ async function submitPengajuan() {
       return showError(data.message || 'Terjadi kesalahan. Coba lagi.');
     }
 
-    // Sukses → reload halaman supaya banner pending muncul
     closeModalPengajuan();
-    // Tampilkan toast sukses sebelum reload
     showToastSuccess(data.message || 'Pengajuan berhasil dikirim!');
     setTimeout(() => location.reload(), 1800);
 
   } catch (err) {
     showError('Gagal terhubung ke server. Periksa koneksi internet.');
   } finally {
-    btn.disabled = false;
+    btn.disabled    = false;
     btn.textContent = 'Kirim Pengajuan';
   }
 }
 
-// ── Toast sukses sederhana ───────────────────────────────────────────────────
+// ── Toast sukses ──────────────────────────────────────────────────────────────
 function showToastSuccess(msg) {
   const toast = document.createElement('div');
-  toast.textContent = msg;
-  toast.style.cssText = `
-    position:fixed;bottom:30px;left:50%;transform:translateX(-50%);
-    background:#2e7d32;color:#fff;padding:12px 24px;border-radius:100px;
-    font-size:13px;font-weight:600;z-index:9999;
-    animation:fadeInUp .3s ease;box-shadow:0 4px 20px rgba(0,0,0,.2);
-    white-space:nowrap;
-  `;
+  toast.textContent   = msg;
+  toast.style.cssText = 'position:fixed;bottom:30px;left:50%;transform:translateX(-50%);' +
+    'background:#2e7d32;color:#fff;padding:12px 24px;border-radius:100px;' +
+    'font-size:13px;font-weight:600;z-index:9999;animation:fadeInUp .3s ease;' +
+    'box-shadow:0 4px 20px rgba(0,0,0,.2);white-space:nowrap;';
   document.body.appendChild(toast);
   setTimeout(() => toast.remove(), 1800);
 }

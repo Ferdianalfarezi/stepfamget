@@ -113,6 +113,37 @@ class KonveksiController extends Controller
         ));
     }
 
+    public function edit($id)
+    {
+        $detail = DetailKaryawan::with('karyawan')->findOrFail($id);
+        return response()->json([
+            'id'            => $detail->id,
+            'nama_keluarga' => $detail->nama_keluarga,
+            'hubungan'      => $detail->hubungan,
+            'ukuran_kaos'   => $detail->ukuran_kaos,
+            'jenis_kaos'    => $detail->jenis_kaos,
+            'lengan_kaos'   => $detail->lengan_kaos,
+        ]);
+    }
+
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'nama_keluarga' => 'required|string|max:100',
+            'hubungan'      => 'required|in:Karyawan,Karyawati,Istri,Suami,Anak,Saudara',
+            'ukuran_kaos'   => 'nullable|in:XS,S,M,L,XL,XXL,XXXL',
+            'jenis_kaos'    => 'nullable|in:Dewasa,Anak',
+            'lengan_kaos'   => 'nullable|in:Lengan Pendek,Lengan Panjang',
+        ]);
+
+        $detail = DetailKaryawan::findOrFail($id);
+        $detail->update($request->only([
+            'nama_keluarga', 'hubungan', 'ukuran_kaos', 'jenis_kaos', 'lengan_kaos'
+        ]));
+
+        return response()->json(['message' => 'Data berhasil diupdate.']);
+    }
+
     // Scan NIK
     public function scan(Request $request)
     {

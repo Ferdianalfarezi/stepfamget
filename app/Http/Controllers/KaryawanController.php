@@ -64,6 +64,13 @@ class KaryawanController extends Controller
             });
         }
     }
+    
+    // ── Filter Hubungan (Karyawan / Karyawati) ──
+    if ($request->filled('hubungan')) {
+        $query->whereHas('details', fn($q) =>
+            $q->where('hubungan', $request->hubungan)
+        );
+    }
 
     // ── Filter Hadir ──
     if ($request->filled('hadir') || $request->hadir === '0') {
@@ -81,15 +88,17 @@ class KaryawanController extends Controller
     $totalHadir      = Karyawan::where('status_kehadiran', 2)->count();
     $totalTidakHadir = Karyawan::where('status_kehadiran', 1)->count();
     $totalBelumHadir = Karyawan::where('status_kehadiran', 0)->count();
+    $totalKaryawanLaki  = DetailKaryawan::where('hubungan', 'Karyawan')->count();
+    $totalKaryawanWanita = DetailKaryawan::where('hubungan', 'Karyawati')->count();
 
     $summaryDept = $allKaryawan
         ->groupBy('departemen')
         ->map(fn($group) => $group->count());
 
     // Merge HR + HRD
-    $hrTotal     = ($summaryDept->get('HR') ?? 0) + ($summaryDept->get('HRD') ?? 0);
-    $summaryDept = $summaryDept->forget(['HR', 'HRD']);
-    if ($hrTotal > 0) $summaryDept->put('HR / HRD', $hrTotal);
+    $hrTotal     = ($summaryDept->get('HR') ?? 0) + ($summaryDept->get('HRD') ?? 0)+ ($summaryDept->get('IT') ?? 0);
+    $summaryDept = $summaryDept->forget(['HR', 'HRD','IT']);
+    if ($hrTotal > 0) $summaryDept->put('HR / HRD / IT', $hrTotal);
 
     $deptNormal   = $summaryDept->filter(fn($v, $k) => !in_array($k, $excludedDept))->sortKeys();
     $deptExcluded = $summaryDept->filter(fn($v, $k) =>  in_array($k, $excludedDept))->sortKeys();
@@ -108,7 +117,8 @@ class KaryawanController extends Controller
         'karyawans', 'departemenList',
         'totalKaryawan', 'totalValid', 'totalEksternal',
         'totalBajuConfirmed', 'totalTransConfirmed',
-        'totalHadir', 'totalTidakHadir', 'totalBelumHadir',  // tambah ini
+        'totalHadir', 'totalTidakHadir', 'totalBelumHadir',
+        'totalKaryawanLaki', 'totalKaryawanWanita',   // ← tambah
         'deptNormal', 'deptExcluded', 'excludedDept'
     ));
 }

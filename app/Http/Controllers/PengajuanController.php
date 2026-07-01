@@ -42,6 +42,8 @@ class PengajuanController extends Controller
             'tanggal_lahir' => 'nullable|date',
             'umur'          => 'nullable|integer|min:0|max:150',
             'ukuran_kaos'   => 'nullable|string|max:10',
+            'jenis_kaos'    => 'nullable|string|max:20',
+            'lengan_kaos'   => 'nullable|string|max:30',
         ], [
             'nama_keluarga.required' => 'Nama anggota keluarga wajib diisi.',
             'hubungan.required'      => 'Hubungan wajib dipilih.',
@@ -54,8 +56,10 @@ class PengajuanController extends Controller
             'hubungan'      => $validated['hubungan'],
             'jenis_kelamin' => $validated['jenis_kelamin'],
             'tanggal_lahir' => $validated['tanggal_lahir'] ?? null,
-            'umur'          => $validated['umur'] ?? null,
-            'ukuran_kaos'   => $validated['ukuran_kaos'] ?? null,
+            'umur'          => $validated['umur']          ?? null,
+            'ukuran_kaos'   => $validated['ukuran_kaos']   ?? null,
+            'jenis_kaos'    => $validated['jenis_kaos']    ?? null,
+            'lengan_kaos'   => $validated['lengan_kaos']   ?? null,
             'status'        => 'pending',
         ]);
 
@@ -116,6 +120,8 @@ class PengajuanController extends Controller
             'tanggal_lahir' => $pengajuan->tanggal_lahir,
             'umur'          => $pengajuan->umur ?? 0,
             'ukuran_kaos'   => $pengajuan->ukuran_kaos,
+            'jenis_kaos'    => $pengajuan->jenis_kaos,
+            'lengan_kaos'   => $pengajuan->lengan_kaos,
         ]);
 
         $karyawan = Karyawan::where('nik', $pengajuan->nik)->first();

@@ -21,6 +21,7 @@ use App\Http\Controllers\PenerimaanHadiahController;
 use App\Http\Controllers\AktifitasLoginController;
 use App\Http\Controllers\RundownController;
 use App\Http\Controllers\GanttController;
+use App\Http\Controllers\KonsumsiController;
 
 // ─── Landing ──────────────────────────────────────────────────────────────────
 Route::get('/', [AuthController::class, 'landing'])->name('landing');
@@ -88,6 +89,8 @@ Route::middleware(['auth', \App\Http\Middleware\AdminOnly::class])->group(functi
 
     // Konveksi
     Route::get('/konveksis',             [KonveksiController::class, 'index'])->name('konveksi.index');
+    Route::get('/konveksis/{id}/edit',   [KonveksiController::class, 'edit'])->name('konveksi.edit');
+    Route::put('/konveksis/{id}',        [KonveksiController::class, 'update'])->name('konveksi.update');
     Route::get('/konveksis/export',      [KonveksiController::class, 'export'])->name('konveksi.export');
     Route::post('/konveksis/scan',       [KonveksiController::class, 'scan'])->name('konveksi.scan');
     Route::post('/konveksis/reset-scan', [KonveksiController::class, 'resetScan'])->name('konveksi.resetScan');
@@ -134,6 +137,10 @@ Route::middleware(['auth', \App\Http\Middleware\AdminOnly::class])->group(functi
     Route::post('/gantt',                   [GanttController::class, 'store'])->name('gantt.store');
     Route::put('/gantt/{ganttActivity}',    [GanttController::class, 'update'])->name('gantt.update');
     Route::delete('/gantt/{ganttActivity}', [GanttController::class, 'destroy'])->name('gantt.destroy');
+
+    Route::resource('konsumsis', KonsumsiController::class)
+     ->only(['index', 'store', 'show', 'update', 'destroy']);
+ 
 });
 
 // ─── Guest Routes ─────────────────────────────────────────────────────────────

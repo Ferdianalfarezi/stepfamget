@@ -16,6 +16,8 @@ class PengajuanAnggota extends Model
         'tanggal_lahir',
         'umur',
         'ukuran_kaos',
+        'jenis_kaos',
+        'lengan_kaos',
         'status',
         'alasan_tolak',
         'reviewed_at',

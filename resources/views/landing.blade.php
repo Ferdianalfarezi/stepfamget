@@ -280,7 +280,20 @@ nav{
 .feat-point{display:flex;align-items:center;gap:9px;font-size:.85rem;color:rgba(255,255,255,.72)}
 .feat-point .dp{width:5px;height:5px;background:var(--green-mid);border-radius:50%;flex-shrink:0}
 .feat-visual{background:#eef4e6;display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:1.75rem;align-content:center}
-.fv-img{border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:2.2rem;opacity:.85}
+.fv-img{
+    border-radius: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden; /* supaya gambar mengikuti border-radius */
+}
+
+.fv-img img{
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* atau cover */
+    display: block;
+}
 .fv-img:nth-child(1){aspect-ratio:1;background:linear-gradient(135deg,#1a3d07,#3B6D11)}
 .fv-img:nth-child(2){aspect-ratio:1;background:linear-gradient(135deg,#2d5a0e,#639922)}
 .fv-img:nth-child(3){grid-column:span 2;height:160px;background:linear-gradient(135deg,#27500A,#97C459)}
@@ -296,7 +309,24 @@ nav{
 .gallery-section{padding:5.5rem 2.5rem;background:var(--white)}
 .section-top{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:2.5rem}
 .gallery-mosaic{display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(2,190px);gap:.9rem}
-.g-tile{border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:2.8rem;cursor:pointer;border:1px solid var(--border);overflow:hidden;transition:transform .3s,opacity .3s}
+.g-tile{
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform .3s, opacity .3s;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.g-tile img{
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* memenuhi seluruh tile */
+    display: block;
+}
 .g-tile:hover{transform:scale(.975);opacity:.9}
 .g-tile:nth-child(1){grid-column:span 2;background:linear-gradient(135deg,#1a4a08,#3B6D11)}
 .g-tile:nth-child(2){background:linear-gradient(135deg,#2d5a0e,#97C459)}
@@ -434,8 +464,7 @@ footer{background:var(--off);padding:2.5rem;display:flex;align-items:center;just
   <div class="hero-content-left">
     <h1>Family<br><span class="outline">Gathering</span></h1>
     <div class="hero-meta">
-      <span class="big"><i class="fa-regular fa-calendar" style="margin-right:5px"></i>COMING SOON!!</span>
-      <span class="small">The Jungle Waterpark, Bogor</span>
+      <span class="big"><i class="fa-solid fa-location-dot"" style="margin-right:5px"></i>The Jungle Waterpark, Bogor</span>
     </div>
     <div class="hero-sub">
       <p class="hero-desc">Rayakan kebersamaan bersama seluruh keluarga besar PT STEP. Ciptakan momen tak terlupakan, penuh tawa dan kenangan indah.</p>
@@ -499,9 +528,17 @@ footer{background:var(--off);padding:2.5rem;display:flex;align-items:center;just
     </div>
   </div>
   <div class="feat-visual">
-    <div class="fv-img">🎪</div>
-    <div class="fv-img">🏆</div>
-    <div class="fv-img">🎶</div>
+    <div class="fv-img">
+    <img src="{{ asset('images/lp1.jpg') }}" alt="Event">
+</div>
+
+<div class="fv-img">
+    <img src="{{ asset('images/lp2.jpg') }}" alt="Trophy">
+</div>
+
+<div class="fv-img">
+    <img src="{{ asset('images/lp3.jpg') }}" alt="Music">
+</div>
   </div>
 </section>
 
@@ -533,11 +570,25 @@ footer{background:var(--off);padding:2.5rem;display:flex;align-items:center;just
     <a href="#" class="see-link">Lihat Semua →</a>
   </div>
   <div class="gallery-mosaic">
-    <div class="g-tile">👨‍👩‍👧‍👦</div>
-    <div class="g-tile">🎉</div>
-    <div class="g-tile">🌿</div>
-    <div class="g-tile">🏅</div>
-    <div class="g-tile">🎊</div>
+    <div class="g-tile">
+    <img src="{{ asset('images/lp4.jpg') }}" alt="Family">
+    </div>
+
+    <div class="g-tile">
+        <img src="{{ asset('images/lp5.jpg') }}" alt="Celebration">
+    </div>
+
+    <div class="g-tile">
+        <img src="{{ asset('images/lp6.jpg') }}" alt="Nature">
+    </div>
+
+    <div class="g-tile">
+        <img src="{{ asset('images/lp7.jpg') }}" alt="Award">
+    </div>
+
+    <div class="g-tile">
+        <img src="{{ asset('images/lp8.jpg') }}" alt="Confetti">
+    </div>
   </div>
 </section>
 

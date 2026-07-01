@@ -192,7 +192,7 @@
 
       <div style="font-size:11px;font-weight:700;color:#999;margin-bottom:8px;letter-spacing:.3px;">PILIH UKURAN</div>
       <div class="sz-grid" style="display:flex;gap:8px;flex-wrap:wrap;">
-        @foreach(['XS','S','M','L','XL','XXL','XXXL'] as $sz)
+        @foreach(['S','M','L','XL','XXL','XXXL'] as $sz)
         <button type="button"
           onclick="selectSize({{ $d->id }}, this, '{{ $sz }}')"
           class="btn-sz" data-sz="{{ $sz }}"

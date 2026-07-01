@@ -45,6 +45,12 @@ class AuthController extends Controller
                 return back()->withErrors(['username' => 'Akun ini bukan akun admin.']);
             }
             $request->session()->regenerate();
+
+            // Hitz langsung ke konsumsi
+            if (Auth::user()->nama === 'Hitz') {
+                return redirect()->route('konsumsis.index');
+            }
+
             return redirect()->route('dashboard');
         }
 
