@@ -85,6 +85,28 @@ class KonveksiController extends Controller
             ->orderByRaw("FIELD(ukuran_kaos,'XS','S','M','L','XL','XXL','XXXL')")
             ->get();
 
+        // Baju Anak selalu dianggap "Lengan Pendek", jadi gabung ulang per ukuran
+        // biar data lama yang lengan_kaos-nya null/kosong/beda ga kehitung dobel.
+        $rekapAnakMerged = $rekap->where('jenis_kaos', 'Anak')
+            ->groupBy('ukuran_kaos')
+            ->map(function ($group, $ukuran) {
+                return (object) [
+                    'ukuran_kaos' => $ukuran,
+                    'jenis_kaos'  => 'Anak',
+                    'lengan_kaos' => 'Lengan Pendek',
+                    'total'       => $group->sum('total'),
+                ];
+            })
+            ->values();
+
+        $rekap = $rekap->where('jenis_kaos', '!=', 'Anak')
+            ->values()
+            ->concat($rekapAnakMerged)
+            ->sortBy(function ($r) {
+                return array_search($r->ukuran_kaos, ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL']);
+            })
+            ->values();
+
         $totalKonfirmasi = Karyawan::whereNotNull('baju_confirmed_at')
             ->whereYear('baju_confirmed_at', $year)
             ->count();
@@ -136,10 +158,18 @@ class KonveksiController extends Controller
             'lengan_kaos'   => 'nullable|in:Lengan Pendek,Lengan Panjang',
         ]);
 
-        $detail = DetailKaryawan::findOrFail($id);
-        $detail->update($request->only([
+        $data = $request->only([
             'nama_keluarga', 'hubungan', 'ukuran_kaos', 'jenis_kaos', 'lengan_kaos'
-        ]));
+        ]);
+
+        // Baju Anak selalu Lengan Pendek — paksa di sini biar data baru konsisten
+        // dan ga bikin rekap dobel lagi ke depannya.
+        if ($data['jenis_kaos'] === 'Anak') {
+            $data['lengan_kaos'] = 'Lengan Pendek';
+        }
+
+        $detail = DetailKaryawan::findOrFail($id);
+        $detail->update($data);
 
         return response()->json(['message' => 'Data berhasil diupdate.']);
     }

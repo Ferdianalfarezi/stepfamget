@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\Bus;
+use App\Models\DetailKaryawan;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -21,19 +22,47 @@ class BusExport implements FromCollection, WithHeadings, WithStyles, ShouldAutoS
 
     public function collection()
     {
-        return Bus::orderBy('nama_karyawan')
+        $buses = Bus::orderBy('nama_karyawan')->get();
+
+        $keluargaGrouped = DetailKaryawan::whereIn('nik', $buses->pluck('nik'))
+            ->whereNotIn('hubungan', ['Karyawan', 'Karyawati'])
+            ->orderBy('id')
             ->get()
-            ->map(fn($b, $i) => [
-                'No'            => $i + 1,
-                'NIK'           => $b->nik,
-                'Nama Karyawan' => $b->nama_karyawan,
-                'Terdaftar'     => $b->created_at->format('d/m/Y H:i'),
+            ->groupBy('nik');
+
+        $result = collect();
+        $no     = 0;
+
+        foreach ($buses as $b) {
+            $no++;
+            $result->push([
+                'No'             => $no,
+                'NIK'            => $b->nik,
+                'Nama'           => $b->nama_karyawan,
+                'Hubungan'       => 'Karyawan',
+                'Kursi'          => $b->kursi ?? '-',
+                'Terdaftar Pada' => $b->created_at->format('d/m/Y H:i'),
             ]);
+
+            foreach ($keluargaGrouped->get($b->nik, collect()) as $k) {
+                $no++;
+                $result->push([
+                    'No'             => $no,
+                    'NIK'            => $b->nik,
+                    'Nama'           => $k->nama_keluarga,
+                    'Hubungan'       => $k->hubungan,
+                    'Kursi'          => $k->kursi_bus ?? '-',
+                    'Terdaftar Pada' => '-',
+                ]);
+            }
+        }
+
+        return $result;
     }
 
     public function headings(): array
     {
-        return ['No', 'NIK', 'Nama Karyawan', 'Terdaftar Pada'];
+        return ['No', 'NIK', 'Nama', 'Hubungan', 'Kursi', 'Terdaftar Pada'];
     }
 
     public function styles(Worksheet $sheet): array

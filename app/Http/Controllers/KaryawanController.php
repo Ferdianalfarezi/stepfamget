@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Exports\KaryawanExport;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\BajuFamilyGatheringImport;
+use App\Imports\KaryawanTambahanImport;
 
 class KaryawanController extends Controller
 {
@@ -135,7 +136,9 @@ class KaryawanController extends Controller
             'nama'             => 'required|string|max:100',
             'departemen'       => 'required|string|max:50',
             'keterangan'       => 'required|in:Aktif,Non-Aktif',
-            'status_kehadiran' => 'nullable|boolean',
+            // FIX: status_kehadiran punya 3 nilai (0 belum, 1 tidak hadir, 2 hadir),
+            // bukan boolean. Rule lama 'boolean' menolak nilai "2" (Hadir) → 422.
+            'status_kehadiran' => 'nullable|in:0,1,2',
 
             'details'                       => 'nullable|array',
             'details.*.nama_keluarga'       => 'required|string|max:100',
@@ -152,6 +155,7 @@ class KaryawanController extends Controller
             'nama.required'                    => 'Nama karyawan wajib diisi.',
             'departemen.required'              => 'Departemen wajib diisi.',
             'keterangan.required'              => 'Status karyawan wajib dipilih.',
+            'status_kehadiran.in'               => 'Status kehadiran tidak valid.',
             'details.*.nama_keluarga.required' => 'Nama anggota keluarga wajib diisi.',
             'details.*.hubungan.required'      => 'Hubungan wajib dipilih.',
             'details.*.jenis_kelamin.required' => 'Jenis kelamin wajib dipilih.',
@@ -166,7 +170,9 @@ class KaryawanController extends Controller
             'nama'             => $validated['nama'],
             'departemen'       => $validated['departemen'],
             'keterangan'       => $validated['keterangan'],
-            'status_kehadiran' => $request->boolean('status_kehadiran'),
+            // FIX: sebelumnya pakai $request->boolean(...) yang cuma menghasilkan
+            // true/false (1/0), sehingga "Hadir" (2) ikut ke-collapse jadi 1.
+            'status_kehadiran' => $validated['status_kehadiran'] ?? 0,
             'jumlah_keluarga'  => $jumlahKeluarga,
         ]);
 
@@ -224,7 +230,8 @@ class KaryawanController extends Controller
             'nama'             => 'required|string|max:100',
             'departemen'       => 'required|string|max:50',
             'keterangan'       => 'required|in:Aktif,Non-Aktif',
-            'status_kehadiran' => 'nullable|boolean',
+            // FIX: sama seperti store() — 3 nilai (0/1/2), bukan boolean.
+            'status_kehadiran' => 'nullable|in:0,1,2',
 
             'details'                       => 'nullable|array',
             'details.*.id'                  => 'nullable|integer',
@@ -242,6 +249,7 @@ class KaryawanController extends Controller
             'nama.required'                    => 'Nama karyawan wajib diisi.',
             'departemen.required'              => 'Departemen wajib diisi.',
             'keterangan.required'              => 'Status karyawan wajib dipilih.',
+            'status_kehadiran.in'               => 'Status kehadiran tidak valid.',
             'details.*.nama_keluarga.required' => 'Nama anggota keluarga wajib diisi.',
             'details.*.hubungan.required'      => 'Hubungan wajib dipilih.',
             'details.*.jenis_kelamin.required' => 'Jenis kelamin wajib dipilih.',
@@ -256,7 +264,8 @@ class KaryawanController extends Controller
             'nama'             => $validated['nama'],
             'departemen'       => $validated['departemen'],
             'keterangan'       => $validated['keterangan'],
-            'status_kehadiran' => $request->boolean('status_kehadiran'),
+            // FIX: langsung pakai nilai tervalidasi (0/1/2), jangan di-boolean-kan.
+            'status_kehadiran' => $validated['status_kehadiran'] ?? 0,
             'jumlah_keluarga'  => $jumlahKeluarga,
         ]);
 
@@ -455,6 +464,44 @@ class KaryawanController extends Controller
 
     public function export(Request $request)
     {
-        return Excel::download(new KaryawanExport($request), 'karyawan-' . now()->format('Ymd-His') . '.xlsx');
+        $type = $request->get('type', 'full');
+
+        $filename = $type === 'simple'
+            ? 'karyawan-simple-' . now()->format('Ymd-His') . '.xlsx'
+            : 'karyawan-' . now()->format('Ymd-His') . '.xlsx';
+
+        return Excel::download(new KaryawanExport($request, $type), $filename);
+    }
+
+    public function importKaryawan(Request $request)
+    {
+        $request->validate([
+            'file_excel' => 'required|file|mimes:xlsx,xls|max:5120',
+        ], [
+            'file_excel.required' => 'File excel wajib dipilih.',
+            'file_excel.mimes'    => 'File harus berformat .xlsx atau .xls.',
+            'file_excel.max'      => 'Ukuran file maksimal 5MB.',
+        ]);
+
+        try {
+            $import = new KaryawanTambahanImport();
+            Excel::import($import, $request->file('file_excel'));
+
+            $message = "Import berhasil! {$import->importedKaryawan} karyawan diproses, "
+                . "{$import->importedDetail} anggota keluarga diproses, "
+                . "{$import->skipped} baris dilewati.";
+
+            return response()->json([
+                'message'           => $message,
+                'imported_karyawan' => $import->importedKaryawan,
+                'imported_detail'   => $import->importedDetail,
+                'skipped'           => $import->skipped,
+                'errors'            => $import->errors,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Import gagal: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 }

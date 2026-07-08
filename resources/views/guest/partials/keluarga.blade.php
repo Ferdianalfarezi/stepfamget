@@ -103,10 +103,16 @@
       </div>
     </div>
     @if($d->umur)
-    <div style="font-size:13px;font-weight:700;color:#555;flex-shrink:0;">
+    <div style="font-size:13px;font-weight:700;color:#555;flex-shrink:0;margin-right:4px;">
       {{ $d->umur }} th
     </div>
     @endif
+    <button type="button"
+      onclick="openModalEdit({{ $d->id }}, {{ Js::from($d->nama_keluarga) }}, {{ Js::from($d->hubungan) }}, {{ Js::from($d->jenis_kelamin) }}, {{ Js::from(optional($d->tanggal_lahir)->format('Y-m-d')) }}, {{ Js::from($d->umur) }}, {{ Js::from($d->ukuran_kaos) }}, {{ Js::from($d->jenis_kaos) }}, {{ Js::from($d->lengan_kaos) }})"
+      style="width:32px;height:32px;border-radius:9px;border:1.5px solid #e0e0e0;background:#fff;
+             color:#3d7a47;flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+      <i class="fa-solid fa-pen" style="font-size:12px;"></i>
+    </button>
   </div>
 
   @if($d->tanggal_lahir || $d->ukuran_kaos)
@@ -135,7 +141,7 @@
 
 
 {{-- ═══════════════════════════════════════════════════════════════════════════
-     MODAL — Form Pengajuan Anggota Keluarga
+     MODAL — Form Pengajuan Anggota Keluarga (TAMBAH)
      ═══════════════════════════════════════════════════════════════════════════ --}}
 <div id="modalPengajuan"
   style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.45);
@@ -143,17 +149,13 @@
   <div style="background:#fff;border-radius:24px 24px 0 0;width:100%;max-width:480px;
               padding:24px 20px 36px;animation:slideUp .3s ease;max-height:90vh;overflow-y:auto;">
 
-    {{-- Handle --}}
     <div style="width:40px;height:4px;background:#e0e0e0;border-radius:2px;margin:0 auto 20px;"></div>
 
-    {{-- Title --}}
     <div style="font-size:16px;font-weight:800;color:#111;margin-bottom:4px;">Tambah Anggota Keluarga</div>
     <div style="font-size:12px;color:#999;margin-bottom:20px;">Pengajuan akan ditinjau oleh panitia terlebih dahulu</div>
 
-    {{-- Form --}}
     <div style="display:flex;flex-direction:column;gap:14px;">
 
-      {{-- Nama --}}
       <div>
         <label style="font-size:11.5px;font-weight:700;color:#555;display:block;margin-bottom:5px;">
           Nama Lengkap <span style="color:#e53935;">*</span>
@@ -164,7 +166,6 @@
           onfocus="this.style.borderColor='#3d7a47'" onblur="this.style.borderColor='#e0e0e0'">
       </div>
 
-      {{-- Hubungan + Jenis Kelamin --}}
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
         <div>
           <label style="font-size:11.5px;font-weight:700;color:#555;display:block;margin-bottom:5px;">
@@ -198,7 +199,6 @@
         </div>
       </div>
 
-      {{-- Tanggal Lahir + Umur --}}
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
         <div>
           <label style="font-size:11.5px;font-weight:700;color:#555;display:block;margin-bottom:5px;">Tanggal Lahir</label>
@@ -209,19 +209,16 @@
             onfocus="this.style.borderColor='#3d7a47'" onblur="this.style.borderColor='#e0e0e0'">
         </div>
         <div>
-          <label style="font-size:11.5px;font-weight:700;color:#555;display:block;margin-bottom:5px;">Umur (tahun)</label>
-          <input type="number" id="pUmur" placeholder="0" min="0" max="150"
+          <label style="font-size:11.5px;font-weight:700;color:#555;display:block;margin-bottom:5px;">Umur (tahun) <span style="color:#bbb;font-weight:500;">— otomatis</span></label>
+          <input type="number" id="pUmur" placeholder="0" readonly tabindex="-1"
             style="width:100%;padding:11px 14px;border-radius:10px;border:1.5px solid #e0e0e0;
-                   font-size:13px;outline:none;box-sizing:border-box;"
-            onfocus="this.style.borderColor='#3d7a47'" onblur="this.style.borderColor='#e0e0e0'">
+                   font-size:13px;outline:none;box-sizing:border-box;background:#f5f5f5;color:#777;cursor:not-allowed;">
         </div>
       </div>
 
-      {{-- Ukuran Kaos --}}
       <div>
         <label style="font-size:11.5px;font-weight:700;color:#555;display:block;margin-bottom:8px;">Ukuran Kaos</label>
 
-        {{-- Auto info (Suami / Istri) --}}
         <div id="pAutoInfo" style="display:none;margin-bottom:10px;">
           <div style="background:#f0f4f0;border-radius:8px;padding:8px 12px;
                       font-size:11.5px;color:#555;display:flex;align-items:center;gap:6px;">
@@ -230,7 +227,6 @@
           </div>
         </div>
 
-        {{-- Jenis kaos (hanya Anak) --}}
         <div id="pJenisSection" style="display:none;margin-bottom:14px;">
           <div style="font-size:11px;font-weight:700;color:#999;margin-bottom:8px;letter-spacing:.3px;">JENIS KAOS</div>
           <div style="display:flex;gap:8px;">
@@ -245,9 +241,8 @@
           </div>
         </div>
 
-        {{-- Size grid --}}
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          @foreach(['S','M','L','XL','XXL','XXXL'] as $sz)
+          @foreach(['S','M','L','XL','XXL','XXXL','XXXXL','XXXXXL'] as $sz)
           <button type="button" onclick="selectPUkuran(this, '{{ $sz }}')"
             class="btn-p-ukuran" data-sz="{{ $sz }}"
             style="padding:7px 14px;border-radius:8px;border:1.5px solid #e0e0e0;
@@ -263,11 +258,9 @@
         <input type="hidden" id="pLenganKaos">
       </div>
 
-      {{-- Error alert --}}
       <div id="pErrorAlert" style="display:none;background:#fce4ec;border-radius:10px;
            padding:10px 14px;font-size:12px;color:#c62828;"></div>
 
-      {{-- Submit --}}
       <button onclick="submitPengajuan()" id="btnSubmitPengajuan"
         style="width:100%;padding:14px;border-radius:12px;border:none;
                background:linear-gradient(135deg,#43a047,#2e7d32);
@@ -277,6 +270,153 @@
       </button>
 
       <button onclick="closeModalPengajuan()"
+        style="width:100%;padding:12px;border-radius:12px;border:1.5px solid #e0e0e0;
+               background:#fff;color:#999;font-size:13px;font-weight:600;cursor:pointer;">
+        Batal
+      </button>
+    </div>
+  </div>
+</div>
+
+{{-- ═══════════════════════════════════════════════════════════════════════════
+     MODAL — Form Edit Anggota Keluarga
+     ═══════════════════════════════════════════════════════════════════════════ --}}
+<div id="modalEdit"
+  style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.45);
+         align-items:flex-end;justify-content:center;">
+  <div style="background:#fff;border-radius:24px 24px 0 0;width:100%;max-width:480px;
+              padding:24px 20px 36px;animation:slideUp .3s ease;max-height:90vh;overflow-y:auto;">
+
+    <div style="width:40px;height:4px;background:#e0e0e0;border-radius:2px;margin:0 auto 20px;"></div>
+
+    <div style="font-size:16px;font-weight:800;color:#111;margin-bottom:4px;">Edit Anggota Keluarga</div>
+    <div style="font-size:12px;color:#999;margin-bottom:20px;">Perubahan langsung tersimpan tanpa perlu ditinjau panitia</div>
+
+    <input type="hidden" id="eDetailId">
+
+    <div style="display:flex;flex-direction:column;gap:14px;">
+
+      <div>
+        <label style="font-size:11.5px;font-weight:700;color:#555;display:block;margin-bottom:5px;">
+          Nama Lengkap <span style="color:#e53935;">*</span>
+        </label>
+        <input type="text" id="eNama" placeholder="Masukkan nama lengkap"
+          style="width:100%;padding:11px 14px;border-radius:10px;border:1.5px solid #e0e0e0;
+                 font-size:13px;outline:none;box-sizing:border-box;transition:border-color .2s;"
+          onfocus="this.style.borderColor='#3d7a47'" onblur="this.style.borderColor='#e0e0e0'">
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div>
+          <label style="font-size:11.5px;font-weight:700;color:#555;display:block;margin-bottom:5px;">
+            Hubungan <span style="color:#e53935;">*</span>
+          </label>
+          <select id="eHubungan"
+            onchange="onHubunganChangeEdit(this.value)"
+            style="width:100%;padding:11px 14px;border-radius:10px;border:1.5px solid #e0e0e0;
+                   font-size:13px;outline:none;box-sizing:border-box;background:#fff;appearance:none;
+                   background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%23999' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E\");
+                   background-repeat:no-repeat;background-position:right 12px center;">
+            <option value="">Pilih</option>
+            <option value="Suami">Suami</option>
+            <option value="Istri">Istri</option>
+            <option value="Anak">Anak</option>
+            {{-- opsi ini disembunyikan dari dropdown, cuma dipakai internal buat nyimpen value
+                 waktu yang diedit adalah record karyawan/karyawati itu sendiri --}}
+            <option value="Karyawan" style="display:none;">Karyawan</option>
+            <option value="Karyawati" style="display:none;">Karyawati</option>
+          </select>
+          <div id="eHubunganLabel" style="display:none;width:100%;padding:11px 14px;border-radius:10px;
+               border:1.5px solid #e0e0e0;font-size:13px;box-sizing:border-box;background:#f5f5f5;
+               color:#777;"></div>
+        </div>
+        <div>
+          <label style="font-size:11.5px;font-weight:700;color:#555;display:block;margin-bottom:5px;">
+            Jenis Kelamin <span style="color:#e53935;">*</span>
+          </label>
+          <select id="eJenisKelamin"
+            style="width:100%;padding:11px 14px;border-radius:10px;border:1.5px solid #e0e0e0;
+                   font-size:13px;outline:none;box-sizing:border-box;background:#fff;appearance:none;
+                   background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%23999' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E\");
+                   background-repeat:no-repeat;background-position:right 12px center;">
+            <option value="">Pilih</option>
+            <option value="Laki-laki">Laki-laki</option>
+            <option value="Perempuan">Perempuan</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div>
+          <label style="font-size:11.5px;font-weight:700;color:#555;display:block;margin-bottom:5px;">Tanggal Lahir</label>
+          <input type="date" id="eTanggalLahir"
+            onchange="hitungUmurEdit()"
+            style="width:100%;padding:11px 14px;border-radius:10px;border:1.5px solid #e0e0e0;
+                   font-size:13px;outline:none;box-sizing:border-box;"
+            onfocus="this.style.borderColor='#3d7a47'" onblur="this.style.borderColor='#e0e0e0'">
+        </div>
+        <div>
+          <label style="font-size:11.5px;font-weight:700;color:#555;display:block;margin-bottom:5px;">Umur (tahun) <span style="color:#bbb;font-weight:500;">— otomatis</span></label>
+          <input type="number" id="eUmur" placeholder="0" readonly tabindex="-1"
+            style="width:100%;padding:11px 14px;border-radius:10px;border:1.5px solid #e0e0e0;
+                   font-size:13px;outline:none;box-sizing:border-box;background:#f5f5f5;color:#777;cursor:not-allowed;">
+        </div>
+      </div>
+
+      <div>
+        <label style="font-size:11.5px;font-weight:700;color:#555;display:block;margin-bottom:8px;">Ukuran Kaos</label>
+
+        <div id="eAutoInfo" style="display:none;margin-bottom:10px;">
+          <div style="background:#f0f4f0;border-radius:8px;padding:8px 12px;
+                      font-size:11.5px;color:#555;display:flex;align-items:center;gap:6px;">
+            <i class="fa-solid fa-circle-info" style="color:#2e7d32;font-size:12px;"></i>
+            <span id="eAutoInfoText"></span>
+          </div>
+        </div>
+
+        <div id="eJenisSection" style="display:none;margin-bottom:14px;">
+          <div style="font-size:11px;font-weight:700;color:#999;margin-bottom:8px;letter-spacing:.3px;">JENIS KAOS</div>
+          <div style="display:flex;gap:8px;">
+            @foreach(['Dewasa','Anak'] as $jenis)
+            <button type="button" onclick="selectEJenis(this, '{{ $jenis }}')"
+              class="btn-e-jenis" data-jenis="{{ $jenis }}"
+              style="flex:1;padding:8px;border-radius:8px;border:1.5px solid #e0e0e0;
+                     background:#fff;font-size:12px;font-weight:700;color:#777;cursor:pointer;transition:all .15s;">
+              @if($jenis === 'Dewasa') 🧑 @else 👶 @endif {{ $jenis }}
+            </button>
+            @endforeach
+          </div>
+        </div>
+
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          @foreach(['S','M','L','XL','XXL','XXXL','XXXXL','XXXXXL'] as $sz)
+          <button type="button" onclick="selectEUkuran(this, '{{ $sz }}')"
+            class="btn-e-ukuran" data-sz="{{ $sz }}"
+            style="padding:7px 14px;border-radius:8px;border:1.5px solid #e0e0e0;
+                   background:#fff;font-size:12px;font-weight:700;color:#777;cursor:pointer;
+                   transition:all .15s;">
+            {{ $sz }}
+          </button>
+          @endforeach
+        </div>
+
+        <input type="hidden" id="eUkuranKaos">
+        <input type="hidden" id="eJenisKaos">
+        <input type="hidden" id="eLenganKaos">
+      </div>
+
+      <div id="eErrorAlert" style="display:none;background:#fce4ec;border-radius:10px;
+           padding:10px 14px;font-size:12px;color:#c62828;"></div>
+
+      <button onclick="submitEdit()" id="btnSubmitEdit"
+        style="width:100%;padding:14px;border-radius:12px;border:none;
+               background:linear-gradient(135deg,#43a047,#2e7d32);
+               color:#fff;font-size:14px;font-weight:800;cursor:pointer;
+               transition:opacity .2s;margin-top:4px;">
+        Simpan Perubahan
+      </button>
+
+      <button onclick="closeModalEdit()"
         style="width:100%;padding:12px;border-radius:12px;border:1.5px solid #e0e0e0;
                background:#fff;color:#999;font-size:13px;font-weight:600;cursor:pointer;">
         Batal
@@ -295,17 +435,17 @@
   from { transform:translateX(-50%) translateY(10px); opacity:0; }
   to   { transform:translateX(-50%) translateY(0);    opacity:1; }
 }
-.btn-p-jenis.active {
+.btn-p-jenis.active, .btn-e-jenis.active {
   background: #e8f5e9 !important;
   border-color: #3d7a47 !important;
   color: #2e7d32 !important;
 }
-.btn-p-ukuran.active {
+.btn-p-ukuran.active, .btn-e-ukuran.active {
   background: #e8f5e9 !important;
   border-color: #3d7a47 !important;
   color: #2e7d32 !important;
 }
-.btn-p-ukuran.active-anak {
+.btn-p-ukuran.active-anak, .btn-e-ukuran.active-anak {
   background: #fff8e1 !important;
   border-color: #f9a825 !important;
   color: #e65100 !important;
@@ -315,34 +455,55 @@
 {{-- JS --}}
 <script>
 const PENGAJUAN_URL = "{{ route('guest.pengajuan.store') }}";
+const KELUARGA_UPDATE_URL = "{{ route('guest.keluarga.update') }}";
 const CSRF_TOKEN    = "{{ csrf_token() }}";
 
-// ── State baju pengajuan ──────────────────────────────────────────────────────
+// Batas ukuran kaos: kalau HUBUNGAN-nya "Anak" (bukan cuma jenis kaosnya),
+// atau jenis kaos yang dipilih "Anak", ukuran dibatasi max XXL
+const KID_SIZES = ['S','M','L','XL','XXL'];
+
+// ═══════════════════════════════════════════════════════════════════════
+// TAMBAH ANGGOTA (pengajuan)
+// ═══════════════════════════════════════════════════════════════════════
 let pSelectedJenis  = null;
 let pSelectedLengan = null;
 let pSelectedUkuran = null;
 
-// ── Resolve auto berdasarkan hubungan ─────────────────────────────────────────
-// Suami  → Dewasa, Lengan Pendek (auto)
-// Istri  → Dewasa, Lengan Panjang (auto)
-// Anak   → manual pilih jenis (Dewasa/Anak), lengan selalu Lengan Pendek
 function resolvePAuto(hubungan) {
+  // Toggle "Jenis Kaos" (Dewasa/Anak) HANYA untuk hubungan === 'Anak'.
+  // Selain itu (Suami, Istri, atau nilai tak terduga lain) selalu Dewasa & otomatis.
+  if (hubungan === 'Anak') {
+    return { jenis: null, lengan: null, manual: true };
+  }
   switch (hubungan) {
-    case 'Suami': return { jenis: 'Dewasa', lengan: 'Lengan Pendek',  manual: false };
     case 'Istri': return { jenis: 'Dewasa', lengan: 'Lengan Panjang', manual: false };
-    default:      return { jenis: null,     lengan: null,             manual: true  };
+    default:      return { jenis: 'Dewasa', lengan: 'Lengan Pendek',  manual: false }; // Suami / lainnya
   }
 }
 
-// ── Trigger saat hubungan berubah ─────────────────────────────────────────────
+// filter ukuran: restrict kalau HUBUNGAN = Anak ATAU jenis kaos = Anak
+function applyPUkuranFilter() {
+  const hubungan = document.getElementById('pHubungan').value;
+  const restrict = hubungan === 'Anak' || pSelectedJenis === 'Anak';
+
+  document.querySelectorAll('.btn-p-ukuran').forEach(b => {
+    const allowed = !restrict || KID_SIZES.includes(b.dataset.sz);
+    b.style.display = allowed ? '' : 'none';
+  });
+
+  if (restrict && pSelectedUkuran && !KID_SIZES.includes(pSelectedUkuran)) {
+    pSelectedUkuran = null;
+    document.getElementById('pUkuranKaos').value = '';
+    document.querySelectorAll('.btn-p-ukuran').forEach(b => b.classList.remove('active', 'active-anak'));
+  }
+}
+
 function onHubunganChange(hubungan) {
-  // Auto jenis kelamin
   const jkEl = document.getElementById('pJenisKelamin');
   if      (hubungan === 'Suami') jkEl.value = 'Laki-laki';
   else if (hubungan === 'Istri') jkEl.value = 'Perempuan';
   else                           jkEl.value = '';
 
-  // Reset state baju
   resetBajuState();
 
   const auto         = resolvePAuto(hubungan);
@@ -353,11 +514,11 @@ function onHubunganChange(hubungan) {
   if (!hubungan) {
     jenisSection.style.display = 'none';
     autoInfo.style.display     = 'none';
+    applyPUkuranFilter();
     return;
   }
 
   if (!auto.manual) {
-    // Suami / Istri → auto, sembunyikan jenis section
     jenisSection.style.display = 'none';
     autoInfo.style.display     = 'block';
     autoInfoText.textContent   = 'Jenis & lengan otomatis: ' + auto.jenis + ' · ' + auto.lengan;
@@ -366,23 +527,24 @@ function onHubunganChange(hubungan) {
     document.getElementById('pJenisKaos').value  = auto.jenis;
     document.getElementById('pLenganKaos').value = auto.lengan;
   } else {
-    // Anak → tampilkan pilihan jenis kaos
     autoInfo.style.display     = 'none';
     jenisSection.style.display = 'block';
   }
+
+  // hubungan "Anak" langsung membatasi ukuran, walau jenis kaos belum dipilih
+  applyPUkuranFilter();
 }
 
-// ── Pilih jenis kaos (flow Anak) ──────────────────────────────────────────────
-// Apapun yang dipilih (Dewasa/Anak), lengan selalu Lengan Pendek
 function selectPJenis(btn, jenis) {
   pSelectedJenis  = jenis;
-  pSelectedLengan = 'Lengan Pendek'; // selalu pendek untuk flow Anak
+  pSelectedLengan = 'Lengan Pendek';
   document.querySelectorAll('.btn-p-jenis').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   document.getElementById('pJenisKaos').value  = jenis;
   document.getElementById('pLenganKaos').value = 'Lengan Pendek';
 
-  // Recolor size buttons sesuai jenis
+  applyPUkuranFilter();
+
   document.querySelectorAll('.btn-p-ukuran').forEach(b => {
     b.classList.remove('active', 'active-anak');
     if (b.dataset.sz === pSelectedUkuran)
@@ -390,7 +552,6 @@ function selectPJenis(btn, jenis) {
   });
 }
 
-// ── Pilih ukuran ──────────────────────────────────────────────────────────────
 function selectPUkuran(btn, sz) {
   pSelectedUkuran = sz;
   document.getElementById('pUkuranKaos').value = sz;
@@ -398,7 +559,6 @@ function selectPUkuran(btn, sz) {
   btn.classList.add(pSelectedJenis === 'Anak' ? 'active-anak' : 'active');
 }
 
-// ── Reset state baju ──────────────────────────────────────────────────────────
 function resetBajuState() {
   pSelectedJenis  = null;
   pSelectedLengan = null;
@@ -407,12 +567,14 @@ function resetBajuState() {
   document.getElementById('pJenisKaos').value  = '';
   document.getElementById('pLenganKaos').value = '';
   document.querySelectorAll('.btn-p-jenis, .btn-p-ukuran')
-    .forEach(b => b.classList.remove('active', 'active-anak'));
+    .forEach(b => {
+      b.classList.remove('active', 'active-anak');
+      b.style.display = ''; // tampilin lagi semua ukuran, nanti difilter ulang
+    });
   document.getElementById('pJenisSection').style.display = 'none';
   document.getElementById('pAutoInfo').style.display     = 'none';
 }
 
-// ── Modal open/close ──────────────────────────────────────────────────────────
 function openModalPengajuan() {
   resetFormPengajuan();
   const modal = document.getElementById('modalPengajuan');
@@ -429,19 +591,18 @@ document.getElementById('modalPengajuan').addEventListener('click', function(e) 
   if (e.target === this) closeModalPengajuan();
 });
 
-// ── Hitung umur otomatis dari tanggal lahir ───────────────────────────────────
 function hitungUmur() {
-  const tgl = document.getElementById('pTanggalLahir').value;
-  if (!tgl) return;
+  const tgl    = document.getElementById('pTanggalLahir').value;
+  const umurEl = document.getElementById('pUmur');
+  if (!tgl) { umurEl.value = ''; return; }
   const today = new Date();
   const birth  = new Date(tgl);
   let age = today.getFullYear() - birth.getFullYear();
   const m = today.getMonth() - birth.getMonth();
   if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
-  document.getElementById('pUmur').value = age >= 0 ? age : 0;
+  umurEl.value = age >= 0 ? age : 0;
 }
 
-// ── Reset form ────────────────────────────────────────────────────────────────
 function resetFormPengajuan() {
   document.getElementById('pNama').value         = '';
   document.getElementById('pHubungan').value     = '';
@@ -452,7 +613,6 @@ function resetFormPengajuan() {
   hideError();
 }
 
-// ── Error helper ──────────────────────────────────────────────────────────────
 function showError(msg) {
   const el = document.getElementById('pErrorAlert');
   el.textContent   = msg;
@@ -462,7 +622,6 @@ function hideError() {
   document.getElementById('pErrorAlert').style.display = 'none';
 }
 
-// ── Submit ────────────────────────────────────────────────────────────────────
 async function submitPengajuan() {
   hideError();
 
@@ -493,7 +652,7 @@ async function submitPengajuan() {
         hubungan      : hubungan,
         jenis_kelamin : jk,
         tanggal_lahir : tglLahir        || null,
-        umur          : umur            || null,
+        umur          : umur !== '' ? umur : 0,
         ukuran_kaos   : pSelectedUkuran || null,
         jenis_kaos    : pSelectedJenis  || null,
         lengan_kaos   : pSelectedLengan || null,
@@ -522,7 +681,261 @@ async function submitPengajuan() {
   }
 }
 
-// ── Toast sukses ──────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════
+// EDIT ANGGOTA (baru) — direct update, no approval
+// ═══════════════════════════════════════════════════════════════════════
+let eSelectedJenis  = null;
+let eSelectedLengan = null;
+let eSelectedUkuran = null;
+
+function resolveEAuto(hubungan) {
+  // Toggle "Jenis Kaos" (Dewasa/Anak) HANYA untuk hubungan === 'Anak'.
+  // Selain itu (Suami, Istri, Karyawan, Karyawati, atau nilai tak terduga lain) selalu Dewasa & otomatis.
+  if (hubungan === 'Anak') {
+    return { jenis: null, lengan: null, manual: true };
+  }
+  switch (hubungan) {
+    case 'Istri':
+    case 'Karyawati':
+      return { jenis: 'Dewasa', lengan: 'Lengan Panjang', manual: false };
+    default:
+      return { jenis: 'Dewasa', lengan: 'Lengan Pendek', manual: false }; // Suami / Karyawan / lainnya
+  }
+}
+
+// filter ukuran: restrict kalau HUBUNGAN = Anak ATAU jenis kaos = Anak
+function applyEUkuranFilter() {
+  const hubungan = document.getElementById('eHubungan').value;
+  const restrict = hubungan === 'Anak' || eSelectedJenis === 'Anak';
+
+  document.querySelectorAll('.btn-e-ukuran').forEach(b => {
+    const allowed = !restrict || KID_SIZES.includes(b.dataset.sz);
+    b.style.display = allowed ? '' : 'none';
+  });
+
+  if (restrict && eSelectedUkuran && !KID_SIZES.includes(eSelectedUkuran)) {
+    eSelectedUkuran = null;
+    document.getElementById('eUkuranKaos').value = '';
+    document.querySelectorAll('.btn-e-ukuran').forEach(b => b.classList.remove('active', 'active-anak'));
+  }
+}
+
+function onHubunganChangeEdit(hubungan, skipAutoGender = false) {
+  if (!skipAutoGender) {
+    const jkEl = document.getElementById('eJenisKelamin');
+    if      (hubungan === 'Suami') jkEl.value = 'Laki-laki';
+    else if (hubungan === 'Istri') jkEl.value = 'Perempuan';
+  }
+
+  const auto         = resolveEAuto(hubungan);
+  const jenisSection = document.getElementById('eJenisSection');
+  const autoInfo      = document.getElementById('eAutoInfo');
+  const autoInfoText  = document.getElementById('eAutoInfoText');
+
+  if (!hubungan) {
+    jenisSection.style.display = 'none';
+    autoInfo.style.display     = 'none';
+    applyEUkuranFilter();
+    return;
+  }
+
+  if (!auto.manual) {
+    jenisSection.style.display = 'none';
+    autoInfo.style.display     = 'block';
+    autoInfoText.textContent   = 'Jenis & lengan otomatis: ' + auto.jenis + ' · ' + auto.lengan;
+    eSelectedJenis  = auto.jenis;
+    eSelectedLengan = auto.lengan;
+    document.getElementById('eJenisKaos').value  = auto.jenis;
+    document.getElementById('eLenganKaos').value = auto.lengan;
+  } else {
+    autoInfo.style.display     = 'none';
+    jenisSection.style.display = 'block';
+  }
+
+  // hubungan "Anak" langsung membatasi ukuran, walau jenis kaos belum dipilih
+  applyEUkuranFilter();
+}
+
+function selectEJenis(btn, jenis) {
+  eSelectedJenis  = jenis;
+  eSelectedLengan = 'Lengan Pendek';
+  document.querySelectorAll('.btn-e-jenis').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('eJenisKaos').value  = jenis;
+  document.getElementById('eLenganKaos').value = 'Lengan Pendek';
+
+  applyEUkuranFilter();
+
+  document.querySelectorAll('.btn-e-ukuran').forEach(b => {
+    b.classList.remove('active', 'active-anak');
+    if (b.dataset.sz === eSelectedUkuran)
+      b.classList.add(jenis === 'Anak' ? 'active-anak' : 'active');
+  });
+}
+
+function selectEUkuran(btn, sz) {
+  eSelectedUkuran = sz;
+  document.getElementById('eUkuranKaos').value = sz;
+  document.querySelectorAll('.btn-e-ukuran').forEach(b => b.classList.remove('active', 'active-anak'));
+  btn.classList.add(eSelectedJenis === 'Anak' ? 'active-anak' : 'active');
+}
+
+function hitungUmurEdit() {
+  const tgl    = document.getElementById('eTanggalLahir').value;
+  const umurEl = document.getElementById('eUmur');
+  if (!tgl) { umurEl.value = ''; return; }
+  const today = new Date();
+  const birth  = new Date(tgl);
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+  umurEl.value = age >= 0 ? age : 0;
+}
+
+function showErrorEdit(msg) {
+  const el = document.getElementById('eErrorAlert');
+  el.textContent   = msg;
+  el.style.display = 'block';
+}
+function hideErrorEdit() {
+  document.getElementById('eErrorAlert').style.display = 'none';
+}
+
+// dipanggil dari tombol pensil tiap card
+function openModalEdit(id, nama, hubungan, jenisKelamin, tanggalLahir, umur, ukuranKaos, jenisKaos, lenganKaos) {
+  hideErrorEdit();
+
+  document.getElementById('eDetailId').value      = id;
+  document.getElementById('eNama').value           = nama || '';
+  document.getElementById('eHubungan').value       = hubungan || '';
+  document.getElementById('eTanggalLahir').value   = tanggalLahir || '';
+  document.getElementById('eUmur').value           = umur || '';
+  hitungUmurEdit(); // recompute otomatis dari tanggal lahir (jangan andalkan value lama dari DB)
+
+  // Kalau yang diedit adalah record karyawan/karyawati itu sendiri, field Hubungan
+  // diganti jadi label statis (bukan dropdown) — dropdown cuma punya opsi Suami/Istri/Anak.
+  const selectHubEl = document.getElementById('eHubungan');
+  const labelHubEl  = document.getElementById('eHubunganLabel');
+  const isKaryawanSelf = (hubungan === 'Karyawan' || hubungan === 'Karyawati');
+
+  if (isKaryawanSelf) {
+    selectHubEl.value       = hubungan; // tetep diisi (option-nya ada, cuma disembunyikan dari list)
+    selectHubEl.style.display = 'none';
+    labelHubEl.textContent    = hubungan + ' (tidak bisa diubah)';
+    labelHubEl.style.display  = 'block';
+  } else {
+    selectHubEl.value       = hubungan || '';
+    selectHubEl.style.display = '';
+    labelHubEl.style.display  = 'none';
+  }
+
+  // reset tombol jenis & ukuran dulu (termasuk tampilin lagi semua ukuran, nanti difilter ulang)
+  document.querySelectorAll('.btn-e-jenis, .btn-e-ukuran').forEach(b => {
+    b.classList.remove('active', 'active-anak');
+    b.style.display = '';
+  });
+
+  eSelectedJenis  = jenisKaos  || null;
+  eSelectedLengan = lenganKaos || null;
+  eSelectedUkuran = ukuranKaos || null;
+  document.getElementById('eJenisKaos').value  = jenisKaos  || '';
+  document.getElementById('eLenganKaos').value = lenganKaos || '';
+  document.getElementById('eUkuranKaos').value = ukuranKaos || '';
+
+  // tampilkan section jenis/auto-info sesuai hubungan, tanpa override gender yg sudah diisi
+  // (fungsi ini juga otomatis memanggil applyEUkuranFilter → batasi max XXL kalau hubungan Anak)
+  onHubunganChangeEdit(hubungan, true);
+  document.getElementById('eJenisKelamin').value = jenisKelamin || '';
+
+  // highlight ukuran yang sudah tersimpan (kalau masih terlihat setelah difilter)
+  if (eSelectedUkuran) {
+    document.querySelectorAll('.btn-e-ukuran').forEach(b => {
+      if (b.dataset.sz === eSelectedUkuran) b.classList.add(eSelectedJenis === 'Anak' ? 'active-anak' : 'active');
+    });
+  }
+  // highlight jenis kaos (hanya relevan utk Anak)
+  if (hubungan === 'Anak' && jenisKaos) {
+    document.querySelectorAll('.btn-e-jenis').forEach(b => {
+      if (b.dataset.jenis === jenisKaos) b.classList.add('active');
+    });
+  }
+
+  const modal = document.getElementById('modalEdit');
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModalEdit() {
+  document.getElementById('modalEdit').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+document.getElementById('modalEdit').addEventListener('click', function(e) {
+  if (e.target === this) closeModalEdit();
+});
+
+async function submitEdit() {
+  hideErrorEdit();
+
+  const id       = document.getElementById('eDetailId').value;
+  const nama     = document.getElementById('eNama').value.trim();
+  const hubungan = document.getElementById('eHubungan').value;
+  const jk       = document.getElementById('eJenisKelamin').value;
+  const tglLahir = document.getElementById('eTanggalLahir').value;
+  const umur     = document.getElementById('eUmur').value;
+
+  if (!nama)     return showErrorEdit('Nama anggota keluarga wajib diisi.');
+  if (!hubungan) return showErrorEdit('Hubungan wajib dipilih.');
+  if (!jk)       return showErrorEdit('Jenis kelamin wajib dipilih.');
+
+  const btn = document.getElementById('btnSubmitEdit');
+  btn.disabled    = true;
+  btn.textContent = 'Menyimpan...';
+
+  try {
+    const res = await fetch(KELUARGA_UPDATE_URL, {
+      method : 'POST',
+      headers: {
+        'Content-Type' : 'application/json',
+        'X-CSRF-TOKEN' : CSRF_TOKEN,
+        'Accept'       : 'application/json',
+      },
+      body: JSON.stringify({
+        detail_id     : id,
+        nama_keluarga : nama,
+        hubungan      : hubungan,
+        jenis_kelamin : jk,
+        tanggal_lahir : tglLahir        || null,
+        umur          : umur !== '' ? umur : 0,
+        ukuran_kaos   : eSelectedUkuran || null,
+        jenis_kaos    : eSelectedJenis  || null,
+        lengan_kaos   : eSelectedLengan || null,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      if (data.errors) {
+        const firstErr = Object.values(data.errors)[0];
+        return showErrorEdit(Array.isArray(firstErr) ? firstErr[0] : firstErr);
+      }
+      return showErrorEdit(data.message || 'Terjadi kesalahan. Coba lagi.');
+    }
+
+    closeModalEdit();
+    showToastSuccess(data.message || 'Data berhasil diperbarui!');
+    setTimeout(() => location.reload(), 1200);
+
+  } catch (err) {
+    showErrorEdit('Gagal terhubung ke server. Periksa koneksi internet.');
+  } finally {
+    btn.disabled    = false;
+    btn.textContent = 'Simpan Perubahan';
+  }
+}
+
+// ── Toast sukses (shared) ──────────────────────────────────────────────
 function showToastSuccess(msg) {
   const toast = document.createElement('div');
   toast.textContent   = msg;

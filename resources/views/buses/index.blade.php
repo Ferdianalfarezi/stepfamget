@@ -4,6 +4,67 @@
 
 @section('content')
 
+{{-- ── SUMMARY CARDS ────────────────────────────────────────────────────────── --}}
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:14px;">
+
+    <div class="card" style="padding:14px 18px;display:flex;align-items:center;gap:12px;">
+        <div style="width:40px;height:40px;border-radius:10px;background:#e0f2fe;display:flex;align-items:center;justify-content:center;">
+            <i class="fa-solid fa-user-tie" style="color:#0369a1;font-size:16px;"></i>
+        </div>
+        <div>
+            <div style="font-size:11px;color:#64748b;font-weight:600;">Karyawan</div>
+            <div style="font-size:20px;font-weight:800;color:#0369a1;">{{ $totalKaryawan }}</div>
+        </div>
+    </div>
+
+    <div class="card" style="padding:14px 18px;display:flex;align-items:center;gap:12px;">
+        <div style="width:40px;height:40px;border-radius:10px;background:#fef9c3;display:flex;align-items:center;justify-content:center;">
+            <i class="fa-solid fa-people-roof" style="color:#ca8a04;font-size:16px;"></i>
+        </div>
+        <div>
+            <div style="font-size:11px;color:#64748b;font-weight:600;">Keluarga</div>
+            <div style="font-size:20px;font-weight:800;color:#ca8a04;">{{ $totalKeluarga }}</div>
+        </div>
+    </div>
+
+    <div class="card" style="padding:14px 18px;display:flex;align-items:center;gap:12px;">
+        <div style="width:40px;height:40px;border-radius:10px;background:#dcfce7;display:flex;align-items:center;justify-content:center;">
+            <i class="fa-solid fa-users" style="color:#16a34a;font-size:16px;"></i>
+        </div>
+        <div>
+            <div style="font-size:11px;color:#64748b;font-weight:600;">Total Naik Bus</div>
+            <div style="font-size:20px;font-weight:800;color:#16a34a;">{{ $total }}</div>
+        </div>
+    </div>
+
+    <div class="card" style="padding:14px 18px;display:flex;align-items:center;gap:12px;">
+        <div style="width:40px;height:40px;border-radius:10px;background:#f0fdf4;display:flex;align-items:center;justify-content:center;">
+            <i class="fa-solid fa-bus" style="color:#0b4614;font-size:16px;"></i>
+        </div>
+        <div>
+            <div style="font-size:11px;color:#64748b;font-weight:600;">Estimasi Bus</div>
+            <div style="font-size:20px;font-weight:800;color:#0b4614;">
+                {{ $jumlahBus }}
+                <span style="font-size:11px;font-weight:500;color:#94a3b8;">(54 kursi/bus)</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card" style="padding:14px 18px;display:flex;align-items:center;gap:12px;">
+        <div style="width:40px;height:40px;border-radius:10px;background:#fdf2f8;display:flex;align-items:center;justify-content:center;">
+            <i class="fa-solid fa-bus-simple" style="color:#be185d;font-size:16px;"></i>
+        </div>
+        <div>
+            <div style="font-size:11px;color:#64748b;font-weight:600;">Estimasi Bus (Jika Full)</div>
+            <div style="font-size:20px;font-weight:800;color:#be185d;">
+                {{ $estimasiBusFullDesimal }}
+                <span style="font-size:11px;font-weight:500;color:#94a3b8;">({{ $estimasiNaikBusFull }} org)</span>
+            </div>
+        </div>
+    </div>
+
+</div>
+
 {{-- FILTER BAR --}}
 <div class="card" style="margin-bottom:5px;">
     <div class="card-body" style="padding:16px 20px;">
@@ -15,10 +76,21 @@
                            placeholder="Cari nama atau NIK..."
                            value="{{ request('search') }}" style="width:280px;">
                 </div>
+
+                <select name="kursi_status" class="form-control" style="width:180px;">
+                    <option value="">Semua Status Kursi</option>
+                    <option value="filled" {{ request('kursi_status') === 'filled' ? 'selected' : '' }}>
+                        Sudah Terisi
+                    </option>
+                    <option value="empty" {{ request('kursi_status') === 'empty' ? 'selected' : '' }}>
+                        Belum Terisi
+                    </option>
+                </select>
+
                 <button type="submit" class="btn btn-primary">
                     <i class="fa-solid fa-filter"></i> Filter
                 </button>
-                @if(request()->hasAny(['search']))
+                @if(request()->hasAny(['search', 'kursi_status']))
                     <a href="{{ route('buses.index') }}" class="btn btn-outline">
                         <i class="fa-solid fa-xmark"></i> Reset
                     </a>
@@ -34,12 +106,6 @@
         <div>
             <div class="card-title">
                 <i class="fa-solid fa-bus" style="color:#0b4614;margin-right:6px;"></i>Data Naik Bus
-            </div>
-            <div style="font-size:12px;color:#64748b;margin-top:4px;">
-                Total <strong>{{ $total }}</strong> karyawan naik bus
-                &nbsp;·&nbsp;
-                Estimasi <strong>{{ $jumlahBus }}</strong> bus
-                <span style="color:#94a3b8;">(kapasitas 54 kursi/bus)</span>
             </div>
         </div>
         <div style="display:flex;gap:8px;align-items:center;">
@@ -76,50 +142,97 @@
                 <tr>
                     <th style="width:45px;">#</th>
                     <th>NIK</th>
-                    <th>Nama Karyawan</th>
+                    <th>Nama</th>
+                    <th>Hubungan</th>
                     <th>Kursi</th>
                     <th>Terdaftar Pada</th>
                 </tr>
             </thead>
             <tbody>
+                @php $no = ($buses->currentPage() - 1) * $buses->perPage(); @endphp
                 @forelse($buses as $b)
-                <tr>
-                    <td style="color:#94a3b8;font-size:12px;">
-                        {{ $loop->iteration + ($buses->currentPage() - 1) * $buses->perPage() }}
-                    </td>
-                    <td>
-                        <span style="font-size:13px;">{{ $b->nik }}</span>
-                    </td>
-                    <td>
-                        <div style="display:flex;align-items:center;gap:10px;">
-                            <div style="width:34px;height:34px;border-radius:10px;
-                                        background:#e8f5e9;color:#2e7d32;
-                                        display:flex;align-items:center;justify-content:center;
-                                        font-size:12px;font-weight:700;flex-shrink:0;">
-                                {{ strtoupper(substr($b->nama_karyawan, 0, 2)) }}
+                    @php $no++; @endphp
+                    <tr>
+                        <td style="color:#94a3b8;font-size:12px;">{{ $no }}</td>
+                        <td>
+                            <span style="font-size:13px;font-weight:700;">{{ $b->nik }}</span>
+                        </td>
+                        <td>
+                            <div style="display:flex;align-items:center;gap:10px;">
+                                <div style="width:34px;height:34px;border-radius:10px;
+                                            background:#e8f5e9;color:#2e7d32;
+                                            display:flex;align-items:center;justify-content:center;
+                                            font-size:12px;font-weight:700;flex-shrink:0;">
+                                    {{ strtoupper(substr($b->nama_karyawan, 0, 2)) }}
+                                </div>
+                                <div style="font-weight:600;font-size:13.5px;">{{ $b->nama_karyawan }}</div>
                             </div>
-                            <div style="font-weight:600;font-size:13.5px;">{{ $b->nama_karyawan }}</div>
-                        </div>
-                    </td>
-                    <td>
-                        @if($b->kursi)
-                            <span style="background:#1e293b;color:#fff;border-radius:8px;
-                                         padding:4px 12px;font-size:13px;font-weight:800;
-                                         letter-spacing:.5px;">
-                                {{ $b->kursi }}
+                        </td>
+                        <td>
+                            <span style="background:#dbeafe;color:#1e40af;border-radius:6px;
+                                         padding:3px 10px;font-size:11px;font-weight:700;">
+                                Karyawan
                             </span>
-                        @else
-                            <span style="color:#cbd5e1;font-size:12px;font-style:italic;">Belum diisi</span>
-                        @endif
-                    </td>
-                    <td style="font-size:13px;color:#64748b;">
-                        <i class="fa-regular fa-clock" style="margin-right:4px;"></i>
-                        {{ $b->created_at->format('d M Y, H:i') }}
-                    </td>
-                </tr>
+                        </td>
+                        <td>
+                            @if($b->kursi)
+                                <span style="background:#1e293b;color:#fff;border-radius:8px;
+                                             padding:4px 12px;font-size:13px;font-weight:800;
+                                             letter-spacing:.5px;">
+                                    {{ $b->kursi }}
+                                </span>
+                            @else
+                                <span style="color:#cbd5e1;font-size:12px;font-style:italic;">Belum diisi</span>
+                            @endif
+                        </td>
+                        <td style="font-size:13px;color:#64748b;">
+                            <i class="fa-regular fa-clock" style="margin-right:4px;"></i>
+                            {{ $b->created_at->format('d M Y, H:i') }}
+                        </td>
+                    </tr>
+
+                    @foreach($b->keluarga as $k)
+                        @php $no++; @endphp
+                        <tr style="background:#fafafa;">
+                            <td style="color:#cbd5e1;font-size:12px;">{{ $no }}</td>
+                            <td>
+                                <span style="font-size:12px;color:#cbd5e1;">{{ $b->nik }}</span>
+                            </td>
+                            <td>
+                                <div style="display:flex;align-items:center;gap:10px;padding-left:20px;">
+                                    <i class="fa-solid fa-share fa-rotate-90" style="color:#cbd5e1;font-size:11px;"></i>
+                                    <div style="font-size:13px;color:#475569;">{{ $k->nama_keluarga }}</div>
+                                </div>
+                            </td>
+                            <td>
+                                @php
+                                    $hubClass = match($k->hubungan) {
+                                        'Istri'  => 'hubungan-istri',
+                                        'Suami'  => 'hubungan-suami',
+                                        'Anak'   => 'hubungan-anak',
+                                        default  => 'badge-gray',
+                                    };
+                                @endphp
+                                <span class="badge {{ $hubClass }}">{{ $k->hubungan }}</span>
+                            </td>
+                            <td>
+                                @if($k->kursi_bus)
+                                    <span style="background:#1e293b;color:#fff;border-radius:8px;
+                                                 padding:4px 12px;font-size:13px;font-weight:800;
+                                                 letter-spacing:.5px;">
+                                        {{ $k->kursi_bus }}
+                                    </span>
+                                @else
+                                    <span style="color:#cbd5e1;font-size:12px;font-style:italic;">Belum diisi</span>
+                                @endif
+                            </td>
+                            <td style="font-size:12px;color:#cbd5e1;">-</td>
+                        </tr>
+                    @endforeach
+
                 @empty
                 <tr>
-                    <td colspan="5" style="text-align:center;padding:40px;color:#94a3b8;">
+                    <td colspan="6" style="text-align:center;padding:40px;color:#94a3b8;">
                         <i class="fa-solid fa-bus-slash" style="font-size:32px;display:block;margin-bottom:10px;"></i>
                         Belum ada karyawan yang memilih naik bus
                     </td>

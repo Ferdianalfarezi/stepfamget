@@ -236,7 +236,7 @@
          ontouchstart="this.style.opacity='.8';this.style.transform='scale(.98)'"
          ontouchend="this.style.opacity='';this.style.transform=''">
         <i class="fa-solid fa-couch" style="font-size:15px;"></i>
-        Lihat Kursi Saya — {{ $pilihanBus->kursi }}
+        Lihat Kursi Saya 
       </a>
     @else
       <div id="badgeMenunggu"

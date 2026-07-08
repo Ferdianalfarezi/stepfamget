@@ -25,6 +25,14 @@ class PengajuanController extends Controller
             ], 422);
         }
 
+        $karyawan = Karyawan::where('nik', $nik)->first();
+
+        if (!$karyawan) {
+            return response()->json([
+                'message' => 'Data karyawan tidak ditemukan. Hubungi administrator.',
+            ], 422);
+        }
+
         $hasPending = PengajuanAnggota::where('nik', $nik)
             ->where('status', 'pending')
             ->exists();
@@ -52,6 +60,7 @@ class PengajuanController extends Controller
 
         $pengajuan = PengajuanAnggota::create([
             'nik'           => $nik,
+            'departemen'    => $karyawan->departemen,
             'nama_keluarga' => $validated['nama_keluarga'],
             'hubungan'      => $validated['hubungan'],
             'jenis_kelamin' => $validated['jenis_kelamin'],
@@ -87,6 +96,7 @@ class PengajuanController extends Controller
             $s = $request->search;
             $query->where(function ($q) use ($s) {
                 $q->where('nama_keluarga', 'like', "%$s%")
+                  ->orWhere('departemen', 'like', "%$s%")
                   ->orWhereHas('karyawan', fn($k) => $k->where('nama', 'like', "%$s%")
                                                         ->orWhere('nik', 'like', "%$s%"));
             });

@@ -97,7 +97,6 @@
                         {{ $loop->iteration + ($pengajuans->currentPage() - 1) * $pengajuans->perPage() }}
                     </td>
 
-                    {{-- Karyawan --}}
                     <td>
                         <div style="display:flex;align-items:center;gap:10px;">
                             <div style="width:34px;height:34px;border-radius:10px;
@@ -109,6 +108,11 @@
                             <div>
                                 <div style="font-weight:600;font-size:13.5px;">{{ $p->karyawan->nama ?? '-' }}</div>
                                 <div style="font-size:12px;color:#94a3b8;">{{ $p->nik }}</div>
+                                @if($p->departemen)
+                                    <div style="font-size:11px;color:#3d7a47;margin-top:2px;">
+                                        <i class="fa-solid fa-building" style="width:12px;"></i> {{ $p->departemen }}
+                                    </div>
+                                @endif
                             </div>
                         </div>
                     </td>

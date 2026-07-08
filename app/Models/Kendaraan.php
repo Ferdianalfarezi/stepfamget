@@ -8,7 +8,7 @@ class Kendaraan extends Model
 {
     protected $table = 'kendaraans';
 
-    protected $fillable = ['nik', 'nama_karyawan', 'plat_no'];
+    protected $fillable = ['nik', 'nama_karyawan', 'plat_no', 'jenis_kendaraan'];
 
     public function karyawan()
     {

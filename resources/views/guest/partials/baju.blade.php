@@ -192,7 +192,7 @@
 
       <div style="font-size:11px;font-weight:700;color:#999;margin-bottom:8px;letter-spacing:.3px;">PILIH UKURAN</div>
       <div class="sz-grid" style="display:flex;gap:8px;flex-wrap:wrap;">
-        @foreach(['S','M','L','XL','XXL','XXXL'] as $sz)
+        @foreach(['S','M','L','XL','XXL','XXXL','XXXXL','XXXXXL'] as $sz)
         <button type="button"
           onclick="selectSize({{ $d->id }}, this, '{{ $sz }}')"
           class="btn-sz" data-sz="{{ $sz }}"
@@ -255,6 +255,10 @@ const TOTAL           = {{ $members->count() }};
 const IS_EXPIRED      = @json($isExpired);
 const DEADLINE        = @json($deadline ? $deadline->toIso8601String() : null);
 
+// Batas ukuran kaos: kalau HUBUNGAN-nya "Anak" (bukan cuma jenis kaosnya),
+// atau jenis kaos yang dipilih "Anak", ukuran dibatasi max XXL
+const KID_SIZES = ['S','M','L','XL','XXL'];
+
 const selectedSize   = {};
 const selectedJenis  = {};
 const selectedLengan = {};
@@ -274,6 +278,26 @@ function resolveAuto(hubungan) {
 }
 
 function getCard(id) { return document.querySelector('.member-card[data-id="' + id + '"]'); }
+
+// ── Filter ukuran: restrict kalau HUBUNGAN card = Anak ATAU jenis kaos = Anak ──
+function applySizeFilter(id, jenis) {
+  var card = getCard(id);
+  if (!card) return;
+
+  var hubungan = card.dataset.hubungan || '';
+  var restrict = hubungan === 'Anak' || jenis === 'Anak';
+
+  card.querySelectorAll('.btn-sz').forEach(function(b) {
+    var allowed = !restrict || KID_SIZES.includes(b.dataset.sz);
+    b.style.display = allowed ? '' : 'none';
+  });
+
+  // kalau ukuran yg udah kepilih ternyata size besar & baru masuk mode restrict, reset
+  if (restrict && selectedSize[id] && !KID_SIZES.includes(selectedSize[id])) {
+    selectedSize[id] = null;
+    card.querySelectorAll('.btn-sz').forEach(function(b) { b.classList.remove('active', 'active-anak'); });
+  }
+}
 
 // ── Toast ─────────────────────────────────────────────────────────────────────
 function showToast(msg, bg) {
@@ -441,6 +465,9 @@ function initCard(id) {
     if (jenisSec) jenisSec.style.display = 'block';
   }
 
+  // langsung batasi ukuran kalau hubungan-nya Anak, walau jenis kaos belum dipilih
+  applySizeFilter(id, selectedJenis[id]);
+
   markCard(id);
 }
 
@@ -508,6 +535,9 @@ function editCard(id, btnEl) {
     }
   }
 
+  // filter ukuran berdasar hubungan card & jenis kaos yang aktif
+  applySizeFilter(id, selectedJenis[id]);
+
   if (prevUkuran) {
     var jenis = selectedJenis[id] || 'Dewasa';
     card.querySelectorAll('.btn-sz').forEach(function(b) {
@@ -567,6 +597,9 @@ function selectJenis(id, btn, jenis) {
     selectedLengan[id] = null;
     card.querySelectorAll('.btn-lengan').forEach(function(b) { b.classList.remove('active'); });
   }
+
+  // filter ukuran max XXL kalau hubungan Anak atau jenis kaosnya Anak
+  applySizeFilter(id, jenis);
 
   applyColorMode(id, jenis);
   markCard(id);

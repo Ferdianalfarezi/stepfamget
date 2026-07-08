@@ -162,7 +162,7 @@ class GuestController extends Controller
     {
         $validated = $request->validate([
             'detail_id'   => 'required|integer|exists:detail_karyawans,id',
-            'ukuran_kaos' => 'required|string|in:XS,S,M,L,XL,XXL,XXXL',
+            'ukuran_kaos' => 'required|string|in:XS,S,M,L,XL,XXL,XXXL,XXXXL,XXXXXL',
             'jenis_kaos'  => 'required|in:Dewasa,Anak',
             'lengan_kaos' => 'nullable|in:Lengan Pendek,Lengan Panjang',
         ], [
@@ -238,23 +238,99 @@ class GuestController extends Controller
         $bus      = Bus::where('nik', $karyawan->nik)->first();
 
         if (!$bus || !$bus->kursi) {
-            return redirect()->route('guest.menu', 'bus')
+            return redirect()->route('guest.dashboard')
                 ->with('error', 'Kursi belum ditentukan.');
         }
 
         [$kode, $nomorKursi] = explode('-', $bus->kursi, 2);
 
-        $terisi = Bus::whereNotNull('kursi')
+        // Kursi yang terisi karyawan
+        $terisiKaryawan = Bus::whereNotNull('kursi')
             ->where('kursi', 'like', $kode . '-%')
             ->get()
-            ->keyBy('kursi');
+            ->keyBy('kursi')
+            ->map(fn($b) => (object) [
+                'nama_karyawan' => $b->nama_karyawan,
+                'nik'           => $b->nik,
+                'kursi'         => $b->kursi,
+                'tipe'          => 'karyawan',
+            ]);
+
+        // Kursi yang terisi anggota keluarga
+        $terisiKeluarga = DetailKaryawan::whereNotNull('kursi_bus')
+            ->where('kursi_bus', 'like', $kode . '-%')
+            ->get()
+            ->keyBy('kursi_bus')
+            ->map(fn($k) => (object) [
+                'nama_karyawan' => $k->nama_keluarga,
+                'nik'           => $k->nik,
+                'kursi'         => $k->kursi_bus,
+                'tipe'          => 'keluarga',
+            ]);
+
+        $terisi = $terisiKaryawan->merge($terisiKeluarga);
+
+        // Semua kursi milik NIK yang login (karyawan + seluruh anggota keluarganya)
+        $kursiSaya = collect([$bus->kursi])
+            ->merge(
+                DetailKaryawan::where('nik', $karyawan->nik)
+                    ->whereNotNull('kursi_bus')
+                    ->pluck('kursi_bus')
+            )
+            ->filter()
+            ->values();
 
         $ketua = KetuaBus::with('karyawan')
             ->where('kode_bus', $kode)
             ->first();
 
         return view('guest.partials.kursi-bus', compact(
-            'kode', 'terisi', 'ketua', 'karyawan', 'bus', 'nomorKursi'
+            'kode', 'terisi', 'ketua', 'karyawan', 'bus', 'nomorKursi', 'kursiSaya'
         ));
+    }
+
+    public function keluargaUpdate(Request $request)
+    {
+        $validated = $request->validate([
+            'detail_id'     => 'required|integer|exists:detail_karyawans,id',
+            'nama_keluarga' => 'required|string|max:255',
+            // Karyawan/Karyawati ditambahkan karena record karyawan itu sendiri
+            // juga bisa diedit dari halaman Keluarga (hubungan-nya fixed, gak bisa diganti dari UI).
+            'hubungan'      => 'required|in:Suami,Istri,Anak,Karyawan,Karyawati',
+            'jenis_kelamin' => 'required|in:Laki-laki,Perempuan',
+            'tanggal_lahir' => 'nullable|date',
+            'umur'          => 'nullable|integer|min:0|max:150',
+            // Ditambahin XXXXL & XXXXXL biar sinkron sama pilihan ukuran di form (khusus Dewasa)
+            'ukuran_kaos'   => 'nullable|in:XS,S,M,L,XL,XXL,XXXL,XXXXL,XXXXXL',
+            'jenis_kaos'    => 'nullable|in:Dewasa,Anak',
+            'lengan_kaos'   => 'nullable|in:Lengan Pendek,Lengan Panjang',
+        ], [
+            'detail_id.exists'       => 'Data anggota tidak ditemukan.',
+            'nama_keluarga.required' => 'Nama wajib diisi.',
+            'hubungan.required'      => 'Hubungan wajib dipilih.',
+            'jenis_kelamin.required' => 'Jenis kelamin wajib dipilih.',
+        ]);
+
+        $karyawan = Auth::user()->karyawan;
+
+        // Security: pastikan detail milik karyawan yang login
+        $detail = $karyawan->details()->findOrFail($validated['detail_id']);
+
+        $detail->update([
+            'nama_keluarga' => $validated['nama_keluarga'],
+            'hubungan'      => $validated['hubungan'],
+            'jenis_kelamin' => $validated['jenis_kelamin'],
+            'tanggal_lahir' => $validated['tanggal_lahir'] ?? null,
+            'umur'          => $validated['umur'] ?? null,
+            'ukuran_kaos'   => $validated['ukuran_kaos'] ?? null,
+            'jenis_kaos'    => $validated['jenis_kaos'] ?? null,
+            'lengan_kaos'   => $validated['jenis_kaos'] === 'Anak'
+                                ? null
+                                : ($validated['lengan_kaos'] ?? null),
+        ]);
+
+        return response()->json([
+            'message' => 'Data anggota keluarga berhasil diperbarui.',
+        ]);
     }
 }

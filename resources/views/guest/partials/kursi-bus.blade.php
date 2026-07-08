@@ -104,21 +104,15 @@
 @endphp
 
 {{-- Hero --}}
+{{-- Hero --}}
 <div style="background:var(--green-dark);border-radius:18px;padding:18px;margin-bottom:14px;position:relative;overflow:hidden;">
   <div style="position:absolute;top:-20px;right:-30px;width:110px;height:110px;
               border-radius:50%;background:rgba(234,179,8,.15);pointer-events:none;"></div>
   <div style="font-size:10px;font-weight:600;color:rgba(255,255,255,.4);letter-spacing:1px;margin-bottom:6px;">
     BUS {{ $kode }}
   </div>
-  <div style="font-size:22px;font-weight:800;color:#fff;margin-bottom:8px;">
-    Kursi Kamu 🎉
-  </div>
-  <div style="display:inline-flex;align-items:center;gap:8px;
-              background:#eab308;border-radius:20px;padding:6px 16px;">
-    <i class="fa-solid fa-couch" style="color:#713f12;font-size:13px;"></i>
-    <span style="font-size:18px;font-weight:800;color:#713f12;letter-spacing:1px;">
-      {{ $bus->kursi }}
-    </span>
+  <div style="font-size:22px;font-weight:800;color:#fff;">
+    Kursi Kamu & Keluarga 🎉
   </div>
 </div>
 
@@ -161,7 +155,7 @@
   <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
     <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#475569;">
       <div style="width:14px;height:14px;border-radius:4px;background:#fef08a;border:1.5px solid #eab308;"></div>
-      Kursi Kamu
+      Kamu / Keluarga
     </div>
     <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#475569;">
       <div style="width:14px;height:14px;border-radius:4px;background:#16a34a;"></div>
@@ -214,8 +208,8 @@
             @php
               $seatId  = $kode . '-' . $n;
               $penump  = $terisi[$seatId] ?? null;
-              $isKetua = $penump && $ketua && $penump->nik === $ketua->nik;
-              $isMySeat = $seatId === $bus->kursi;
+              $isKetua = $penump && $ketua && $penump->tipe === 'karyawan' && $penump->nik === $ketua->nik;
+              $isMySeat = $kursiSaya->contains($seatId);
             @endphp
             <div style="flex:1;">{!! renderSeatGuest($seatId, $penump, $isKetua, $isMySeat) !!}</div>
           @endforeach
@@ -231,8 +225,8 @@
             @php
               $seatId  = $kode . '-' . $n;
               $penump  = $terisi[$seatId] ?? null;
-              $isKetua = $penump && $ketua && $penump->nik === $ketua->nik;
-              $isMySeat = $seatId === $bus->kursi;
+              $isKetua = $penump && $ketua && $penump->tipe === 'karyawan' && $penump->nik === $ketua->nik;
+              $isMySeat = $kursiSaya->contains($seatId);
             @endphp
             <div style="flex:1;">{!! renderSeatGuest($seatId, $penump, $isKetua, $isMySeat) !!}</div>
           @endforeach
@@ -262,8 +256,8 @@
           @php
             $seatId  = $kode . '-' . $n;
             $penump  = $terisi[$seatId] ?? null;
-            $isKetua = $penump && $ketua && $penump->nik === $ketua->nik;
-            $isMySeat = $seatId === $bus->kursi;
+            $isKetua = $penump && $ketua && $penump->tipe === 'karyawan' && $penump->nik === $ketua->nik;
+            $isMySeat = $kursiSaya->contains($seatId);
           @endphp
           <div style="flex:1;min-width:0;">{!! renderSeatGuest($seatId, $penump, $isKetua, $isMySeat) !!}</div>
         @endforeach
@@ -277,8 +271,8 @@
         @php
           $seatId  = $kode . '-' . $n;
           $penump  = $terisi[$seatId] ?? null;
-          $isKetua = $penump && $ketua && $penump->nik === $ketua->nik;
-          $isMySeat = $seatId === $bus->kursi;
+          $isKetua = $penump && $ketua && $penump->tipe === 'karyawan' && $penump->nik === $ketua->nik;
+          $isMySeat = $kursiSaya->contains($seatId);
         @endphp
         {!! renderSeatGuest($seatId, $penump, $isKetua, $isMySeat) !!}
       @endforeach
@@ -300,13 +294,11 @@
     </div>
     <div style="width:1px;background:var(--border);"></div>
     <div>
-      <div style="font-size:16px;font-weight:700;color:#eab308;">{{ $bus->kursi }}</div>
-      <div style="font-size:10px;color:var(--text-light);">Kursi Kamu</div>
+      <div style="font-size:14px;font-weight:700;color:#eab308;">{{ $kursiSaya->implode(', ') }}</div>
+      <div style="font-size:10px;color:var(--text-light);">Kursi Kamu & Keluarga</div>
     </div>
   </div>
 
 </div>
-
-
 
 @endsection

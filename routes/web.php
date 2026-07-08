@@ -46,6 +46,7 @@ Route::middleware(['auth', \App\Http\Middleware\AdminOnly::class])->group(functi
     // Karyawan — route eksplisit HARUS di atas resource supaya tidak bentrok
     Route::get('/karyawan/export',        [KaryawanController::class, 'export'])->name('karyawan.export');
     Route::post('/karyawan/import-baju',  [KaryawanController::class, 'importBaju'])->name('karyawan.importBaju');
+    Route::post('/karyawan/import', [KaryawanController::class, 'importKaryawan'])->name('karyawan.import');
     Route::get('/karyawan/detail-all',    [KaryawanController::class, 'detailAll'])->name('karyawan.detail.all');
     Route::get('/karyawan/{id}/detail',   [KaryawanController::class, 'detailAll'])->name('karyawan.detail');
     Route::get('/detail-karyawan/{id}',    [KaryawanController::class, 'showDetail'])->name('detail-karyawan.show');
@@ -158,6 +159,7 @@ Route::middleware(['auth', \App\Http\Middleware\GuestOnly::class])->group(functi
 
     // Pengajuan Anggota Keluarga
     Route::post('/my/pengajuan', [PengajuanController::class, 'store'])->name('guest.pengajuan.store');
+    Route::post('/my/keluarga/update', [GuestController::class, 'keluargaUpdate'])->name('guest.keluarga.update');
 
     // Baju
     Route::get('/my/baju',                        [GuestController::class, 'baju'])->name('guest.baju.index');

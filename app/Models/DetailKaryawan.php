@@ -13,6 +13,7 @@ class DetailKaryawan extends Model
         'hubungan', 'tanggal_lahir', 'umur',
         'ukuran_kaos', 'jenis_kaos', 'lengan_kaos',
         'is_scanned', 'is_scanned_baju', 'scanned_baju_at',
+        'kursi_bus',
     ];
 
     protected $casts = [

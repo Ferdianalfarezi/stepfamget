@@ -17,16 +17,23 @@ use PhpOffice\PhpSpreadsheet\Style\Alignment;
 class KaryawanExport implements FromQuery, WithHeadings, WithMapping, WithStyles, ShouldAutoSize
 {
     protected $request;
+    protected $type; // 'simple' | 'full'
     protected $no = 0;
 
-    public function __construct(Request $request)
+    public function __construct(Request $request, string $type = 'full')
     {
         $this->request = $request;
+        $this->type    = $type;
     }
 
     public function query()
     {
-        $q = Karyawan::with('details');
+        $q = Karyawan::query();
+
+        // Detail keluarga cuma perlu di-load kalau mode full
+        if ($this->type === 'full') {
+            $q->with('details');
+        }
 
         if ($this->request->filled('search')) {
             $search = $this->request->search;
@@ -45,12 +52,52 @@ class KaryawanExport implements FromQuery, WithHeadings, WithMapping, WithStyles
             $q->where('keterangan', $this->request->keterangan);
         }
 
+        // ── Filter Baju ──
+        if ($this->request->filled('baju')) {
+            $year = now()->year;
+            if ($this->request->baju === 'confirmed') {
+                $q->whereNotNull('baju_confirmed_at')
+                  ->whereYear('baju_confirmed_at', $year);
+            } elseif ($this->request->baju === 'belum') {
+                $q->where(function ($q2) use ($year) {
+                    $q2->whereNull('baju_confirmed_at')
+                       ->orWhereYear('baju_confirmed_at', '!=', $year);
+                });
+            }
+        }
+
+        // ── Filter Trans ──
+        if ($this->request->filled('trans')) {
+            $year = now()->year;
+            if ($this->request->trans === 'confirmed') {
+                $q->whereNotNull('trans_confirmed_at')
+                  ->whereYear('trans_confirmed_at', $year);
+            } elseif ($this->request->trans === 'belum') {
+                $q->where(function ($q2) use ($year) {
+                    $q2->whereNull('trans_confirmed_at')
+                       ->orWhereYear('trans_confirmed_at', '!=', $year);
+                });
+            }
+        }
+
+        // ── Filter Hubungan (Karyawan / Karyawati) ──
+        if ($this->request->filled('hubungan')) {
+            $q->whereHas('details', fn ($q2) =>
+                $q2->where('hubungan', $this->request->hubungan)
+            );
+        }
+
+        // ── Filter Hadir ──
+        if ($this->request->filled('hadir') || $this->request->hadir === '0') {
+            $q->where('status_kehadiran', $this->request->hadir);
+        }
+
         return $q->orderBy('nama');
     }
 
     public function headings(): array
     {
-        return [
+        $base = [
             'No',
             'NIK',
             'NIK Login',
@@ -59,7 +106,14 @@ class KaryawanExport implements FromQuery, WithHeadings, WithMapping, WithStyles
             'Jumlah Keluarga',
             'Status',
             'Hadir',
-            // ── detail keluarga ──
+        ];
+
+        if ($this->type === 'simple') {
+            return $base;
+        }
+
+        // full → tambah kolom detail keluarga
+        return array_merge($base, [
             'Nama Anggota',
             'Hubungan',
             'Jenis Kelamin',
@@ -68,33 +122,38 @@ class KaryawanExport implements FromQuery, WithHeadings, WithMapping, WithStyles
             'Ukuran Kaos',
             'Jenis Kaos',
             'Lengan Kaos',
-        ];
+        ]);
     }
 
     public function map($k): array
     {
         $this->no++;
-        $rows = [];
 
+        $baseRow = [
+            $this->no,
+            $k->nik,
+            $k->nik_login ?? '-',
+            $k->nama,
+            $k->departemen,
+            $k->jumlah_keluarga,
+            $k->keterangan,
+            $k->status_kehadiran ? 'Ya' : 'Tidak',
+        ];
+
+        // ── MODE SIMPLE: 1 baris per karyawan, tanpa detail keluarga ──
+        if ($this->type === 'simple') {
+            return $baseRow;
+        }
+
+        // ── MODE FULL: 1 baris per anggota keluarga (baris pertama bawa data karyawan) ──
+        $rows    = [];
         $details = $k->details;
 
         if ($details->isEmpty()) {
-            // Karyawan tanpa anggota keluarga → 1 baris, kolom detail kosong
-            $rows[] = [
-                $this->no,
-                $k->nik,
-                $k->nik_login ?? '-',
-                $k->nama,
-                $k->departemen,
-                $k->jumlah_keluarga,
-                $k->keterangan,
-                $k->status_kehadiran ? 'Ya' : 'Tidak',
-                '', '', '', '', '', '', '', '',
-            ];
+            $rows[] = array_merge($baseRow, ['', '', '', '', '', '', '', '']);
         } else {
             foreach ($details as $idx => $d) {
                 $rows[] = [
-                    // Kolom karyawan hanya di baris pertama
                     $idx === 0 ? $this->no          : '',
                     $idx === 0 ? $k->nik             : '',
                     $idx === 0 ? ($k->nik_login ?? '-') : '',
@@ -103,7 +162,6 @@ class KaryawanExport implements FromQuery, WithHeadings, WithMapping, WithStyles
                     $idx === 0 ? $k->jumlah_keluarga : '',
                     $idx === 0 ? $k->keterangan      : '',
                     $idx === 0 ? ($k->status_kehadiran ? 'Ya' : 'Tidak') : '',
-                    // Kolom detail
                     $d->nama_keluarga,
                     $d->hubungan,
                     $d->jenis_kelamin,
@@ -144,5 +202,4 @@ class KaryawanExport implements FromQuery, WithHeadings, WithMapping, WithStyles
 
         return [];
     }
-    
 }

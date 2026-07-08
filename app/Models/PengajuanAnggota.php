@@ -10,6 +10,7 @@ class PengajuanAnggota extends Model
 
     protected $fillable = [
         'nik',
+        'departemen',
         'nama_keluarga',
         'hubungan',
         'jenis_kelamin',

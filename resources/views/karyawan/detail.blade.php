@@ -322,11 +322,13 @@
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
                 <div class="k-form-group">
                     <label class="k-form-label">Tanggal Lahir</label>
-                    <input type="date" id="ed_tanggal_lahir" class="k-form-input">
+                    <input type="date" id="ed_tanggal_lahir" class="k-form-input"
+                           onchange="document.getElementById('ed_umur').value = hitungUmur(this.value);">
                 </div>
                 <div class="k-form-group">
                     <label class="k-form-label">Umur</label>
-                    <input type="number" id="ed_umur" class="k-form-input" min="0" placeholder="0">
+                    <input type="number" id="ed_umur" class="k-form-input" min="0" placeholder="0" readonly
+                           style="background:#f1f5f9;color:#64748b;cursor:not-allowed;">
                 </div>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
@@ -425,6 +427,16 @@ function toggleLengan() {
     if (isAnak) document.getElementById('ed_lengan_kaos').value   = '';
 }
 
+function hitungUmur(tanggalLahir) {
+    if (!tanggalLahir) return '';
+    const lahir = new Date(tanggalLahir);
+    const now   = new Date();
+    let umur = now.getFullYear() - lahir.getFullYear();
+    const m = now.getMonth() - lahir.getMonth();
+    if (m < 0 || (m === 0 && now.getDate() < lahir.getDate())) umur--;
+    return umur >= 0 ? umur : '';
+}
+
 function openEditDetail(id) {
     document.getElementById('editDetailSub').textContent = 'Memuat data...';
     document.getElementById('ed_err_nama').textContent   = '';
@@ -435,12 +447,15 @@ function openEditDetail(id) {
     })
     .then(r => r.json())
     .then(d => {
+        // potong ke YYYY-MM-DD karena input[type=date] gak nerima format lain (mis. ada timestamp)
+        const tglLahir = d.tanggal_lahir ? d.tanggal_lahir.substring(0, 10) : '';
+
         document.getElementById('ed_id').value             = d.id;
         document.getElementById('ed_nama_keluarga').value  = d.nama_keluarga ?? '';
         document.getElementById('ed_hubungan').value       = d.hubungan ?? '';
         document.getElementById('ed_jenis_kelamin').value  = d.jenis_kelamin ?? 'Laki-laki';
-        document.getElementById('ed_tanggal_lahir').value  = d.tanggal_lahir ?? '';
-        document.getElementById('ed_umur').value           = d.umur ?? '';
+        document.getElementById('ed_tanggal_lahir').value  = tglLahir;
+        document.getElementById('ed_umur').value           = hitungUmur(tglLahir);
         document.getElementById('ed_ukuran_kaos').value    = d.ukuran_kaos ?? '';
         document.getElementById('ed_jenis_kaos').value     = d.jenis_kaos ?? 'Dewasa';
         document.getElementById('ed_lengan_kaos').value    = d.lengan_kaos ?? '';

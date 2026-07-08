@@ -88,7 +88,7 @@
 
     {{-- Kehadiran --}}
     <div class="card" style="padding:14px 18px;display:flex;align-items:center;gap:12px;">
-        
+
         <div>
             <div style="font-size:11px;color:#64748b;font-weight:600;margin-bottom:5px;">Kehadiran</div>
             <div style="display:flex;gap:10px;align-items:center;">
@@ -100,8 +100,6 @@
             </div>
         </div>
     </div>
-
-</div>
 
 </div>
 
@@ -192,11 +190,17 @@
         </div>
         {{-- Grup tombol kanan --}}
         <div style="display:flex;gap:8px;align-items:center;">
-            <a href="{{ route('karyawan.export', request()->query()) }}"
-               class="btn"
-               style="background:#16a34a;color:#fff;border:none;display:inline-flex;align-items:center;gap:6px;">
-                <i class="fa-solid fa-file-excel"></i> Export Excel
-            </a>
+            <button type="button" class="btn btn-success" onclick="openModalImportKaryawan()">
+                <i class="fa-solid fa-file-arrow-up"></i> Import Karyawan
+            </button>
+            <a href="{{ route('karyawan.export', array_merge(request()->query(), ['type' => 'simple'])) }}"
+                class="btn" style="background:#16a34a;color:#fff;border:none;">
+                    <i class="fa-solid fa-file-excel"></i> Export Karyawan
+                </a>
+                <a href="{{ route('karyawan.export', array_merge(request()->query(), ['type' => 'full'])) }}"
+                class="btn" style="background:#0369a1;color:#fff;border:none;">
+                    <i class="fa-solid fa-file-excel"></i> Export + Keluarga
+                </a>
             <a href="{{ route('karyawan.detail.all') }}"
                class="btn"
                style="background:#0369a1;color:#fff;border:none;display:inline-flex;align-items:center;gap:6px;">
@@ -510,6 +514,71 @@
                 </button>
                 <button type="button" id="btnDoImport" onclick="doImportBaju()"
                         class="btn" style="background:#0369a1;color:#fff;">
+                    <i class="fa-solid fa-file-arrow-up"></i> Import
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- ============================= --}}
+{{-- MODAL: IMPORT KARYAWAN        --}}
+{{-- ============================= --}}
+<div class="modal-overlay" id="modalImportKaryawan">
+    <div class="modal-box" style="max-width:480px;">
+        <div class="modal-header">
+            <div>
+                <div class="modal-title">
+                    <i class="fa-solid fa-file-arrow-up" style="color:#16a34a;margin-right:8px;"></i>Import Data Karyawan
+                </div>
+                <div class="modal-subtitle">Upload file excel data karyawan &amp; anggota keluarga</div>
+            </div>
+            <button class="modal-close" onclick="closeModalImportKaryawan()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+
+            <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:#166534;">
+                <div style="font-weight:600;margin-bottom:6px;">
+                    <i class="fa-solid fa-circle-info" style="margin-right:4px;"></i>Kolom yang dibaca dari excel:
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 12px;">
+                    <span>• NIK</span>
+                    <span>• NIK Login</span>
+                    <span>• Nama Karyawan</span>
+                    <span>• Departemen</span>
+                    <span>• Status</span>
+                    <span>• Hadir</span>
+                    <span>• Nama Anggota</span>
+                    <span>• Hubungan</span>
+                    <span>• Jenis Kelamin</span>
+                    <span>• Tanggal Lahir</span>
+                    <span>• Umur</span>
+                    <span>• Ukuran/Jenis/Lengan Kaos</span>
+                </div>
+            </div>
+
+            <div style="background:#fefce8;border:1px solid #fde68a;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:12px;color:#92400e;">
+                <i class="fa-solid fa-triangle-exclamation" style="margin-right:4px;"></i>
+                NIK yang sudah ada akan di-<strong>update</strong>. NIK baru akan ditambahkan otomatis.
+            </div>
+
+            <div class="k-form-group">
+                <label class="k-form-label">File Excel <span class="required">*</span></label>
+                <input type="file" id="importKaryawanFileInput" class="k-form-input"
+                       accept=".xlsx,.xls" style="padding:6px;">
+                <div class="k-form-error" id="importKaryawanFileError"></div>
+            </div>
+
+            <div id="importKaryawanResult" style="display:none;margin-top:12px;"></div>
+
+            <div class="k-form-actions" style="margin-top:20px;">
+                <button type="button" class="btn btn-outline" onclick="closeModalImportKaryawan()">
+                    <i class="fa-solid fa-xmark"></i> Batal
+                </button>
+                <button type="button" id="btnDoImportKaryawan" onclick="doImportKaryawan()"
+                        class="btn" style="background:#16a34a;color:#fff;">
                     <i class="fa-solid fa-file-arrow-up"></i> Import
                 </button>
             </div>
@@ -945,16 +1014,93 @@ async function doImportBaju() {
 }
 
 // ─────────────────────────────────────────────
+// MODAL IMPORT KARYAWAN
+// ─────────────────────────────────────────────
+function openModalImportKaryawan() {
+    document.getElementById('importKaryawanFileInput').value = '';
+    document.getElementById('importKaryawanFileError').textContent = '';
+    document.getElementById('importKaryawanResult').style.display = 'none';
+    document.getElementById('importKaryawanResult').innerHTML = '';
+    document.getElementById('modalImportKaryawan').classList.add('show');
+}
+function closeModalImportKaryawan() {
+    document.getElementById('modalImportKaryawan').classList.remove('show');
+}
+
+async function doImportKaryawan() {
+    const fileInput = document.getElementById('importKaryawanFileInput');
+    const errEl     = document.getElementById('importKaryawanFileError');
+    const resultEl  = document.getElementById('importKaryawanResult');
+    const btn       = document.getElementById('btnDoImportKaryawan');
+
+    errEl.textContent = '';
+    resultEl.style.display = 'none';
+
+    if (!fileInput.files.length) {
+        errEl.textContent = 'Pilih file excel terlebih dahulu.';
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('file_excel', fileInput.files[0]);
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Mengimport...';
+
+    try {
+        const res = await fetch('{{ route('karyawan.import') }}', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': CSRF,
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+            },
+            body: formData,
+        });
+
+        const data = await res.json();
+
+        resultEl.style.display = 'block';
+        if (res.ok) {
+            let errHtml = '';
+            if (data.errors && data.errors.length) {
+                errHtml = `<div style="margin-top:6px;font-size:11px;color:#991b1b;">${data.errors.join('<br>')}</div>`;
+            }
+            resultEl.innerHTML = `
+                <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:12px 14px;font-size:13px;color:#166534;">
+                    <i class="fa-solid fa-circle-check" style="margin-right:6px;"></i>${data.message}
+                </div>${errHtml}`;
+            showToast('Import karyawan berhasil!');
+            setTimeout(() => { closeModalImportKaryawan(); location.reload(); }, 1800);
+        } else {
+            resultEl.innerHTML = `
+                <div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:12px 14px;font-size:13px;color:#991b1b;">
+                    <i class="fa-solid fa-circle-exclamation" style="margin-right:6px;"></i>${data.message ?? 'Import gagal.'}
+                </div>`;
+        }
+    } catch {
+        resultEl.style.display = 'block';
+        resultEl.innerHTML = `
+            <div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:12px 14px;font-size:13px;color:#991b1b;">
+                <i class="fa-solid fa-circle-exclamation" style="margin-right:6px;"></i>Gagal menghubungi server.
+            </div>`;
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-file-arrow-up"></i> Import';
+    }
+}
+
+// ─────────────────────────────────────────────
 // CLOSE ON OVERLAY / ESC
 // ─────────────────────────────────────────────
-['modalCreate','modalEdit','modalDetail','modalDelete','modalImport'].forEach(id => {
+['modalCreate','modalEdit','modalDetail','modalDelete','modalImport','modalImportKaryawan'].forEach(id => {
     document.getElementById(id).addEventListener('click', function (e) {
         if (e.target === this) this.classList.remove('show');
     });
 });
 document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
-        ['modalCreate','modalEdit','modalDetail','modalDelete','modalImport'].forEach(id => {
+        ['modalCreate','modalEdit','modalDetail','modalDelete','modalImport','modalImportKaryawan'].forEach(id => {
             document.getElementById(id).classList.remove('show');
         });
     }
