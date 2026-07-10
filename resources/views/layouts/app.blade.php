@@ -574,34 +574,35 @@
         </div>
     </div>
     @if(auth()->user()->nama !== 'Hitz')
-    {{-- Navigation --}}
-    <div class="sb-section-label"></div>
+        {{-- Navigation --}}
+        <div class="sb-section-label"></div>
 
-    <div class="sb-nav-wrap {{ request()->routeIs('dashboard') ? 'active' : '' }}">
-        <a href="{{ route('dashboard') }}" class="sb-nav">
-            @if(request()->routeIs('dashboard'))
-                <div class="sb-dot"></div>
-            @else
-                <i class="fa-solid fa-gauge-high"></i>
-            @endif
-            <span class="sb-nav-label">Dashboard</span>
-        </a>
-    </div>
+        <div class="sb-nav-wrap {{ request()->routeIs('dashboard') ? 'active' : '' }}">
+            <a href="{{ route('dashboard') }}" class="sb-nav">
+                @if(request()->routeIs('dashboard'))
+                    <div class="sb-dot"></div>
+                @else
+                    <i class="fa-solid fa-gauge-high"></i>
+                @endif
+                <span class="sb-nav-label">Dashboard</span>
+            </a>
+        </div>
 
-     {{-- Navigation --}}
-    <div class="sb-section-label">Menu</div>
+        {{-- Navigation --}}
+        <div class="sb-section-label">Menu</div>
 
-    <div class="sb-nav-wrap {{ request()->routeIs('users.*') ? 'active' : '' }}">
-        <a href="{{ route('users.index') }}" class="sb-nav">
-            @if(request()->routeIs('users.*'))
-                <div class="sb-dot"></div>
-            @else
-                <i class="fa-solid fa-users-gear"></i>
-            @endif
-            <span class="sb-nav-label">List Admin</span>
-        </a>
-    </div>
+        <div class="sb-nav-wrap {{ request()->routeIs('users.*') ? 'active' : '' }}">
+            <a href="{{ route('users.index') }}" class="sb-nav">
+                @if(request()->routeIs('users.*'))
+                    <div class="sb-dot"></div>
+                @else
+                    <i class="fa-solid fa-users-gear"></i>
+                @endif
+                <span class="sb-nav-label">List Admin</span>
+            </a>
+        </div>
 
+    @endif
         {{-- Data Karyawan --}}
     <div class="sb-nav-wrap {{ request()->routeIs('karyawan.index') || (request()->routeIs('karyawan.*') && !request()->routeIs('karyawan.detail.all')) ? 'active' : '' }}">
         <a href="{{ route('karyawan.index') }}" class="sb-nav">
@@ -615,151 +616,154 @@
         </a>
     </div>
 
-    {{-- Keluarga Karyawan --}}
-    <div class="sb-nav-wrap {{ request()->routeIs('karyawan.detail.all') ? 'active' : '' }}">
-        <a href="{{ route('karyawan.detail.all') }}" class="sb-nav">
-            @if(request()->routeIs('karyawan.detail.all'))
-                <div class="sb-dot"></div>
-            @else
-                <i class="fa-solid fa-people-group"></i>
-            @endif
-            <span class="sb-nav-label">Keluarga Karyawan</span>
-            <span class="sb-badge">{{ $countDetailKaryawan }}</span>
-        </a>
-    </div>
-
-    <div class="sb-nav-wrap {{ request()->routeIs('guest-menu.*') ? 'active' : '' }}">
-        <a href="{{ route('guest-menu.index') }}" class="sb-nav">
-            @if(request()->routeIs('guest-menu.*'))
-                <div class="sb-dot"></div>
-            @else
-                <i class="fa-solid fa-table-cells"></i>
-            @endif
-            <span class="sb-nav-label">Menu Karyawan</span>
-        </a>
-    </div>
-
-    <div class="sb-nav-wrap {{ request()->routeIs('suppliers.*') ? 'active' : '' }}">
-        <a href="{{ route('suppliers.index') }}" class="sb-nav">
-            @if(request()->routeIs('suppliers.*'))
-                <div class="sb-dot"></div>
-            @else
-                <i class="fa-solid fa-truck"></i>
-            @endif
-            <span class="sb-nav-label">Data Supplier</span>
-        </a>
-    </div>
-
-    <div class="sb-nav-wrap {{ request()->routeIs('voting.*') ? 'active' : '' }}">
-        <a href="{{ route('voting.index') }}" class="sb-nav">
-            @if(request()->routeIs('voting.*'))
-                <div class="sb-dot"></div>
-            @else
-                <i class="fa-solid fa-map-location-dot"></i>
-            @endif
-            <span class="sb-nav-label">Kelola Tempat</span>
-        </a>
-    </div>
-
-    <div class="sb-nav-wrap {{ request()->routeIs('buses.*') || request()->routeIs('kendaraans.*') ? 'active' : '' }}">
-        <div class="sb-nav" onclick="toggleDropdown('dd-transportasi')" style="cursor:pointer;">
-            @if(request()->routeIs('buses.*') || request()->routeIs('kendaraans.*'))
-                <div class="sb-dot"></div>
-            @else
-                <i class="fa-solid fa-bus"></i>
-            @endif
-            <span class="sb-nav-label">Transportasi</span>
-            <i class="fa-solid fa-chevron-down" id="dd-transportasi-chevron"
-               style="font-size:10px;margin-left:auto;color:#94a3b8;transition:transform .2s;
-                      {{ request()->routeIs('buses.*') || request()->routeIs('kendaraans.*') ? 'transform:rotate(180deg);' : '' }}">
-            </i>
+    @if(auth()->user()->nama !== 'Hitz')
+        {{-- Keluarga Karyawan --}}
+        <div class="sb-nav-wrap {{ request()->routeIs('karyawan.detail.all') ? 'active' : '' }}">
+            <a href="{{ route('karyawan.detail.all') }}" class="sb-nav">
+                @if(request()->routeIs('karyawan.detail.all'))
+                    <div class="sb-dot"></div>
+                @else
+                    <i class="fa-solid fa-people-group"></i>
+                @endif
+                <span class="sb-nav-label">Keluarga Karyawan</span>
+                <span class="sb-badge">{{ $countDetailKaryawan }}</span>
+            </a>
         </div>
-        <div id="dd-transportasi"
-             style="overflow:hidden;transition:max-height .25s ease;
-                    {{ request()->routeIs('buses.*') || request()->routeIs('kendaraans.*') ? 'max-height:120px;' : 'max-height:0;' }}">
-            <div style="padding:4px 0 4px 36px;display:flex;flex-direction:column;gap:2px;">
-                <a href="{{ route('buses.index') }}"
-                   style="font-size:12px;font-weight:600;padding:6px 10px;border-radius:8px;text-decoration:none;
-                          color:{{ request()->routeIs('buses.*') ? '#0b4614' : '#64748b' }};
-                          background:{{ request()->routeIs('buses.*') ? '#e8f5e9' : 'transparent' }};">
-                    <i class="fa-solid fa-bus" style="font-size:11px;margin-right:6px;"></i>Bus
-                </a>
-                <a href="{{ route('kendaraans.index') }}"
-                   style="font-size:12px;font-weight:600;padding:6px 10px;border-radius:8px;text-decoration:none;
-                          color:{{ request()->routeIs('kendaraans.*') ? '#0b4614' : '#64748b' }};
-                          background:{{ request()->routeIs('kendaraans.*') ? '#e8f5e9' : 'transparent' }};">
-                    <i class="fa-solid fa-car" style="font-size:11px;margin-right:6px;"></i>Kendaraan Pribadi
-                </a>
+
+        <div class="sb-nav-wrap {{ request()->routeIs('guest-menu.*') ? 'active' : '' }}">
+            <a href="{{ route('guest-menu.index') }}" class="sb-nav">
+                @if(request()->routeIs('guest-menu.*'))
+                    <div class="sb-dot"></div>
+                @else
+                    <i class="fa-solid fa-table-cells"></i>
+                @endif
+                <span class="sb-nav-label">Menu Karyawan</span>
+            </a>
+        </div>
+
+        <div class="sb-nav-wrap {{ request()->routeIs('suppliers.*') ? 'active' : '' }}">
+            <a href="{{ route('suppliers.index') }}" class="sb-nav">
+                @if(request()->routeIs('suppliers.*'))
+                    <div class="sb-dot"></div>
+                @else
+                    <i class="fa-solid fa-truck"></i>
+                @endif
+                <span class="sb-nav-label">Data Supplier</span>
+            </a>
+        </div>
+
+        <div class="sb-nav-wrap {{ request()->routeIs('voting.*') ? 'active' : '' }}">
+            <a href="{{ route('voting.index') }}" class="sb-nav">
+                @if(request()->routeIs('voting.*'))
+                    <div class="sb-dot"></div>
+                @else
+                    <i class="fa-solid fa-map-location-dot"></i>
+                @endif
+                <span class="sb-nav-label">Kelola Tempat</span>
+            </a>
+        </div>
+
+        <div class="sb-nav-wrap {{ request()->routeIs('buses.*') || request()->routeIs('kendaraans.*') ? 'active' : '' }}">
+            <div class="sb-nav" onclick="toggleDropdown('dd-transportasi')" style="cursor:pointer;">
+                @if(request()->routeIs('buses.*') || request()->routeIs('kendaraans.*'))
+                    <div class="sb-dot"></div>
+                @else
+                    <i class="fa-solid fa-bus"></i>
+                @endif
+                <span class="sb-nav-label">Transportasi</span>
+                <i class="fa-solid fa-chevron-down" id="dd-transportasi-chevron"
+                style="font-size:10px;margin-left:auto;color:#94a3b8;transition:transform .2s;
+                        {{ request()->routeIs('buses.*') || request()->routeIs('kendaraans.*') ? 'transform:rotate(180deg);' : '' }}">
+                </i>
+            </div>
+            <div id="dd-transportasi"
+                style="overflow:hidden;transition:max-height .25s ease;
+                        {{ request()->routeIs('buses.*') || request()->routeIs('kendaraans.*') ? 'max-height:120px;' : 'max-height:0;' }}">
+                <div style="padding:4px 0 4px 36px;display:flex;flex-direction:column;gap:2px;">
+                    <a href="{{ route('buses.index') }}"
+                    style="font-size:12px;font-weight:600;padding:6px 10px;border-radius:8px;text-decoration:none;
+                            color:{{ request()->routeIs('buses.*') ? '#0b4614' : '#64748b' }};
+                            background:{{ request()->routeIs('buses.*') ? '#e8f5e9' : 'transparent' }};">
+                        <i class="fa-solid fa-bus" style="font-size:11px;margin-right:6px;"></i>Bus
+                    </a>
+                    <a href="{{ route('kendaraans.index') }}"
+                    style="font-size:12px;font-weight:600;padding:6px 10px;border-radius:8px;text-decoration:none;
+                            color:{{ request()->routeIs('kendaraans.*') ? '#0b4614' : '#64748b' }};
+                            background:{{ request()->routeIs('kendaraans.*') ? '#e8f5e9' : 'transparent' }};">
+                        <i class="fa-solid fa-car" style="font-size:11px;margin-right:6px;"></i>Kendaraan Pribadi
+                    </a>
+                </div>
             </div>
         </div>
-    </div>
 
-    <div class="sb-nav-wrap {{ request()->routeIs('pengajuan.*') ? 'active' : '' }}">
-        <a href="{{ route('pengajuan.index') }}" class="sb-nav">
-            @if(request()->routeIs('pengajuan.*'))
-                <div class="sb-dot"></div>
-            @else
-                <i class="fa-solid fa-user-plus"></i>
-            @endif
-            <span class="sb-nav-label">
-                Pengajuan Anggota
-                @php
-                    $pendingCount = \App\Models\PengajuanAnggota::where('status', 'pending')->count();
-                @endphp
-                @if($pendingCount > 0)
-                    <span style="
-                        background:#ef4444;color:#fff;border-radius:100px;
-                        font-size:10px;font-weight:700;padding:1px 6px;
-                        margin-left:4px;line-height:1.6;display:inline-block;
-                    ">{{ $pendingCount }}</span>
+        <div class="sb-nav-wrap {{ request()->routeIs('pengajuan.*') ? 'active' : '' }}">
+            <a href="{{ route('pengajuan.index') }}" class="sb-nav">
+                @if(request()->routeIs('pengajuan.*'))
+                    <div class="sb-dot"></div>
+                @else
+                    <i class="fa-solid fa-user-plus"></i>
                 @endif
-            </span>
-        </a>
-    </div>
+                <span class="sb-nav-label">
+                    Pengajuan Anggota
+                    @php
+                        $pendingCount = \App\Models\PengajuanAnggota::where('status', 'pending')->count();
+                    @endphp
+                    @if($pendingCount > 0)
+                        <span style="
+                            background:#ef4444;color:#fff;border-radius:100px;
+                            font-size:10px;font-weight:700;padding:1px 6px;
+                            margin-left:4px;line-height:1.6;display:inline-block;
+                        ">{{ $pendingCount }}</span>
+                    @endif
+                </span>
+            </a>
+        </div>
 
-    <div class="sb-nav-wrap {{ request()->routeIs('konveksi.*') ? 'active' : '' }}">
-        <a href="{{ route('konveksi.index') }}" class="sb-nav">
-            @if(request()->routeIs('konveksi.*'))
-                <div class="sb-dot"></div>
-            @else
-                <i class="fa-solid fa-shirt"></i>
-            @endif
-            <span class="sb-nav-label">Konveksi</span>
-        </a>
-    </div>
+        <div class="sb-nav-wrap {{ request()->routeIs('konveksi.*') ? 'active' : '' }}">
+            <a href="{{ route('konveksi.index') }}" class="sb-nav">
+                @if(request()->routeIs('konveksi.*'))
+                    <div class="sb-dot"></div>
+                @else
+                    <i class="fa-solid fa-shirt"></i>
+                @endif
+                <span class="sb-nav-label">Konveksi</span>
+            </a>
+        </div>
 
-    <div class="sb-nav-wrap {{ request()->routeIs('penerimaan-baju.*') ? 'active' : '' }}">
-        <a href="{{ route('penerimaan-baju.index') }}" class="sb-nav">
-            @if(request()->routeIs('penerimaan-baju.*'))
-                <div class="sb-dot"></div>
-            @else
-                <i class="fa-solid fa-box-open"></i>
-            @endif
-            <span class="sb-nav-label">Penerimaan Baju</span>
-        </a>
-    </div>
+        <div class="sb-nav-wrap {{ request()->routeIs('penerimaan-baju.*') ? 'active' : '' }}">
+            <a href="{{ route('penerimaan-baju.index') }}" class="sb-nav">
+                @if(request()->routeIs('penerimaan-baju.*'))
+                    <div class="sb-dot"></div>
+                @else
+                    <i class="fa-solid fa-box-open"></i>
+                @endif
+                <span class="sb-nav-label">Penerimaan Baju</span>
+            </a>
+        </div>
 
-    <div class="sb-nav-wrap {{ request()->routeIs('penerimaan-barang.*') ? 'active' : '' }}">
-        <a href="{{ route('penerimaan-barang.index') }}" class="sb-nav">
-            @if(request()->routeIs('penerimaan-barang.*'))
-                <div class="sb-dot"></div>
-            @else
-                <i class="fa-solid fa-boxes-stacked"></i>
-            @endif
-            <span class="sb-nav-label">Penerimaan Barang</span>
-        </a>
-    </div>
+        <div class="sb-nav-wrap {{ request()->routeIs('penerimaan-barang.*') ? 'active' : '' }}">
+            <a href="{{ route('penerimaan-barang.index') }}" class="sb-nav">
+                @if(request()->routeIs('penerimaan-barang.*'))
+                    <div class="sb-dot"></div>
+                @else
+                    <i class="fa-solid fa-boxes-stacked"></i>
+                @endif
+                <span class="sb-nav-label">Penerimaan Barang</span>
+            </a>
+        </div>
 
-    <div class="sb-nav-wrap {{ request()->routeIs('penerimaan-hadiah.*') ? 'active' : '' }}">
-        <a href="{{ route('penerimaan-hadiah.index') }}" class="sb-nav">
-            @if(request()->routeIs('penerimaan-hadiah.*'))
-                <div class="sb-dot"></div>
-            @else
-                <i class="fa-solid fa-gift"></i>
-            @endif
-            <span class="sb-nav-label">Penerimaan Hadiah</span>
-        </a>
-    </div>
+        <div class="sb-nav-wrap {{ request()->routeIs('penerimaan-hadiah.*') ? 'active' : '' }}">
+            <a href="{{ route('penerimaan-hadiah.index') }}" class="sb-nav">
+                @if(request()->routeIs('penerimaan-hadiah.*'))
+                    <div class="sb-dot"></div>
+                @else
+                    <i class="fa-solid fa-gift"></i>
+                @endif
+                <span class="sb-nav-label">Penerimaan Hadiah</span>
+            </a>
+        </div>
+
+    @endif
 
     <div class="sb-nav-wrap {{ request()->routeIs('rundowns.*') ? 'active' : '' }}">
         <a href="{{ route('rundowns.index') }}" class="sb-nav">
@@ -772,25 +776,27 @@
         </a>
     </div>
 
-    <div class="sb-nav-wrap {{ request()->routeIs('gantt.*') ? 'active' : '' }}">
-        <a href="{{ route('gantt.index') }}" class="sb-nav">
-            @if(request()->routeIs('gantt.*'))
-                <div class="sb-dot"></div>
-            @else
-                <i class="fa-solid fa-chart-gantt"></i>
-            @endif
-            <span class="sb-nav-label">Gantt Chart</span>
-        </a>
-    </div>
-     @endif       
+    @if(auth()->user()->nama !== 'Hitz')
+        <div class="sb-nav-wrap {{ request()->routeIs('gantt.*') ? 'active' : '' }}">
+            <a href="{{ route('gantt.index') }}" class="sb-nav">
+                @if(request()->routeIs('gantt.*'))
+                    <div class="sb-dot"></div>
+                @else
+                    <i class="fa-solid fa-chart-gantt"></i>
+                @endif
+                <span class="sb-nav-label">Gantt Chart</span>
+            </a>
+        </div>
+    @endif
+           
     <div class="sb-nav-wrap {{ request()->routeIs('konsumsis.*') ? 'active' : '' }}">
         <a href="{{ route('konsumsis.index') }}" class="sb-nav">
             @if(request()->routeIs('konsumsis.*'))
                 <div class="sb-dot"></div>
             @else
-                <i class="fa-solid fa-utensils"></i>
+                <i class="fa-solid fa-clapperboard"></i></i>
             @endif
-            <span class="sb-nav-label">Konsumsi</span>
+            <span class="sb-nav-label">Production</span>
         </a>
     </div>
     {{-- <div class="sb-nav-wrap {{ request()->routeIs('import.*') ? 'active' : '' }}">

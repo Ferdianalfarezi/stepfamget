@@ -79,8 +79,9 @@ Route::middleware(['auth', \App\Http\Middleware\AdminOnly::class])->group(functi
     // Transportasi
     Route::get('/buses',              [TransportasiController::class, 'buses'])->name('buses.index');
     Route::get('/buses/export',       [TransportasiController::class, 'exportBuses'])->name('buses.export');
-    Route::get('/kendaraans',         [TransportasiController::class, 'kendaraans'])->name('kendaraans.index');
-    Route::get('/kendaraans/export',  [TransportasiController::class, 'exportKendaraans'])->name('kendaraans.export');
+    Route::get('/kendaraans',                    [TransportasiController::class, 'kendaraans'])->name('kendaraans.index');
+    Route::get('/kendaraans/export',             [TransportasiController::class, 'exportKendaraans'])->name('kendaraans.export');
+    Route::patch('/kendaraans/{kendaraan}/tiket', [TransportasiController::class, 'updateTiket'])->name('kendaraans.updateTiket');
     Route::post('buses/import-kursi', [TransportasiController::class, 'importKursi'])->name('buses.importKursi');
 
     // Pengajuan Anggota Keluarga
@@ -133,9 +134,10 @@ Route::middleware(['auth', \App\Http\Middleware\AdminOnly::class])->group(functi
     Route::post('/rundowns/bulk', [RundownController::class, 'bulk'])->name('rundowns.bulk');
     Route::resource('rundowns', RundownController::class)->only(['index', 'edit', 'update', 'destroy']);
 
-    // Gantt Chart
+    // Gantt Chart — reorder HARUS di atas route {ganttActivity} supaya tidak bentrok
     Route::get('/gantt',                    [GanttController::class, 'index'])->name('gantt.index');
     Route::post('/gantt',                   [GanttController::class, 'store'])->name('gantt.store');
+    Route::post('/gantt/reorder',           [GanttController::class, 'reorder'])->name('gantt.reorder');
     Route::put('/gantt/{ganttActivity}',    [GanttController::class, 'update'])->name('gantt.update');
     Route::delete('/gantt/{ganttActivity}', [GanttController::class, 'destroy'])->name('gantt.destroy');
 

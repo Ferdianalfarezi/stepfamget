@@ -54,7 +54,9 @@
                     <th style="width:140px;">PIC</th>
                     <th style="width:160px;">Properti</th>
                     <th>Keterangan</th>
-                    <th style="width:110px;">Aksi</th>
+                    @if(auth()->user()->nama !== 'Hitz')
+                        <th style="width:110px;">Aksi</th>
+                    @endif
                 </tr>
             </thead>
             <tbody id="rundownBody">
@@ -127,28 +129,31 @@
                         @endif
                     </td>
 
-                    <td>
-                        <div class="row-actions-view" style="display:flex;gap:6px;">
-                            <button class="action-btn action-btn-warning"
-                                    onclick="startEdit(this)" title="Edit">
-                                <i class="fa-solid fa-pen"></i>
-                            </button>
-                            <button class="action-btn action-btn-danger"
-                                    onclick="confirmDelete(this)" title="Hapus">
-                                <i class="fa-solid fa-trash"></i>
-                            </button>
-                        </div>
-                        <div class="row-actions-edit" style="display:none;gap:6px;">
-                            <button class="action-btn action-btn-success"
-                                    onclick="saveEdit(this)" title="Simpan">
-                                <i class="fa-solid fa-check"></i>
-                            </button>
-                            <button class="action-btn action-btn-secondary"
-                                    onclick="cancelEdit(this)" title="Batal">
-                                <i class="fa-solid fa-xmark"></i>
-                            </button>
-                        </div>
-                    </td>
+                    
+                    @if(auth()->user()->nama !== 'Hitz')
+                        <td>
+                            <div class="row-actions-view" style="display:flex;gap:6px;">
+                                <button class="action-btn action-btn-warning"
+                                        onclick="startEdit(this)" title="Edit">
+                                    <i class="fa-solid fa-pen"></i>
+                                </button>
+                                <button class="action-btn action-btn-danger"
+                                        onclick="confirmDelete(this)" title="Hapus">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
+                            <div class="row-actions-edit" style="display:none;gap:6px;">
+                                <button class="action-btn action-btn-success"
+                                        onclick="saveEdit(this)" title="Simpan">
+                                    <i class="fa-solid fa-check"></i>
+                                </button>
+                                <button class="action-btn action-btn-secondary"
+                                        onclick="cancelEdit(this)" title="Batal">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+                        </td>
+                    @endif
                 </tr>
 
                 @empty
@@ -180,22 +185,23 @@
         </div>
 
         <div id="inlineRows"></div>
-
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;flex-wrap:wrap;gap:10px;">
-            <div style="font-size:12px;color:#94a3b8;">
-                <i class="fa-solid fa-circle-info" style="margin-right:4px;"></i>
-                Baris yang tidak diisi kegiatan akan otomatis dilewati.
+        @if(auth()->user()->nama !== 'Hitz')
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;flex-wrap:wrap;gap:10px;">
+                <div style="font-size:12px;color:#94a3b8;">
+                    <i class="fa-solid fa-circle-info" style="margin-right:4px;"></i>
+                    Baris yang tidak diisi kegiatan akan otomatis dilewati.
+                </div>
+                <div style="display:flex;gap:8px;">
+                    <button class="btn btn-outline" onclick="addInlineRow()" style="gap:6px;">
+                        <i class="fa-solid fa-plus"></i> Tambah Baris
+                    </button>
+                    <button class="btn btn-primary" onclick="submitBulk()" id="btnSimpanSemua"
+                            style="gap:6px;min-width:140px;display:none;">
+                        <i class="fa-solid fa-check"></i> Simpan Semua
+                    </button>
+                </div>
             </div>
-            <div style="display:flex;gap:8px;">
-                <button class="btn btn-outline" onclick="addInlineRow()" style="gap:6px;">
-                    <i class="fa-solid fa-plus"></i> Tambah Baris
-                </button>
-                <button class="btn btn-primary" onclick="submitBulk()" id="btnSimpanSemua"
-                        style="gap:6px;min-width:140px;display:none;">
-                    <i class="fa-solid fa-check"></i> Simpan Semua
-                </button>
-            </div>
-        </div>
+        @endif
     </div>
 </div>
 

@@ -98,14 +98,19 @@ class TransportasiController extends Controller
             });
         }
 
-        // ── Filter jenis kendaraan (yang tadinya belum ada) ──
+        // ── Filter jenis kendaraan ──
         if ($request->filled('jenis')) {
             $query->where('jenis_kendaraan', $request->jenis);
         }
 
+        // ── Filter jenis tiket (baru) ──
+        if ($request->filled('jenis_tiket')) {
+            $query->where('jenis_tiket', $request->jenis_tiket);
+        }
+
         $kendaraans = $query->orderBy('nama_karyawan')->paginate(15)->withQueryString();
 
-        // Total keseluruhan (tanpa filter jenis, biar summary tetap nunjukin semua)
+        // Total keseluruhan (tanpa filter, biar summary tetap nunjukin semua)
         $total = Kendaraan::count();
 
         // ── Summary per jenis kendaraan ──
@@ -113,7 +118,29 @@ class TransportasiController extends Controller
             ->groupBy('jenis_kendaraan')
             ->pluck('total', 'jenis_kendaraan');
 
-        return view('kendaraans.index', compact('kendaraans', 'total', 'totalPerJenis'));
+        // ── Summary per jenis tiket (baru) ──
+        $totalPerTiket = Kendaraan::selectRaw('jenis_tiket, count(*) as total')
+            ->groupBy('jenis_tiket')
+            ->pluck('total', 'jenis_tiket');
+
+        return view('kendaraans.index', compact('kendaraans', 'total', 'totalPerJenis', 'totalPerTiket'));
+    }
+
+    // ── Mark VIP/VVIP langsung dari tabel (tanpa CRUD form) ──
+    public function updateTiket(Request $request, Kendaraan $kendaraan)
+    {
+        $request->validate([
+            'jenis_tiket' => 'required|in:0,1,2',
+        ]);
+
+        $kendaraan->update(['jenis_tiket' => $request->jenis_tiket]);
+
+        return response()->json([
+            'success'     => true,
+            'jenis_tiket' => (int) $kendaraan->jenis_tiket,
+            'label'       => Kendaraan::tiketOptions()[$kendaraan->jenis_tiket],
+            'message'     => "{$kendaraan->nama_karyawan} ditandai sebagai " . Kendaraan::tiketOptions()[$kendaraan->jenis_tiket],
+        ]);
     }
 
     public function exportBuses(Request $request)

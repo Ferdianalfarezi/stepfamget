@@ -19,10 +19,11 @@ class KonsumsiController extends Controller
             ->paginate(20)
             ->withQueryString();
 
-        // Hitung qty hadir sekali, dipakai semua row
+        // Hitung sekali, dipakai semua row
         $qtyHadir = Konsumsi::getQtyHadir();
+        $qtySemua = Konsumsi::getQtySemua();
 
-        return view('konsumsis.index', compact('konsumsis', 'qtyHadir', 'search'));
+        return view('konsumsis.index', compact('konsumsis', 'qtyHadir', 'qtySemua', 'search'));
     }
 
     public function store(Request $request)
@@ -30,7 +31,7 @@ class KonsumsiController extends Controller
         $validated = $request->validate([
             'nama'   => 'required|string|max:100',
             'satuan' => 'required|string|max:50',
-            'spare'  => 'required|integer|min:0',
+            'spare'  => 'required|integer',
         ]);
 
         Konsumsi::create($validated);
@@ -41,13 +42,17 @@ class KonsumsiController extends Controller
     public function show(Konsumsi $konsumsi)
     {
         $qtyHadir = Konsumsi::getQtyHadir();
+        $qtySemua = Konsumsi::getQtySemua();
+
         return response()->json([
-            'id'     => $konsumsi->id,
-            'nama'   => $konsumsi->nama,
-            'satuan' => $konsumsi->satuan,
-            'spare'  => $konsumsi->spare,
-            'qty'    => $qtyHadir,
-            'total'  => $qtyHadir + $konsumsi->spare,
+            'id'          => $konsumsi->id,
+            'nama'        => $konsumsi->nama,
+            'satuan'      => $konsumsi->satuan,
+            'spare'       => $konsumsi->spare,
+            'qty'         => $qtyHadir,
+            'total'       => $qtyHadir + $konsumsi->spare,
+            'qty_semua'   => $qtySemua,
+            'total_semua' => $qtySemua + $konsumsi->spare,
         ]);
     }
 
@@ -56,7 +61,7 @@ class KonsumsiController extends Controller
         $validated = $request->validate([
             'nama'   => 'required|string|max:100',
             'satuan' => 'required|string|max:50',
-            'spare'  => 'required|integer|min:0',
+            'spare'  => 'required|integer',
         ]);
 
         $konsumsi->update($validated);

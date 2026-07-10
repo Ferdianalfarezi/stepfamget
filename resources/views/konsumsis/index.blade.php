@@ -35,8 +35,15 @@
             <div class="card-title">
                 <i class="fa-solid fa-utensils" style="color:#0b4614;margin-right:6px;"></i>Data Konsumsi
             </div>
-            <div style="font-size:12px;color:#64748b;margin-top:4px;">
-                Total peserta hadir (qty): <strong>{{ number_format($qtyHadir) }}</strong> orang
+            <div style="font-size:12px;color:#64748b;margin-top:4px;display:flex;gap:14px;flex-wrap:wrap;">
+                <span>
+                    <i class="fa-solid fa-user-check" style="color:#16a34a;margin-right:4px;"></i>
+                    Qty Hadir: <strong>{{ number_format($qtyHadir) }}</strong> orang
+                </span>
+                <span>
+                    <i class="fa-solid fa-users" style="color:#0369a1;margin-right:4px;"></i>
+                    Qty Jika Semua Hadir: <strong>{{ number_format($qtySemua) }}</strong> orang
+                </span>
             </div>
         </div>
         @if(auth()->user()->nama !== 'Hitz')
@@ -57,9 +64,11 @@
                     <th style="width:45px;">#</th>
                     <th>Nama</th>
                     <th>Satuan</th>
-                    <th style="text-align:center;">Qty (Hadir)</th>
+                    {{-- <th style="text-align:center;">Qty (Hadir)</th> --}}
                     <th style="text-align:center;">Spare</th>
-                    <th style="text-align:center;">Total</th>
+                    {{-- <th style="text-align:center;">Total (Hadir)</th> --}}
+                    <th style="text-align:center;background:#eff6ff;">Qty (Semua Hadir)</th>
+                    <th style="text-align:center;background:#eff6ff;">Total (Semua Hadir)</th>
                     @if(auth()->user()->nama !== 'Hitz')
                         <th style="width:100px;text-align:center;">Aksi</th>
                     @endif
@@ -88,21 +97,33 @@
                             {{ $k->satuan }}
                         </span>
                     </td>
-                    <td style="text-align:center;">
+                    {{-- <td style="text-align:center;">
                         <span style="font-size:15px;font-weight:700;color:#0b4614;">
                             {{ number_format($qtyHadir) }}
                         </span>
-                    </td>
+                    </td> --}}
                     <td style="text-align:center;">
                         <span style="font-size:14px;font-weight:600;color:#0369a1;">
                             {{ number_format($k->spare) }}
                         </span>
                     </td>
-                    <td style="text-align:center;">
+                    {{-- <td style="text-align:center;">
                         <span style="background:#1e293b;color:#fff;border-radius:8px;
                                      padding:4px 14px;font-size:14px;font-weight:800;
                                      letter-spacing:.5px;">
                             {{ number_format($qtyHadir + $k->spare) }}
+                        </span>
+                    </td> --}}
+                    <td style="text-align:center;background:#f8fbff;">
+                        <span style="font-size:15px;font-weight:700;color:#0369a1;">
+                            {{ number_format($qtySemua) }}
+                        </span>
+                    </td>
+                    <td style="text-align:center;background:#f8fbff;">
+                        <span style="background:#0369a1;color:#fff;border-radius:8px;
+                                     padding:4px 14px;font-size:14px;font-weight:800;
+                                     letter-spacing:.5px;">
+                            {{ number_format($qtySemua + $k->spare) }}
                         </span>
                     </td>
                     @if(auth()->user()->nama !== 'Hitz')
@@ -124,7 +145,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="7" style="text-align:center;padding:40px;color:#94a3b8;">
+                    <td colspan="9" style="text-align:center;padding:40px;color:#94a3b8;">
                         <i class="fa-solid fa-utensils" style="font-size:32px;display:block;margin-bottom:10px;"></i>
                         Belum ada data konsumsi
                     </td>
@@ -190,17 +211,24 @@
             <div class="k-form-group">
                 <label class="k-form-label">Spare <span class="required">*</span></label>
                 <input type="number" id="addSpare" class="k-form-input"
-                       placeholder="0" min="0" value="0">
+                    placeholder="0" value="0">
                 <div class="k-form-error" id="addSpareError"></div>
             </div>
 
-            {{-- Preview total --}}
+            {{-- Preview total hadir --}}
             <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;
                         padding:10px 14px;font-size:13px;color:#166534;margin-top:4px;">
                 <i class="fa-solid fa-calculator" style="margin-right:6px;"></i>
-                Estimasi Total:
+                Estimasi Total (Hadir):
                 <strong id="previewTotal">{{ $qtyHadir }} + 0 = {{ $qtyHadir }}</strong>
-                <span style="color:#64748b;margin-left:4px;">(qty hadir + spare)</span>
+            </div>
+
+            {{-- Preview total semua hadir --}}
+            <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;
+                        padding:10px 14px;font-size:13px;color:#1d4ed8;margin-top:8px;">
+                <i class="fa-solid fa-users" style="margin-right:6px;"></i>
+                Estimasi Total (Jika Semua Hadir):
+                <strong id="previewTotalSemua">{{ $qtySemua }} + 0 = {{ $qtySemua }}</strong>
             </div>
 
             <div class="k-form-actions" style="margin-top:20px;">
@@ -244,16 +272,22 @@
             </div>
             <div class="k-form-group">
                 <label class="k-form-label">Spare <span class="required">*</span></label>
-                <input type="number" id="editSpare" class="k-form-input" min="0">
+                <input type="number" id="editSpare" class="k-form-input">
                 <div class="k-form-error" id="editSpareError"></div>
             </div>
 
             <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;
                         padding:10px 14px;font-size:13px;color:#166534;margin-top:4px;">
                 <i class="fa-solid fa-calculator" style="margin-right:6px;"></i>
-                Estimasi Total:
+                Estimasi Total (Hadir):
                 <strong id="editPreviewTotal">–</strong>
-                <span style="color:#64748b;margin-left:4px;">(qty hadir + spare)</span>
+            </div>
+
+            <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;
+                        padding:10px 14px;font-size:13px;color:#1d4ed8;margin-top:8px;">
+                <i class="fa-solid fa-users" style="margin-right:6px;"></i>
+                Estimasi Total (Jika Semua Hadir):
+                <strong id="editPreviewTotalSemua">–</strong>
             </div>
 
             <div class="k-form-actions" style="margin-top:20px;">
@@ -273,8 +307,9 @@
 
 @push('scripts')
 <script>
-const CSRF     = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
+const CSRF      = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
 const QTY_HADIR = {{ $qtyHadir }};
+const QTY_SEMUA = {{ $qtySemua }};
 
 /* ─── Toast ─── */
 function showToast(msg, type = 'success') {
@@ -311,9 +346,12 @@ function closeModalAdd() {
 
 function updatePreviewAdd() {
     const spare = parseInt(document.getElementById('addSpare').value) || 0;
-    const total = QTY_HADIR + spare;
+    const total      = QTY_HADIR + spare;
+    const totalSemua = QTY_SEMUA + spare;
     document.getElementById('previewTotal').textContent =
         `${QTY_HADIR.toLocaleString('id-ID')} + ${spare.toLocaleString('id-ID')} = ${total.toLocaleString('id-ID')}`;
+    document.getElementById('previewTotalSemua').textContent =
+        `${QTY_SEMUA.toLocaleString('id-ID')} + ${spare.toLocaleString('id-ID')} = ${totalSemua.toLocaleString('id-ID')}`;
 }
 document.getElementById('addSpare').addEventListener('input', updatePreviewAdd);
 
@@ -329,7 +367,7 @@ async function doAdd() {
 
     if (!nama)   { document.getElementById('addNamaError').textContent   = 'Nama wajib diisi.'; valid = false; }
     if (!satuan) { document.getElementById('addSatuanError').textContent = 'Satuan wajib diisi.'; valid = false; }
-    if (spare === '' || parseInt(spare) < 0) { document.getElementById('addSpareError').textContent = 'Spare minimal 0.'; valid = false; }
+   if (spare === '' || isNaN(parseInt(spare))) { document.getElementById('addSpareError').textContent = 'Spare wajib diisi angka.'; valid = false; }
     if (!valid) return;
 
     const btn = document.getElementById('btnDoAdd');
@@ -352,7 +390,6 @@ async function doAdd() {
             closeModalAdd();
             setTimeout(() => location.reload(), 800);
         } else {
-            // Validation errors
             if (data.errors) {
                 if (data.errors.nama)   document.getElementById('addNamaError').textContent   = data.errors.nama[0];
                 if (data.errors.satuan) document.getElementById('addSatuanError').textContent = data.errors.satuan[0];
@@ -375,6 +412,7 @@ async function openModalEdit(id) {
     document.getElementById('editSatuanError').textContent = '';
     document.getElementById('editSpareError').textContent  = '';
     document.getElementById('editPreviewTotal').textContent = '...';
+    document.getElementById('editPreviewTotalSemua').textContent = '...';
 
     try {
         const res  = await fetch(`/konsumsis/${id}`, {
@@ -398,9 +436,12 @@ function closeModalEdit() {
 
 function updatePreviewEdit() {
     const spare = parseInt(document.getElementById('editSpare').value) || 0;
-    const total = QTY_HADIR + spare;
+    const total      = QTY_HADIR + spare;
+    const totalSemua = QTY_SEMUA + spare;
     document.getElementById('editPreviewTotal').textContent =
         `${QTY_HADIR.toLocaleString('id-ID')} + ${spare.toLocaleString('id-ID')} = ${total.toLocaleString('id-ID')}`;
+    document.getElementById('editPreviewTotalSemua').textContent =
+        `${QTY_SEMUA.toLocaleString('id-ID')} + ${spare.toLocaleString('id-ID')} = ${totalSemua.toLocaleString('id-ID')}`;
 }
 document.getElementById('editSpare').addEventListener('input', updatePreviewEdit);
 
@@ -417,7 +458,7 @@ async function doEdit() {
 
     if (!nama)   { document.getElementById('editNamaError').textContent   = 'Nama wajib diisi.'; valid = false; }
     if (!satuan) { document.getElementById('editSatuanError').textContent = 'Satuan wajib diisi.'; valid = false; }
-    if (spare === '' || parseInt(spare) < 0) { document.getElementById('editSpareError').textContent = 'Spare minimal 0.'; valid = false; }
+    if (spare === '' || isNaN(parseInt(spare))) { document.getElementById('editSpareError').textContent = 'Spare wajib diisi angka.'; valid = false; }
     if (!valid) return;
 
     const btn = document.getElementById('btnDoEdit');

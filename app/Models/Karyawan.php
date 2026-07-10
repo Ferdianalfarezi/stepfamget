@@ -8,12 +8,12 @@ class Karyawan extends Model
 {
     protected $fillable = [
         'nik_login', 'nik', 'nama', 'departemen',
-        'jumlah_keluarga', 'keterangan', 'status_kehadiran',
+        'jumlah_keluarga', 'jumlah_fasilitas', 'keterangan', 'status_kehadiran',
         'last_login_at', 'baju_confirmed_at', 'trans_confirmed_at',
     ];
 
     protected $casts = [
-        'status_kehadiran' => 'integer', // was: 'boolean'
+        'status_kehadiran' => 'integer',
         'last_login_at'      => 'datetime',
         'baju_confirmed_at'  => 'datetime',
         'trans_confirmed_at' => 'datetime',
@@ -24,21 +24,28 @@ class Karyawan extends Model
         return $this->hasMany(DetailKaryawan::class, 'nik', 'nik');
     }
 
-    /**
-     * Sudah konfirmasi baju di tahun berjalan?
-     */
     public function isBajuConfirmedThisYear(): bool
     {
         return $this->baju_confirmed_at !== null
             && $this->baju_confirmed_at->year === now()->year;
     }
 
-    /**
-     * Sudah konfirmasi transportasi di tahun berjalan?
-     */
     public function isTransConfirmedThisYear(): bool
     {
         return $this->trans_confirmed_at !== null
             && $this->trans_confirmed_at->year === now()->year;
+    }
+
+    /**
+     * Hitung ulang jumlah_fasilitas dari relasi details (umur > 1 tahun)
+     * dan simpan ke kolom. Dipanggil dari Observer setiap details berubah,
+     * atau manual saat backfill.
+     */
+    public function recalculateJumlahFasilitas(): void
+    {
+        $count = $this->details()->where('umur', '>', 1)->count();
+
+        // updateQuietly biar gak trigger event Karyawan lain yang gak perlu
+        $this->updateQuietly(['jumlah_fasilitas' => $count]);
     }
 }

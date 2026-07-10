@@ -190,9 +190,11 @@
         </div>
         {{-- Grup tombol kanan --}}
         <div style="display:flex;gap:8px;align-items:center;">
-            <button type="button" class="btn btn-success" onclick="openModalImportKaryawan()">
-                <i class="fa-solid fa-file-arrow-up"></i> Import Karyawan
-            </button>
+            @if(auth()->user()->nama !== 'Hitz')
+                <button type="button" class="btn btn-success" onclick="openModalImportKaryawan()">
+                    <i class="fa-solid fa-file-arrow-up"></i> Import Karyawan
+                </button>
+            @endif
             <a href="{{ route('karyawan.export', array_merge(request()->query(), ['type' => 'simple'])) }}"
                 class="btn" style="background:#16a34a;color:#fff;border:none;">
                     <i class="fa-solid fa-file-excel"></i> Export Karyawan
@@ -201,14 +203,16 @@
                 class="btn" style="background:#0369a1;color:#fff;border:none;">
                     <i class="fa-solid fa-file-excel"></i> Export + Keluarga
                 </a>
-            <a href="{{ route('karyawan.detail.all') }}"
-               class="btn"
-               style="background:#0369a1;color:#fff;border:none;display:inline-flex;align-items:center;gap:6px;">
-                <i class="fa-solid fa-table-list"></i> Detail View
-            </a>
-            <button class="btn btn-primary" onclick="openModalCreate()">
-                <i class="fa-solid fa-plus"></i> Tambah Karyawan
-            </button>
+                @if(auth()->user()->nama !== 'Hitz')
+                    <a href="{{ route('karyawan.detail.all') }}"
+                    class="btn"
+                    style="background:#0369a1;color:#fff;border:none;display:inline-flex;align-items:center;gap:6px;">
+                        <i class="fa-solid fa-table-list"></i> Detail View
+                    </a>
+                    <button class="btn btn-primary" onclick="openModalCreate()">
+                        <i class="fa-solid fa-plus"></i> Tambah Karyawan
+                    </button>
+                @endif
         </div>
     </div>
     <div class="table-wrap">
@@ -220,11 +224,14 @@
                     <th>Nama Karyawan</th>
                     <th>Departemen</th>
                     <th>Jml. Keluarga</th>
+                    <th>Fasilitas</th>
                     <th>Status</th>
                     <th>Hadir</th>
                     <th style="width:110px;">Baju</th>
                     <th style="width:110px;">Transport</th>
-                    <th style="width:150px;">Aksi</th>
+                    @if(auth()->user()->nama !== 'Hitz')
+                        <th style="width:150px;">Aksi</th>
+                    @endif
                 </tr>
             </thead>
             <tbody>
@@ -253,6 +260,12 @@
                         <span style="display:inline-flex;align-items:center;gap:5px;font-size:13px;">
                             <i class="fa-solid fa-people-group" style="color:#0b4614;font-size:12px;"></i>
                             {{ $k->jumlah_keluarga }} orang
+                        </span>
+                    </td>
+                    <td>
+                        <span style="display:inline-flex;align-items:center;gap:5px;font-size:13px;">
+                            <i  style="color:#0b4614;font-size:12px;"></i>
+                            {{ $k->jumlah_fasilitas }}
                         </span>
                     </td>
                     <td>
@@ -304,19 +317,21 @@
                             </span>
                         @endif
                     </td>
-                    <td>
-                        <div style="display:flex;gap:6px;">
-                            <button class="action-btn" onclick="showDetail({{ $k->id }}, '{{ addslashes($k->nama) }}')">
-                                <i class="fa-solid fa-eye"></i>
-                            </button>
-                            <button class="action-btn action-btn-warning" onclick="openModalEdit({{ $k->id }})">
-                                <i class="fa-solid fa-pen"></i>
-                            </button>
-                            <button class="action-btn action-btn-danger" onclick="confirmDelete({{ $k->id }}, '{{ addslashes($k->nama) }}')">
-                                <i class="fa-solid fa-trash"></i>
-                            </button>
-                        </div>
-                    </td>
+                    @if(auth()->user()->nama !== 'Hitz')
+                        <td>
+                            <div style="display:flex;gap:6px;">
+                                <button class="action-btn" onclick="showDetail({{ $k->id }}, '{{ addslashes($k->nama) }}')">
+                                    <i class="fa-solid fa-eye"></i>
+                                </button>
+                                <button class="action-btn action-btn-warning" onclick="openModalEdit({{ $k->id }})">
+                                    <i class="fa-solid fa-pen"></i>
+                                </button>
+                                <button class="action-btn action-btn-danger" onclick="confirmDelete({{ $k->id }}, '{{ addslashes($k->nama) }}')">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    @endif
                 </tr>
                 @empty
                 <tr>

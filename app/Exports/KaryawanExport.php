@@ -30,7 +30,6 @@ class KaryawanExport implements FromQuery, WithHeadings, WithMapping, WithStyles
     {
         $q = Karyawan::query();
 
-        // Detail keluarga cuma perlu di-load kalau mode full
         if ($this->type === 'full') {
             $q->with('details');
         }
@@ -104,6 +103,7 @@ class KaryawanExport implements FromQuery, WithHeadings, WithMapping, WithStyles
             'Nama Karyawan',
             'Departemen',
             'Jumlah Keluarga',
+            'Usia diatas 1 Tahun',
             'Status',
             'Hadir',
         ];
@@ -136,6 +136,7 @@ class KaryawanExport implements FromQuery, WithHeadings, WithMapping, WithStyles
             $k->nama,
             $k->departemen,
             $k->jumlah_keluarga,
+            $k->jumlah_fasilitas,
             $k->keterangan,
             $k->status_kehadiran ? 'Ya' : 'Tidak',
         ];
@@ -160,6 +161,7 @@ class KaryawanExport implements FromQuery, WithHeadings, WithMapping, WithStyles
                     $idx === 0 ? $k->nama            : '',
                     $idx === 0 ? $k->departemen      : '',
                     $idx === 0 ? $k->jumlah_keluarga : '',
+                    $idx === 0 ? $k->jumlah_fasilitas : '',
                     $idx === 0 ? $k->keterangan      : '',
                     $idx === 0 ? ($k->status_kehadiran ? 'Ya' : 'Tidak') : '',
                     $d->nama_keluarga,
@@ -182,7 +184,6 @@ class KaryawanExport implements FromQuery, WithHeadings, WithMapping, WithStyles
         $lastRow = $sheet->getHighestRow();
         $lastCol = $sheet->getHighestColumn();
 
-        // Header row
         $sheet->getStyle("A1:{$lastCol}1")->applyFromArray([
             'font'      => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF']],
             'fill'      => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FF0B4614']],
@@ -190,14 +191,12 @@ class KaryawanExport implements FromQuery, WithHeadings, WithMapping, WithStyles
             'borders'   => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FFD1D5DB']]],
         ]);
 
-        // Data rows — border tipis
         if ($lastRow > 1) {
             $sheet->getStyle("A2:{$lastCol}{$lastRow}")->applyFromArray([
                 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FFE5E7EB']]],
             ]);
         }
 
-        // Freeze header
         $sheet->freezePane('A2');
 
         return [];

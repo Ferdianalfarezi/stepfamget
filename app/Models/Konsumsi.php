@@ -21,7 +21,7 @@ class Konsumsi extends Model
 
     /**
      * Hitung qty realtime:
-     * Jumlah detail_karyawans yang karyawannya hadir (status_kehadiran = 1)
+     * Jumlah anggota (termasuk keluarga) dari karyawan yang statusnya HADIR (status_kehadiran = 2)
      */
     public static function getQtyHadir(): int
     {
@@ -31,10 +31,27 @@ class Konsumsi extends Model
     }
 
     /**
+     * Hitung qty jika SEMUA karyawan (apapun status_kehadiran-nya) dianggap hadir semua.
+     * Dipakai untuk estimasi worst-case / persiapan konsumsi maksimal.
+     */
+    public static function getQtySemua(): int
+    {
+        return (int) DB::table('karyawans')->sum('jumlah_keluarga');
+    }
+
+    /**
      * total = qty (hadir) + spare
      */
     public function getTotalAttribute(): int
     {
         return self::getQtyHadir() + $this->spare;
+    }
+
+    /**
+     * total jika semua hadir = qty (semua) + spare
+     */
+    public function getTotalSemuaAttribute(): int
+    {
+        return self::getQtySemua() + $this->spare;
     }
 }

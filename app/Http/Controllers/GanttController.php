@@ -18,6 +18,7 @@ class GanttController extends Controller
         $validated = $request->validate([
             'activity'           => 'required|string|max:200',
             'detail'             => 'nullable|string|max:300',
+            'is_highlight'       => 'nullable|boolean',
             'plan_start_month'   => 'required|integer|min:1|max:12',
             'plan_start_week'    => 'required|integer|min:1|max:4',
             'plan_end_month'     => 'required|integer|min:1|max:12',
@@ -28,7 +29,8 @@ class GanttController extends Controller
             'actual_end_week'    => 'nullable|integer|min:1|max:4',
         ]);
 
-        // Validasi range plan
+        $validated['is_highlight'] = $request->boolean('is_highlight');
+
         $planStart = GanttActivity::toGlobal($validated['plan_start_month'], $validated['plan_start_week']);
         $planEnd   = GanttActivity::toGlobal($validated['plan_end_month'],   $validated['plan_end_week']);
         if ($planEnd < $planStart) {
@@ -37,7 +39,6 @@ class GanttController extends Controller
             ], 422);
         }
 
-        // Validasi range actual (kalau diisi)
         if (!empty($validated['actual_start_month']) && !empty($validated['actual_end_month'])) {
             $actStart = GanttActivity::toGlobal($validated['actual_start_month'], $validated['actual_start_week'] ?? 1);
             $actEnd   = GanttActivity::toGlobal($validated['actual_end_month'],   $validated['actual_end_week']   ?? 4);
@@ -62,6 +63,7 @@ class GanttController extends Controller
         $validated = $request->validate([
             'activity'           => 'required|string|max:200',
             'detail'             => 'nullable|string|max:300',
+            'is_highlight'       => 'nullable|boolean',
             'plan_start_month'   => 'required|integer|min:1|max:12',
             'plan_start_week'    => 'required|integer|min:1|max:4',
             'plan_end_month'     => 'required|integer|min:1|max:12',
@@ -71,6 +73,8 @@ class GanttController extends Controller
             'actual_end_month'   => 'nullable|integer|min:1|max:12',
             'actual_end_week'    => 'nullable|integer|min:1|max:4',
         ]);
+
+        $validated['is_highlight'] = $request->boolean('is_highlight');
 
         $planStart = GanttActivity::toGlobal($validated['plan_start_month'], $validated['plan_start_week']);
         $planEnd   = GanttActivity::toGlobal($validated['plan_end_month'],   $validated['plan_end_week']);
@@ -102,5 +106,19 @@ class GanttController extends Controller
     {
         $ganttActivity->delete();
         return response()->json(['message' => 'Activity berhasil dihapus!']);
+    }
+
+    public function reorder(Request $request)
+    {
+        $validated = $request->validate([
+            'ids'   => 'required|array|min:1',
+            'ids.*' => 'integer|exists:gantt_activities,id',
+        ]);
+
+        foreach ($validated['ids'] as $index => $id) {
+            GanttActivity::where('id', $id)->update(['urutan' => $index + 1]);
+        }
+
+        return response()->json(['message' => 'Urutan berhasil disimpan!']);
     }
 }

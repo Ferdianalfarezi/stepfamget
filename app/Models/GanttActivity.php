@@ -9,6 +9,7 @@ class GanttActivity extends Model
     protected $fillable = [
         'activity',
         'detail',
+        'is_highlight',
         'plan_start_month',
         'plan_start_week',
         'plan_end_month',
@@ -30,8 +31,9 @@ class GanttActivity extends Model
         'actual_end_month'   => 'integer',
         'actual_end_week'    => 'integer',
         'urutan'             => 'integer',
+        'is_highlight'       => 'boolean',
     ];
-
+    
     public static $months = [
         1=>'Jan', 2=>'Feb', 3=>'Mar', 4=>'Apr',
         5=>'Mei', 6=>'Jun', 7=>'Jul', 8=>'Ags',

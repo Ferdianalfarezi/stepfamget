@@ -8,6 +8,7 @@ use App\Models\DetailKaryawan;
 use Illuminate\Support\Facades\View;
 use App\Models\PenerimaanBarang;
 use App\Observers\PenerimaanBarangObserver;
+use App\Observers\DetailKaryawanObserver;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -27,5 +28,6 @@ class AppServiceProvider extends ServiceProvider
         View::share('countKaryawan', Karyawan::count());
         View::share('countDetailKaryawan', DetailKaryawan::count());
         PenerimaanBarang::observe(PenerimaanBarangObserver::class);
+        DetailKaryawan::observe(DetailKaryawanObserver::class);
     }
 }
