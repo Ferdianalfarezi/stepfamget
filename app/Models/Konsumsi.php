@@ -13,6 +13,7 @@ class Konsumsi extends Model
         'nama',
         'satuan',
         'spare',
+        'qty_source', 
     ];
 
     protected $casts = [

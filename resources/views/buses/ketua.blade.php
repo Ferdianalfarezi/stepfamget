@@ -34,7 +34,9 @@
                     <th>Nama Ketua</th>
                     <th>Departemen</th>
                     <th>No. Telp</th>
-                    <th style="width:120px;">Aksi</th>
+                    @if(auth()->user()->nama !== 'Hitz')
+                        <th style="width:120px;">Aksi</th>
+                    @endif
                 </tr>
             </thead>
             <tbody>
@@ -60,16 +62,18 @@
                         <i class="fa-solid fa-phone" style="margin-right:4px;font-size:11px;"></i>
                         {{ $k->no_telp ?? '-' }}
                     </td>
-                    <td>
-                        <div style="display:flex;gap:6px;">
-                            <button class="action-btn action-btn-warning" onclick="openModalEdit({{ $k->id }})">
-                                <i class="fa-solid fa-pen"></i>
-                            </button>
-                            <button class="action-btn action-btn-danger" onclick="confirmDelete({{ $k->id }}, '{{ addslashes($k->karyawan?->nama ?? '') }}')">
-                                <i class="fa-solid fa-trash"></i>
-                            </button>
-                        </div>
-                    </td>
+                    @if(auth()->user()->nama !== 'Hitz')
+                        <td>
+                            <div style="display:flex;gap:6px;">
+                                <button class="action-btn action-btn-warning" onclick="openModalEdit({{ $k->id }})">
+                                    <i class="fa-solid fa-pen"></i>
+                                </button>
+                                <button class="action-btn action-btn-danger" onclick="confirmDelete({{ $k->id }}, '{{ addslashes($k->karyawan?->nama ?? '') }}')">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    @endif
                 </tr>
                 @empty
                 <tr>

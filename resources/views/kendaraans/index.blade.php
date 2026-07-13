@@ -98,7 +98,9 @@
                     <th>Jenis Kendaraan</th>
                     <th>Plat Nomor</th>
                     <th>Terdaftar Pada</th>
-                    <th style="width:60px;text-align:center;">Aksi</th>
+                    @if(auth()->user()->nama !== 'Hitz')
+                        <th style="width:60px;text-align:center;">Aksi</th>
+                    @endif
                 </tr>
             </thead>
             <tbody id="kendaraan-tbody">
@@ -163,23 +165,25 @@
                         <i class="fa-regular fa-clock" style="margin-right:4px;"></i>
                         {{ $k->created_at->format('d M Y, H:i') }}
                     </td>
-                    <td style="text-align:center;">
-                        <div style="position:relative;display:inline-block;width:32px;height:32px;">
-                            <button type="button" tabindex="-1"
-                                    style="background:#f1f5f9;border:none;width:32px;height:32px;border-radius:8px;
-                                           color:#475569;pointer-events:none;display:flex;align-items:center;justify-content:center;">
-                                <i class="fa-solid fa-ellipsis-vertical"></i>
-                            </button>
-                            <select class="select-tiket" onchange="markTiket({{ $k->id }}, this.value)"
-                                    title="Tandai jenis tiket"
-                                    style="position:absolute;inset:0;width:100%;height:100%;
-                                           opacity:0;cursor:pointer;z-index:1;">
-                                <option value="0" {{ ($k->jenis_tiket ?? 0) == 0 ? 'selected' : '' }}>Regular</option>
-                                <option value="1" {{ ($k->jenis_tiket ?? 0) == 1 ? 'selected' : '' }}>VIP</option>
-                                <option value="2" {{ ($k->jenis_tiket ?? 0) == 2 ? 'selected' : '' }}>VVIP</option>
-                            </select>
-                        </div>
-                    </td>
+                    @if(auth()->user()->nama !== 'Hitz')
+                        <td style="text-align:center;">
+                            <div style="position:relative;display:inline-block;width:32px;height:32px;">
+                                <button type="button" tabindex="-1"
+                                        style="background:#f1f5f9;border:none;width:32px;height:32px;border-radius:8px;
+                                            color:#475569;pointer-events:none;display:flex;align-items:center;justify-content:center;">
+                                    <i class="fa-solid fa-ellipsis-vertical"></i>
+                                </button>
+                                <select class="select-tiket" onchange="markTiket({{ $k->id }}, this.value)"
+                                        title="Tandai jenis tiket"
+                                        style="position:absolute;inset:0;width:100%;height:100%;
+                                            opacity:0;cursor:pointer;z-index:1;">
+                                    <option value="0" {{ ($k->jenis_tiket ?? 0) == 0 ? 'selected' : '' }}>Regular</option>
+                                    <option value="1" {{ ($k->jenis_tiket ?? 0) == 1 ? 'selected' : '' }}>VIP</option>
+                                    <option value="2" {{ ($k->jenis_tiket ?? 0) == 2 ? 'selected' : '' }}>VVIP</option>
+                                </select>
+                            </div>
+                        </td>
+                    @endif
                 </tr>
                 @empty
                 <tr>

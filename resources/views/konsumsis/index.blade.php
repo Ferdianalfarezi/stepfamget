@@ -35,16 +35,7 @@
             <div class="card-title">
                 <i class="fa-solid fa-utensils" style="color:#0b4614;margin-right:6px;"></i>Data Konsumsi
             </div>
-            <div style="font-size:12px;color:#64748b;margin-top:4px;display:flex;gap:14px;flex-wrap:wrap;">
-                <span>
-                    <i class="fa-solid fa-user-check" style="color:#16a34a;margin-right:4px;"></i>
-                    Qty Hadir: <strong>{{ number_format($qtyHadir) }}</strong> orang
-                </span>
-                <span>
-                    <i class="fa-solid fa-users" style="color:#0369a1;margin-right:4px;"></i>
-                    Qty Jika Semua Hadir: <strong>{{ number_format($qtySemua) }}</strong> orang
-                </span>
-            </div>
+            
         </div>
         @if(auth()->user()->nama !== 'Hitz')
             <div style="display:flex;gap:8px;align-items:center;">
@@ -64,11 +55,9 @@
                     <th style="width:45px;">#</th>
                     <th>Nama</th>
                     <th>Satuan</th>
-                    {{-- <th style="text-align:center;">Qty (Hadir)</th> --}}
                     <th style="text-align:center;">Spare</th>
-                    {{-- <th style="text-align:center;">Total (Hadir)</th> --}}
-                    <th style="text-align:center;background:#eff6ff;">Qty (Semua Hadir)</th>
-                    <th style="text-align:center;background:#eff6ff;">Total (Semua Hadir)</th>
+                    <th style="text-align:center;background:#eff6ff;">Qty</th>
+                    <th style="text-align:center;background:#eff6ff;">Total</th>
                     @if(auth()->user()->nama !== 'Hitz')
                         <th style="width:100px;text-align:center;">Aksi</th>
                     @endif
@@ -76,6 +65,24 @@
             </thead>
             <tbody>
                 @forelse($konsumsis as $k)
+                @php
+                    $rowQty = match($k->qty_source) {
+                        'karyawan_saja' => $qtyKaryawanSemua,
+                        'anak'          => $qtyAnakSemua,
+                        'pasangan'      => $qtyPasanganSemua,
+                        'vip'           => $qtyVip,
+                        'vvip'          => $qtyVvip,
+                        default         => $qtySemua,
+                    };
+                    $qtySourceLabel = match($k->qty_source) {
+                        'karyawan_saja' => 'Karyawan Saja',
+                        'anak'          => 'Anak Karyawan',
+                        'pasangan'      => 'Pasangan (Suami/Istri)',
+                        'vip'           => 'Kendaraan VIP',
+                        'vvip'          => 'Kendaraan VVIP',
+                        default         => 'Semua Orang',
+                    };
+                @endphp
                 <tr>
                     <td style="color:#94a3b8;font-size:12px;">
                         {{ $loop->iteration + ($konsumsis->currentPage() - 1) * $konsumsis->perPage() }}
@@ -97,33 +104,22 @@
                             {{ $k->satuan }}
                         </span>
                     </td>
-                    {{-- <td style="text-align:center;">
-                        <span style="font-size:15px;font-weight:700;color:#0b4614;">
-                            {{ number_format($qtyHadir) }}
-                        </span>
-                    </td> --}}
+                   
                     <td style="text-align:center;">
                         <span style="font-size:14px;font-weight:600;color:#0369a1;">
                             {{ number_format($k->spare) }}
                         </span>
                     </td>
-                    {{-- <td style="text-align:center;">
-                        <span style="background:#1e293b;color:#fff;border-radius:8px;
-                                     padding:4px 14px;font-size:14px;font-weight:800;
-                                     letter-spacing:.5px;">
-                            {{ number_format($qtyHadir + $k->spare) }}
-                        </span>
-                    </td> --}}
                     <td style="text-align:center;background:#f8fbff;">
                         <span style="font-size:15px;font-weight:700;color:#0369a1;">
-                            {{ number_format($qtySemua) }}
+                            {{ number_format($rowQty) }}
                         </span>
                     </td>
                     <td style="text-align:center;background:#f8fbff;">
                         <span style="background:#0369a1;color:#fff;border-radius:8px;
                                      padding:4px 14px;font-size:14px;font-weight:800;
                                      letter-spacing:.5px;">
-                            {{ number_format($qtySemua + $k->spare) }}
+                            {{ number_format($rowQty + $k->spare) }}
                         </span>
                     </td>
                     @if(auth()->user()->nama !== 'Hitz')
@@ -145,7 +141,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="9" style="text-align:center;padding:40px;color:#94a3b8;">
+                    <td colspan="8" style="text-align:center;padding:40px;color:#94a3b8;">
                         <i class="fa-solid fa-utensils" style="font-size:32px;display:block;margin-bottom:10px;"></i>
                         Belum ada data konsumsi
                     </td>
@@ -199,7 +195,7 @@
             <div class="k-form-group">
                 <label class="k-form-label">Nama <span class="required">*</span></label>
                 <input type="text" id="addNama" class="k-form-input"
-                       placeholder="e.g. Makan Siang, Gorengan, Air Mineral">
+                       placeholder="e.g. Makan Siang, Gorengan, Souvenir Anak">
                 <div class="k-form-error" id="addNamaError"></div>
             </div>
             <div class="k-form-group">
@@ -209,26 +205,29 @@
                 <div class="k-form-error" id="addSatuanError"></div>
             </div>
             <div class="k-form-group">
+                <label class="k-form-label">Sumber Qty <span class="required">*</span></label>
+                <select id="addQtySource" class="k-form-input">
+                    <option value="semua_orang">Semua Orang (Karyawan + Keluarga)</option>
+                    <option value="karyawan_saja">Karyawan Saja (Tanpa Keluarga)</option>
+                    <option value="anak">Anak Karyawan Saja</option>
+                    <option value="pasangan">Pasangan (Suami/Istri) Saja</option>
+                    <option value="vip">Kendaraan VIP</option>
+                    <option value="vvip">Kendaraan VVIP</option>
+                </select>
+                <div class="k-form-error" id="addQtySourceError"></div>
+            </div>
+            <div class="k-form-group">
                 <label class="k-form-label">Spare <span class="required">*</span></label>
                 <input type="number" id="addSpare" class="k-form-input"
                     placeholder="0" value="0">
                 <div class="k-form-error" id="addSpareError"></div>
             </div>
 
-            {{-- Preview total hadir --}}
-            <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;
-                        padding:10px 14px;font-size:13px;color:#166534;margin-top:4px;">
-                <i class="fa-solid fa-calculator" style="margin-right:6px;"></i>
-                Estimasi Total (Hadir):
-                <strong id="previewTotal">{{ $qtyHadir }} + 0 = {{ $qtyHadir }}</strong>
-            </div>
-
-            {{-- Preview total semua hadir --}}
             <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;
-                        padding:10px 14px;font-size:13px;color:#1d4ed8;margin-top:8px;">
-                <i class="fa-solid fa-users" style="margin-right:6px;"></i>
-                Estimasi Total (Jika Semua Hadir):
-                <strong id="previewTotalSemua">{{ $qtySemua }} + 0 = {{ $qtySemua }}</strong>
+                        padding:10px 14px;font-size:13px;color:#1d4ed8;margin-top:4px;">
+                <i class="fa-solid fa-calculator" style="margin-right:6px;"></i>
+                Estimasi Total:
+                <strong id="previewTotal">–</strong>
             </div>
 
             <div class="k-form-actions" style="margin-top:20px;">
@@ -271,23 +270,28 @@
                 <div class="k-form-error" id="editSatuanError"></div>
             </div>
             <div class="k-form-group">
+                <label class="k-form-label">Sumber Qty <span class="required">*</span></label>
+                <select id="editQtySource" class="k-form-input">
+                    <option value="semua_orang">Semua Orang (Karyawan + Keluarga)</option>
+                    <option value="karyawan_saja">Karyawan Saja (Tanpa Keluarga)</option>
+                    <option value="anak">Anak Karyawan Saja</option>
+                    <option value="pasangan">Pasangan (Suami/Istri) Saja</option>
+                    <option value="vip">Kendaraan VIP</option>
+                    <option value="vvip">Kendaraan VVIP</option>
+                </select>
+                <div class="k-form-error" id="editQtySourceError"></div>
+            </div>
+            <div class="k-form-group">
                 <label class="k-form-label">Spare <span class="required">*</span></label>
                 <input type="number" id="editSpare" class="k-form-input">
                 <div class="k-form-error" id="editSpareError"></div>
             </div>
 
-            <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;
-                        padding:10px 14px;font-size:13px;color:#166534;margin-top:4px;">
-                <i class="fa-solid fa-calculator" style="margin-right:6px;"></i>
-                Estimasi Total (Hadir):
-                <strong id="editPreviewTotal">–</strong>
-            </div>
-
             <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;
-                        padding:10px 14px;font-size:13px;color:#1d4ed8;margin-top:8px;">
-                <i class="fa-solid fa-users" style="margin-right:6px;"></i>
-                Estimasi Total (Jika Semua Hadir):
-                <strong id="editPreviewTotalSemua">–</strong>
+                        padding:10px 14px;font-size:13px;color:#1d4ed8;margin-top:4px;">
+                <i class="fa-solid fa-calculator" style="margin-right:6px;"></i>
+                Estimasi Total:
+                <strong id="editPreviewTotal">–</strong>
             </div>
 
             <div class="k-form-actions" style="margin-top:20px;">
@@ -307,9 +311,26 @@
 
 @push('scripts')
 <script>
-const CSRF      = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
-const QTY_HADIR = {{ $qtyHadir }};
-const QTY_SEMUA = {{ $qtySemua }};
+const CSRF = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
+
+// Qty per kategori — dikirim dari controller
+const QTY_SEMUA_ORANG = {{ $qtySemua }};
+const QTY_KARYAWAN     = {{ $qtyKaryawanSemua }};
+const QTY_ANAK         = {{ $qtyAnakSemua }};
+const QTY_PASANGAN     = {{ $qtyPasanganSemua }};
+const QTY_VIP          = {{ $qtyVip }};
+const QTY_VVIP         = {{ $qtyVvip }};
+
+function getQtyBySource(source) {
+    switch (source) {
+        case 'karyawan_saja': return QTY_KARYAWAN;
+        case 'anak':           return QTY_ANAK;
+        case 'pasangan':       return QTY_PASANGAN;
+        case 'vip':             return QTY_VIP;
+        case 'vvip':            return QTY_VVIP;
+        default:                 return QTY_SEMUA_ORANG;
+    }
+}
 
 /* ─── Toast ─── */
 function showToast(msg, type = 'success') {
@@ -330,12 +351,14 @@ function showToast(msg, type = 'success') {
 
 /* ─── Modal Add ─── */
 function openModalAdd() {
-    document.getElementById('addNama').value   = '';
-    document.getElementById('addSatuan').value = '';
-    document.getElementById('addSpare').value  = '0';
-    document.getElementById('addNamaError').textContent   = '';
-    document.getElementById('addSatuanError').textContent = '';
-    document.getElementById('addSpareError').textContent  = '';
+    document.getElementById('addNama').value      = '';
+    document.getElementById('addSatuan').value    = '';
+    document.getElementById('addQtySource').value = 'semua_orang';
+    document.getElementById('addSpare').value     = '0';
+    document.getElementById('addNamaError').textContent      = '';
+    document.getElementById('addSatuanError').textContent    = '';
+    document.getElementById('addQtySourceError').textContent = '';
+    document.getElementById('addSpareError').textContent     = '';
     updatePreviewAdd();
     document.getElementById('modalAdd').classList.add('show');
     document.getElementById('addNama').focus();
@@ -345,29 +368,31 @@ function closeModalAdd() {
 }
 
 function updatePreviewAdd() {
-    const spare = parseInt(document.getElementById('addSpare').value) || 0;
-    const total      = QTY_HADIR + spare;
-    const totalSemua = QTY_SEMUA + spare;
+    const source = document.getElementById('addQtySource').value;
+    const qty    = getQtyBySource(source);
+    const spare  = parseInt(document.getElementById('addSpare').value) || 0;
+    const total  = qty + spare;
     document.getElementById('previewTotal').textContent =
-        `${QTY_HADIR.toLocaleString('id-ID')} + ${spare.toLocaleString('id-ID')} = ${total.toLocaleString('id-ID')}`;
-    document.getElementById('previewTotalSemua').textContent =
-        `${QTY_SEMUA.toLocaleString('id-ID')} + ${spare.toLocaleString('id-ID')} = ${totalSemua.toLocaleString('id-ID')}`;
+        `${qty.toLocaleString('id-ID')} + ${spare.toLocaleString('id-ID')} = ${total.toLocaleString('id-ID')}`;
 }
+document.getElementById('addQtySource').addEventListener('change', updatePreviewAdd);
 document.getElementById('addSpare').addEventListener('input', updatePreviewAdd);
 
 async function doAdd() {
-    const nama   = document.getElementById('addNama').value.trim();
-    const satuan = document.getElementById('addSatuan').value.trim();
-    const spare  = document.getElementById('addSpare').value;
+    const nama      = document.getElementById('addNama').value.trim();
+    const satuan    = document.getElementById('addSatuan').value.trim();
+    const qtySource = document.getElementById('addQtySource').value;
+    const spare     = document.getElementById('addSpare').value;
     let valid = true;
 
-    document.getElementById('addNamaError').textContent   = '';
-    document.getElementById('addSatuanError').textContent = '';
-    document.getElementById('addSpareError').textContent  = '';
+    document.getElementById('addNamaError').textContent      = '';
+    document.getElementById('addSatuanError').textContent    = '';
+    document.getElementById('addQtySourceError').textContent = '';
+    document.getElementById('addSpareError').textContent     = '';
 
     if (!nama)   { document.getElementById('addNamaError').textContent   = 'Nama wajib diisi.'; valid = false; }
     if (!satuan) { document.getElementById('addSatuanError').textContent = 'Satuan wajib diisi.'; valid = false; }
-   if (spare === '' || isNaN(parseInt(spare))) { document.getElementById('addSpareError').textContent = 'Spare wajib diisi angka.'; valid = false; }
+    if (spare === '' || isNaN(parseInt(spare))) { document.getElementById('addSpareError').textContent = 'Spare wajib diisi angka.'; valid = false; }
     if (!valid) return;
 
     const btn = document.getElementById('btnDoAdd');
@@ -382,7 +407,7 @@ async function doAdd() {
                 'X-CSRF-TOKEN' : CSRF,
                 'Accept'       : 'application/json',
             },
-            body: JSON.stringify({ nama, satuan, spare: parseInt(spare) }),
+            body: JSON.stringify({ nama, satuan, spare: parseInt(spare), qty_source: qtySource }),
         });
         const data = await res.json();
         if (res.ok) {
@@ -391,9 +416,10 @@ async function doAdd() {
             setTimeout(() => location.reload(), 800);
         } else {
             if (data.errors) {
-                if (data.errors.nama)   document.getElementById('addNamaError').textContent   = data.errors.nama[0];
-                if (data.errors.satuan) document.getElementById('addSatuanError').textContent = data.errors.satuan[0];
-                if (data.errors.spare)  document.getElementById('addSpareError').textContent  = data.errors.spare[0];
+                if (data.errors.nama)       document.getElementById('addNamaError').textContent      = data.errors.nama[0];
+                if (data.errors.satuan)     document.getElementById('addSatuanError').textContent    = data.errors.satuan[0];
+                if (data.errors.spare)      document.getElementById('addSpareError').textContent     = data.errors.spare[0];
+                if (data.errors.qty_source) document.getElementById('addQtySourceError').textContent = data.errors.qty_source[0];
             } else {
                 showToast(data.message ?? 'Terjadi kesalahan.', 'error');
             }
@@ -408,21 +434,22 @@ async function doAdd() {
 
 /* ─── Modal Edit ─── */
 async function openModalEdit(id) {
-    document.getElementById('editNamaError').textContent   = '';
-    document.getElementById('editSatuanError').textContent = '';
-    document.getElementById('editSpareError').textContent  = '';
-    document.getElementById('editPreviewTotal').textContent = '...';
-    document.getElementById('editPreviewTotalSemua').textContent = '...';
+    document.getElementById('editNamaError').textContent      = '';
+    document.getElementById('editSatuanError').textContent    = '';
+    document.getElementById('editQtySourceError').textContent = '';
+    document.getElementById('editSpareError').textContent     = '';
+    document.getElementById('editPreviewTotal').textContent   = '...';
 
     try {
         const res  = await fetch(`/konsumsis/${id}`, {
             headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF }
         });
         const data = await res.json();
-        document.getElementById('editId').value      = data.id;
-        document.getElementById('editNama').value    = data.nama;
-        document.getElementById('editSatuan').value  = data.satuan;
-        document.getElementById('editSpare').value   = data.spare;
+        document.getElementById('editId').value        = data.id;
+        document.getElementById('editNama').value      = data.nama;
+        document.getElementById('editSatuan').value    = data.satuan;
+        document.getElementById('editQtySource').value = data.qty_source;
+        document.getElementById('editSpare').value     = data.spare;
         updatePreviewEdit();
         document.getElementById('modalEdit').classList.add('show');
         document.getElementById('editNama').focus();
@@ -435,26 +462,28 @@ function closeModalEdit() {
 }
 
 function updatePreviewEdit() {
-    const spare = parseInt(document.getElementById('editSpare').value) || 0;
-    const total      = QTY_HADIR + spare;
-    const totalSemua = QTY_SEMUA + spare;
+    const source = document.getElementById('editQtySource').value;
+    const qty    = getQtyBySource(source);
+    const spare  = parseInt(document.getElementById('editSpare').value) || 0;
+    const total  = qty + spare;
     document.getElementById('editPreviewTotal').textContent =
-        `${QTY_HADIR.toLocaleString('id-ID')} + ${spare.toLocaleString('id-ID')} = ${total.toLocaleString('id-ID')}`;
-    document.getElementById('editPreviewTotalSemua').textContent =
-        `${QTY_SEMUA.toLocaleString('id-ID')} + ${spare.toLocaleString('id-ID')} = ${totalSemua.toLocaleString('id-ID')}`;
+        `${qty.toLocaleString('id-ID')} + ${spare.toLocaleString('id-ID')} = ${total.toLocaleString('id-ID')}`;
 }
+document.getElementById('editQtySource').addEventListener('change', updatePreviewEdit);
 document.getElementById('editSpare').addEventListener('input', updatePreviewEdit);
 
 async function doEdit() {
-    const id     = document.getElementById('editId').value;
-    const nama   = document.getElementById('editNama').value.trim();
-    const satuan = document.getElementById('editSatuan').value.trim();
-    const spare  = document.getElementById('editSpare').value;
+    const id        = document.getElementById('editId').value;
+    const nama      = document.getElementById('editNama').value.trim();
+    const satuan    = document.getElementById('editSatuan').value.trim();
+    const qtySource = document.getElementById('editQtySource').value;
+    const spare     = document.getElementById('editSpare').value;
     let valid = true;
 
-    document.getElementById('editNamaError').textContent   = '';
-    document.getElementById('editSatuanError').textContent = '';
-    document.getElementById('editSpareError').textContent  = '';
+    document.getElementById('editNamaError').textContent      = '';
+    document.getElementById('editSatuanError').textContent    = '';
+    document.getElementById('editQtySourceError').textContent = '';
+    document.getElementById('editSpareError').textContent     = '';
 
     if (!nama)   { document.getElementById('editNamaError').textContent   = 'Nama wajib diisi.'; valid = false; }
     if (!satuan) { document.getElementById('editSatuanError').textContent = 'Satuan wajib diisi.'; valid = false; }
@@ -473,7 +502,7 @@ async function doEdit() {
                 'X-CSRF-TOKEN' : CSRF,
                 'Accept'       : 'application/json',
             },
-            body: JSON.stringify({ nama, satuan, spare: parseInt(spare) }),
+            body: JSON.stringify({ nama, satuan, spare: parseInt(spare), qty_source: qtySource }),
         });
         const data = await res.json();
         if (res.ok) {
@@ -482,9 +511,10 @@ async function doEdit() {
             setTimeout(() => location.reload(), 800);
         } else {
             if (data.errors) {
-                if (data.errors.nama)   document.getElementById('editNamaError').textContent   = data.errors.nama[0];
-                if (data.errors.satuan) document.getElementById('editSatuanError').textContent = data.errors.satuan[0];
-                if (data.errors.spare)  document.getElementById('editSpareError').textContent  = data.errors.spare[0];
+                if (data.errors.nama)       document.getElementById('editNamaError').textContent      = data.errors.nama[0];
+                if (data.errors.satuan)     document.getElementById('editSatuanError').textContent    = data.errors.satuan[0];
+                if (data.errors.spare)      document.getElementById('editSpareError').textContent     = data.errors.spare[0];
+                if (data.errors.qty_source) document.getElementById('editQtySourceError').textContent = data.errors.qty_source[0];
             } else {
                 showToast(data.message ?? 'Terjadi kesalahan.', 'error');
             }
